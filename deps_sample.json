@@ -1,0 +1,39 @@
+{
+    "name":"Test",
+    "verbose":true,
+    "verboseGit":true,
+    "tasks":[
+        {
+            "type":"git-checkout",
+            
+            "url":"https://.../xxx.git",
+            "__url":"Leave it empty if using local repository",
+            
+            "localPath":"...",
+            "__localPath":"A path of git(local) repository",
+
+            "branch":"master",
+            "__branch":"Specify a branch(local) that you want to use",
+            
+            "startPoint":"origin/master",
+            "__startPoint":"Use a specific commit hash, tag or another branch(e.g origin/master)",
+            
+            "updateSubmodules":false,
+        },
+        {
+            "type":"symlink",
+            
+            "target":"./symlink_target",
+            "__target":"TARGET PATH of SYMLINK",
+            
+            "path":"./symlink_path",
+            "__path":"SYMLINK DESTINATION PATH",
+            
+            "forced":true,
+            "__forced":"Remove exist PATH then recreate symlink everytime",
+            
+            "linkType":"dir",
+            "__linkType":"'dir', 'file', 'junction'"
+        }
+    ]
+}
