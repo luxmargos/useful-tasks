@@ -18,6 +18,6 @@ export const loadJsonConfig = (filePath:string)=>{
         const extendsFilePath = path.resolve(filePathDir, configJson.extends);
         configJson = Object.assign({}, configJson, loadJsonConfig(extendsFilePath));
     }
-
+    
     return configJson;
 };

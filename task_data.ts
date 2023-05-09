@@ -1,5 +1,6 @@
 export interface Task {
-    type:'git-checkout'|'symlink'|'cmd'
+    type:'git-repo-prepare'|'symlink'|'cmd',
+    cwd?:string
 }
 
 export interface TaskGitCheckout extends Task{
@@ -20,14 +21,15 @@ export interface TaskSymlink extends Task{
 }
 
 export interface TaskTerminalCommand extends Task{
-    cmd:string
+    cmd:string,
+    shell?:string,
 }
 
 export interface DepsJson {
     name?:string,
     verbose?:boolean,
     verboseGit?:boolean,
-    tasks?:Array<TaskGitCheckout | TaskSymlink>
+    tasks?:Array<Task>
 }
 
-export const TAG = "dependency-resolver"
+export const TAG = "useful-tasks"

@@ -6,7 +6,7 @@
         "name": "Jinho Yun",
         "email": "owlflyx12@gmail.com"
     },
-    "bin": {"useful-tasks":"dist/index.js"},
+    "bin": {"useful-tasks":"bin/cli.js"},
     "entryPoint": "dist/index.js",
     "license": "MIT",
     "keywords": [
@@ -25,8 +25,9 @@
     "scripts": {
         "start": "npm run build && node dist/index.js",
         "start:ts": "ts-node index.ts",
-        "build": "npm run build:common",
+        "build": "npm run build:bin && npm run build:common",
         "build:common": "esbuild index.ts --platform=node --sourcemap --bundle --outdir=dist --minify",
+        "build:bin": "esbuild cli.ts --platform=node --sourcemap --bundle --outdir=bin --minify",
         "build:types": "tsc --emitDeclarationOnly --declaration --project tsconfig.json"
     },
     "devDependencies": {

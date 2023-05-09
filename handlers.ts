@@ -8,11 +8,11 @@ import { loadJsonConfig } from './utils';
 
 import { fstat, removeSync } from 'fs-extra';
 import debug from 'debug';
-import { TAG, TaskGitCheckout, TaskSymlink } from './task_data';
+import { TAG, Task, TaskGitCheckout, TaskSymlink, TaskTerminalCommand } from './task_data';
 
 const vlog = debug(TAG);
 
-export const handleGitCheckout = async (task:TaskGitCheckout)=>{
+export const handleGitRepoSetup = async (task:TaskGitCheckout)=>{
     const localPath = path.resolve(task.localPath);
 
     if(!fs.existsSync(localPath)){
@@ -95,4 +95,15 @@ export const handleSymlink = async (task:TaskSymlink)=>{
         const lstat:fs.Stats = fs.lstatSync(dstPath);
         vlog(`LSTAT is symlink? ${lstat.isSymbolicLink()}, is directory? ${lstat.isDirectory()}`);
     }
+}
+
+export const handleTerminalCommand = async (task:TaskTerminalCommand)=>{
+    vlog(`Start execution... ${task.cmd}`);
+    execSync(task.cmd,{
+        shell: task.shell,
+        // cwd: cwd, 
+        env: process.env,
+        stdio: [process.stdin, process.stdout, process.stderr],
+        encoding: 'utf-8'
+    })
 }
