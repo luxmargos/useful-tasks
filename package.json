@@ -7,6 +7,9 @@
         "email": "owlflyx12@gmail.com"
     },
     "bin": {"useful-tasks":"bin/cli.js"},
+    "engines": {
+        "node": ">=4.2.0"
+    },
     "entryPoint": "dist/index.js",
     "license": "MIT",
     "keywords": [
