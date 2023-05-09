@@ -34,6 +34,10 @@ const runTasks = async ()=>{
     for(let i=0;i<taskCount; i++){
         const task = tasks[i];
 
+        if(task.enabled === false){
+            continue;
+        }
+
         if(task.cwd){
             const taskCwd = path.resolve(task.cwd);
             vlog(`Changing the current working directory => ${taskCwd}`);

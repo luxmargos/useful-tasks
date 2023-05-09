@@ -15,6 +15,9 @@ Create json file
             //This task sets up a Git repository. The main purpose is to prepare the Git repository to be usable, utilizing various Git commands such as clone, checkout, reset, fetch, and clean.
             "type":"git-repo-prepare",
 
+            //Optional. false - Pass the current task without process.
+            "enabled":true,
+
             //Optional. Current working directory.
             "cwd":"...",
 
@@ -39,6 +42,9 @@ Create json file
         {
             "type":"symlink",
             
+            //Optional. false - Pass the current task without process.
+            "enabled":true,
+
             //Optional. Current working directory.
             "cwd":"...",
 
@@ -56,6 +62,10 @@ Create json file
         },
         {
             "type":"cmd",
+
+            //Optional. false - Pass the current task without process.
+            "enabled":true,
+
             //Optional. Current working directory.
             "cwd":"...",
 
