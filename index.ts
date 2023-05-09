@@ -35,7 +35,14 @@ const runTasks = async ()=>{
         const task = tasks[i];
 
         if(task.enabled === false){
+            vlog(`Pass the task without execution => ${i}/${task.type}`);
             continue;
+        }else{
+            vlog(`Task : ${i}/${task.type}`)
+        }
+
+        if(task.comment){
+            vlog(task.comment);
         }
 
         if(task.cwd){

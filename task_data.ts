@@ -1,7 +1,8 @@
 export interface Task {
     type:'git-repo-prepare'|'symlink'|'cmd',
     cwd?:string,
-    enabled?:boolean
+    enabled?:boolean,
+    comment?:string
 }
 
 export interface TaskGitCheckout extends Task{
