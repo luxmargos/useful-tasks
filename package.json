@@ -1,18 +1,19 @@
 {
-    "name": "dependency-resolver",
+    "name": "useful-tasks",
     "version": "0.1.0",
     "description": "A dependency resolver for git and some of simple tasks",
     "author": {
         "name": "Jinho Yun",
         "email": "owlflyx12@gmail.com"
     },
-    "bin": {"deps-resolver":"dist/index.js"},
+    "bin": {"useful-tasks":"dist/index.js"},
     "entryPoint": "dist/index.js",
     "license": "MIT",
     "keywords": [
         "git",
         "symlink",
-        "dependency"
+        "dependency",
+        "task"
     ],
     "dependencies": {
         "commander": "^9.4.0",
