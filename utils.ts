@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import json5 from 'json5';
 
 const loadJson = (filePath:string)=>{
     if(!fs.existsSync(filePath)){
@@ -7,7 +8,7 @@ const loadJson = (filePath:string)=>{
     }
 
     const fileString = fs.readFileSync(filePath, {encoding:'utf-8'});
-    return JSON.parse(fileString);
+    return json5.parse(fileString);
 };
 
 

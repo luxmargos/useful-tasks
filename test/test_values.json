@@ -5,6 +5,7 @@
         "verboseGit":true
     },
     "tasks":[
+        //comment test
         {
             "type":"set-value",
             "key":"file_val_json",
