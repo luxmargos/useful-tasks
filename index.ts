@@ -28,6 +28,9 @@ if(debugPat){
 const vlog = debug(TAG);
 const originCwd = path.resolve(process.cwd());
 
+console.log("######################################################################")
+console.log(`[${depsJson.name}] Start task processing`);
+
 const runTasks = async ()=>{
     const tasks = depsJson.tasks ?? [];
     const taskCount = tasks.length ?? 0;
@@ -67,4 +70,6 @@ runTasks().then(()=>{}).catch((reason:any)=>{
     throw reason;
 }).finally(()=>{
     process.chdir(originCwd);
+    console.log(`[${depsJson.name}] Tasks completed`);
+    console.log("######################################################################")
 });

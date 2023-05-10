@@ -12,7 +12,6 @@ export interface CliOptions {
 export const setup = ()=> {
     console.log("######################################################################")
     console.log("Useful Tasks : Parsing cli-arguments");
-    console.log("######################################################################")
 
     console.log('cwd', process.cwd());
     console.log('argv', process.argv);
@@ -30,6 +29,7 @@ export const setup = ()=> {
     if(typedOptions.cwd){
         process.chdir(path.resolve(typedOptions.cwd));
     }
+    console.log("######################################################################")
 
     return typedOptions;
 }
