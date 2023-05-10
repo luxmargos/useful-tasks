@@ -2,7 +2,7 @@ import path from 'path';
 import { CliOptions, setup } from './build_cli_parser';
 import { loadJsonConfig } from './utils';
 import debug from 'debug';
-import { DepsJson, TAG, TaskGitCheckout, TaskSymlink, TaskTerminalCommand } from './task_data';
+import { DepsJson, TAG, Task, TaskGitCheckout, TaskSymlink, TaskTerminalCommand } from './task_data';
 import { handleTerminalCommand, handleGitRepoSetup, handleSymlink } from './handlers';
 
 const opt:CliOptions = setup();
@@ -32,16 +32,27 @@ console.log("###################################################################
 console.log(`[${depsJson.name}] Start task processing`);
 
 const runTasks = async ()=>{
-    const tasks = depsJson.tasks ?? [];
+    let tasks:Array<Task> = depsJson.tasks ?? [];
+    
+    if(opt.tasks){
+        vlog(`Filtering tasks by specified IDs : ${opt.tasks}`)
+        tasks = tasks.filter((value:Task, index:number, array:Task[])=>{
+            if(value.id !== undefined && value.id !== null && opt.tasks?.includes(value.id) === true){
+                return value;
+            }
+        });
+    }
+    
     const taskCount = tasks.length ?? 0;
     for(let i=0;i<taskCount; i++){
         const task = tasks[i];
-
+        
+        const taskRepresentStr = task.id !== undefined ? `${i}/${task.id}/${task.type}` : `${i}/${task.type}`;
         if(task.enabled === false){
-            vlog(`Pass the task without execution => ${i}/${task.type}`);
+            vlog(`Pass the task without execution => ${taskRepresentStr}`);
             continue;
         }else{
-            vlog(`Task : ${i}/${task.type}`)
+            vlog(`Task : ${taskRepresentStr}`)
         }
 
         if(task.comment){

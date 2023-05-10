@@ -1,5 +1,6 @@
 export interface Task {
     type:'git-repo-prepare'|'symlink'|'cmd',
+    id?:string,
     cwd?:string,
     enabled?:boolean,
     comment?:string
