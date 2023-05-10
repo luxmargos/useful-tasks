@@ -1,0 +1,76 @@
+{
+    "name":"Sample",
+    "verbose":true,
+    "verboseGit":true,
+    "tasks":[
+        {
+            "type":"set-value",
+            "key":"file_val_json",
+            "value":"value_from_file.json",
+            "valueType":"file",
+            "fileFormat":"json"
+        },
+
+        {
+            "type":"set-value",
+            "key":"file_val_text",
+            "value":"value_from_file.txt",
+            "valueType":"file",
+            "fileFormat":"string"
+        },
+
+        {
+            "type":"set-value",
+            "id":"my_task_1",
+            "enabled":true,
+            "key":"key_of_value",
+            "value":{
+                "a":"value-a",
+                "b":"value-b"
+            },
+            "valueType":"value",
+            "fileFormat":"string"
+        },
+
+        {
+            "type":"set-value",
+            "id":"my_task_2",
+            "enabled":true,
+            "key":"v2",
+            "value":[1,2,3],
+            "valueType":"value",
+            "fileFormat":"string"
+        },
+
+        {
+            "type":"echo",
+            "text":"I found a value ${key_of_value.a}!"
+         },
+
+         {
+            "type":"echo",
+            "text":"${key_of_value.a},${key_of_value.b},${key_of_value.a}"
+         },
+
+         {
+            "type":"echo",
+            "text":"${v2}"
+         },
+
+         {
+            "type":"echo",
+            "text":"Getting value from a json file=${file_val_json.a}"
+         },
+
+         {
+            "type":"echo",
+            "text":"Getting value from a text file=${file_val_text}"
+         },
+
+         {
+            "id":"excluded_task",
+            "type":"echo",
+            "text":"I'm excluded"
+         }
+    ]
+}

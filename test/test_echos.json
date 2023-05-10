@@ -1,0 +1,22 @@
+{
+    "name":"Sample",
+    "verbose":true,
+    "verboseGit":true,
+    "tasks":[
+        {
+            "id":"task-1",
+            "type":"echo",
+            "text":"task-1!"
+        },
+        {
+            "id":"task-2",
+            "type":"echo",
+            "text":"task-2!"
+        },
+        {
+            "id":"task-3",
+            "type":"echo",
+            "text":"task-3!"
+        }
+    ]
+}

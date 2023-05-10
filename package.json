@@ -1,6 +1,6 @@
 {
     "name": "useful-tasks",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "A dependency resolver for git and some of simple tasks",
     "author": {
         "name": "Jinho Yun",
@@ -31,7 +31,11 @@
         "build": "npm run build:bin && npm run build:common",
         "build:common": "esbuild index.ts --platform=node --sourcemap --bundle --outdir=dist --minify",
         "build:bin": "esbuild cli.ts --platform=node --sourcemap --bundle --outdir=bin --minify",
-        "build:types": "tsc --emitDeclarationOnly --declaration --project tsconfig.json"
+        "build:types": "tsc --emitDeclarationOnly --declaration --project tsconfig.json",
+        "test:values": "ts-node index.ts --cwd=./test --config=test_values.json",
+        "test:exclude": "ts-node index.ts --cwd=./test --config=test_echos.json --exclude=task-1,task-3",
+        "test:include": "ts-node index.ts --cwd=./test --config=test_echos.json --include=task-2",
+        "test:exclude_include": "ts-node index.ts --cwd=./test --config=test_echos.json --exclude=task-2 --include=task-2"
     },
     "devDependencies": {
         "@types/commander": "^2.12.2",

@@ -7,7 +7,8 @@ export const DEFAULT_CONFIG = "useful_tasks.json";
 export interface CliOptions {
     cwd?:string;
     config:string;
-    tasks?:string[];
+    include?:string[];
+    exclude?:string[];
 }
 
 export const setup = ()=> {
@@ -20,12 +21,14 @@ export const setup = ()=> {
     program.name('useful-tasks').version(packageJson.version)
     .option('--cwd <string>','Change working directory')
     .option('--config <string>','A path of json configuraion', DEFAULT_CONFIG)
-    .option('--tasks <items>','Specified task IDs to process. Comma separated e.g. my_task_01, my_task_02');
+    .option('--include <items>','Include specified task IDs to process. Comma separated e.g. my_task_01, my_task_02')
+    .option('--exclude <items>','Exclude specified task IDs from process. Comma separated e.g. my_task_01, my_task_02');
     
     program.parse();
 
     const opts = program.opts();
-    opts.tasks = fixStringArrayArgument(opts.tasks);
+    opts.include = fixStringArrayArgument(opts.include);
+    opts.exclude = fixStringArrayArgument(opts.exclude);
 
     const typedOptions = opts as CliOptions;
     console.log(`Using options : ${JSON.stringify(typedOptions, undefined, 2)}`);
