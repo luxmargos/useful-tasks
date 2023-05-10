@@ -1,6 +1,6 @@
 {
     "name": "useful-tasks",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "description": "A dependency resolver for git and some of simple tasks",
     "author": {
         "name": "Jinho Yun",
@@ -35,7 +35,9 @@
         "test:values": "ts-node index.ts --cwd=./test --config=test_values.json",
         "test:exclude": "ts-node index.ts --cwd=./test --config=test_echos.json --exclude=task-1,task-3",
         "test:include": "ts-node index.ts --cwd=./test --config=test_echos.json --include=task-2",
-        "test:exclude_include": "ts-node index.ts --cwd=./test --config=test_echos.json --exclude=task-2 --include=task-2"
+        "test:exclude_include": "ts-node index.ts --cwd=./test --config=test_echos.json --exclude=task-2 --include=task-2",
+        "test:custom_regex":"ts-node index.ts --cwd=./test --config=test_custom_value_replace_regex.json"
+        
     },
     "devDependencies": {
         "@types/commander": "^2.12.2",

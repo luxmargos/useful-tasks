@@ -2,23 +2,42 @@ import path from 'path';
 import { CliOptions, setup } from './build_cli_parser';
 import { loadJsonConfig } from './utils';
 import debug from 'debug';
-import { DepsJson, TAG, Task, TaskContext, TaskEcho, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, REGEX_REPLACE_VALUE } from './task_data';
+import { Config, TAG, Task, TaskContext, TaskEcho, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, DEFAULT_VALUE_REPLACE_REGEX } from './task_data';
 import { handleTerminalCommand, handleGitRepoSetup, handleSymlink, handleGetValue, handleEcho, applyValues } from './handlers';
 
 const opt:CliOptions = setup();
 
-let depsJson:DepsJson = {};
+let tasksConfig:Config = {};
 
 let configFilePath = path.resolve(opt.config);
-depsJson = loadJsonConfig(configFilePath);
+tasksConfig = loadJsonConfig(configFilePath);
 
 let debugPat:string = '';
-if(depsJson.verbose){
-    debugPat = `${TAG}, ${TAG}:*`;
+
+let valueReplaceRegex = DEFAULT_VALUE_REPLACE_REGEX;
+if(tasksConfig.env && typeof(tasksConfig.env) === 'object'){
+    const env = tasksConfig.env;
+    if(env.verbose){
+        debugPat = `${TAG}, ${TAG}:*`;
+    }
+    
+    if(env.verboseGit){
+        debugPat = `${debugPat},simple-git,simple-git:*`;
+    }
+
+    if(env.valueReplaceRegex){
+        valueReplaceRegex = env.valueReplaceRegex;
+    }
 }
 
-if(depsJson.verboseGit){
-    debugPat = `${debugPat},simple-git,simple-git:*`;
+if(typeof(valueReplaceRegex) !== 'string'){
+    throw new Error(`valueReplaceRegex '${valueReplaceRegex}'  must be a string`);
+}
+if(valueReplaceRegex.length < 1){
+    throw new Error(`valueReplaceRegex '${valueReplaceRegex}' cannot be empty`);
+}
+if(valueReplaceRegex.indexOf('(') < 0 || valueReplaceRegex.indexOf(')') < 0){
+    throw new Error(`valueReplaceRegex '${valueReplaceRegex}' must contain regex group express '(' and ')'`);
 }
 
 if(debugPat){
@@ -29,10 +48,10 @@ const vlog = debug(TAG);
 const originCwd = path.resolve(process.cwd());
 
 console.log("######################################################################")
-console.log(`[${depsJson.name}] Start task processing`);
+console.log(`[${tasksConfig.name}] Start task processing`);
 
 const runTasks = async ()=>{
-    let tasks:Array<Task> = depsJson.tasks ?? [];
+    let tasks:Array<Task> = tasksConfig.tasks ?? [];
 
     // Validate task IDs
     for(let i=0;i<tasks.length;i++){
@@ -74,6 +93,7 @@ const runTasks = async ()=>{
     }
     
     const context:TaskContext = {
+        valueReplaceReg:new RegExp(valueReplaceRegex),
         values:{}
     };
 
@@ -121,6 +141,6 @@ runTasks().then(()=>{}).catch((reason:any)=>{
     throw reason;
 }).finally(()=>{
     process.chdir(originCwd);
-    console.log(`[${depsJson.name}] Tasks completed`);
+    console.log(`[${tasksConfig.name}] Tasks completed`);
     console.log("######################################################################")
 });

@@ -1,4 +1,7 @@
-export type TaskContext = {values:any};
+export interface TaskContext {
+    valueReplaceReg:RegExp;
+    values:any;
+}
 
 export interface Task {
     type:'git-repo-prepare'|'symlink'|'cmd'|'set-value';
@@ -42,14 +45,18 @@ export interface TaskEcho extends Task{
     text:string;
 }
 
-export interface DepsJson {
+export interface Config {
     name?:string;
-    verbose?:boolean;
-    verboseGit?:boolean;
+    
+    env?:{
+        verbose?:boolean;
+        verboseGit?:boolean;
+        valueReplaceRegex?:string;
+    };
     tasks?:Array<Task>;
 }
 
 export const TAG = "useful-tasks"
 
 /** e.g. ${value.key} */
-export const REGEX_REPLACE_VALUE = new RegExp("\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}");
+export const DEFAULT_VALUE_REPLACE_REGEX = "\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}";

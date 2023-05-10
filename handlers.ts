@@ -3,12 +3,9 @@ import { execSync } from 'child_process';
 import path from 'path';
 import {CheckRepoActions, ResetMode, simpleGit} from 'simple-git';
 
-import { CliOptions, setup } from './build_cli_parser';
-import { loadJsonConfig } from './utils';
-
-import { fstat, removeSync } from 'fs-extra';
+import { removeSync } from 'fs-extra';
 import debug from 'debug';
-import { REGEX_REPLACE_VALUE, TAG, Task, TaskContext, TaskEcho, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand } from './task_data';
+import { TAG, Task, TaskContext, TaskEcho, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand } from './task_data';
 
 const vlog = debug(TAG);
 
@@ -144,7 +141,7 @@ export const applyValues = async (context:TaskContext, task:Task)=>{
             if(anyTypeTask[key] !== undefined && typeof(anyTypeTask[key]) ==='string'){
                 let valueOfKey:string = anyTypeTask[key];
                 while(true){
-                    const match = REGEX_REPLACE_VALUE.exec(valueOfKey);
+                    const match = context.valueReplaceReg.exec(valueOfKey);
                     if(match === null || match === undefined){
                         break;
                     }

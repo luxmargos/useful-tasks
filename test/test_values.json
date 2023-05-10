@@ -1,7 +1,9 @@
 {
     "name":"Sample",
-    "verbose":true,
-    "verboseGit":true,
+    "env":{
+        "verbose":true,
+        "verboseGit":true
+    },
     "tasks":[
         {
             "type":"set-value",

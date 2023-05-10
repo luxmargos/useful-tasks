@@ -2,27 +2,81 @@
 
 ## How to use
 
-## Configuration
+Useful-tasks can be used thorough command line interface
 
-Create json file
+### Default usage
+ $ useful-tasks --config=my_tasks.json
+
+### Process with including specific tasks
+ $ useful-tasks --config=my_tasks.json --include=my_task_1,my_task_2
+
+### Process without some of tasks
+ $ useful-tasks --config=my_tasks.json --exclude=my_task_1,my_task_2
+
+## Configuration
+The tasks will be processed in the order they are specified.
+
+### A basic structure
 ```json
 {
     "name":"Sample",
-    "verbose":true,
-    "verboseGit":true,
+    "tasks":[
+        ...
+    ]
+}
+```
+
+### Environment configuration
+```json
+{
+    "name":"Sample",
+    //Optional.
+    "env":{
+        //Optional. To see what happens throughout the entire process.
+        "verbose":false,
+        //Optional. To see what happens with 'git-repo-prepare' task.
+        "verboseGit":false,
+        //Optional. The regular expression used for value replacement. A default regex is targeting a format such as '${VALUE_REFERENCE}'. DEFAULT="\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}"
+        "valueReplaceRegex":"..."
+    },
+    "tasks":[
+        ...
+    ]
+}
+```
+
+### Common Task structure
+All tasks have the following common properties
+
+```json
+{
+    "name":"Sample",
     "tasks":[
         {
-            //This task sets up a Git repository. The main purpose is to prepare the Git repository to be usable, utilizing various Git commands such as clone, checkout, reset, fetch, and clean.
-            "type":"git-repo-prepare",
-
+            //Required
+            "type":"TASK TYPE",
+            
             //Optional. The identifier of task.
-            "id":"my_task_1",
+            "id":"UNIQUE TASK ID",
 
-            //Optional. false - Pass the current task without process. DEFAULT=true
+            //Optional. If the value is false, the task will be passed without process. DEFAULT=true
             "enabled":true,
 
-            //Optional. Current working directory. DEFAULT="."
+            //Optional. Current working directory. Each task can be proccessed in a different directory. DEFAULT="."
             "cwd":"...",
+        }
+    ]
+}
+```
+
+### Tasks
+```json
+{
+    "name":"Sample",
+    "tasks":[
+         {
+            //This task sets up a Git repository. The main purpose is to prepare the Git repository to be usable, utilizing various Git commands such as clone, checkout, reset, fetch, and clean.
+            "type":"git-repo-prepare",
 
             //A path of git(local) repository
             "localPath":"...",
@@ -45,15 +99,6 @@ Create json file
         {
             "type":"symlink",
             
-            //Optional. The identifier of task
-            "id":"my_task_2",
-
-            //Optional. false - Pass the current task without process. DEFAULT=true
-            "enabled":true,
-
-            //Optional. Current working directory. DEFAULT="."
-            "cwd":"...",
-
             //"TARGET PATH of SYMLINK"
             "target":"./symlink_target",
             
@@ -67,32 +112,16 @@ Create json file
             "linkType":"dir"
         },
         {
+            //Run a terminal command
             "type":"cmd",
-
-            //Optional. The identifier of task
-            "id":"my_task_3",
-
-            //Optional. false - Pass the current task without process. DEFAULT=true
-            "enabled":true,
-
-            //Optional. Current working directory. DEFAULT="."
-            "cwd":"...",
 
             //Command line to execute
             "cmd":"..."
         },
 
         {
+            //The value can be set and subsequently used by all following tasks. 
             "type":"set-value",
-
-            //Optional. The identifier of task
-            "id":"my_task_4",
-
-            //Optional. false - Pass the current task without process. DEFAULT=true
-            "enabled":true,
-
-            //Optional. Current working directory. DEFAULT="."
-            "cwd":"...",
 
             //This represents the key for the value. All subsequent tasks will access the value using this key.
             "key":"key_of_value",
@@ -106,24 +135,23 @@ Create json file
             //Optional. It can be used as either 'value' or 'file.' If the 'valueType' is 'file,' the 'value' must be a file path. DEFAULT="value"
             "valueType":"value",
 
-            //Optional. This option applies when the 'valueIsFile' parameter is set to 'file', and can be set to either 'json' or 'string'. When set to 'json', the value in the file will be parsed as JSON. DEFAULT="string"
+            //Optional. This option applies when the 'valueIsFile' parameter is set to 'file', and can be set to either 'json' or 'string'. 
+            //When set to 'json', the value in the file will be parsed as JSON. DEFAULT="string"
             "fileFormat":"string"
         },
 
-         {
+        {
+            //To output a text
             "type":"echo",
+            "text":"Hello world!"
+        },
 
-            //Optional. The identifier of task
-            "id":"my_task_5",
-
-            //Optional. false - Pass the current task without process. DEFAULT=true
-            "enabled":true,
-
-            //Optional. Current working directory. DEFAULT="."
-            "cwd":"...",
-
+        {
+            //To output a text with the value of 'set-value' that was previously set.
+            "type":"echo",
             "text":"I found a value ${key_of_value.a}!"
-         }
+        }
     ]
 }
+   
 ```
