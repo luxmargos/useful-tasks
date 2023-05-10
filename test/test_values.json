@@ -73,6 +73,16 @@
             "id":"excluded_task",
             "type":"echo",
             "text":"I'm excluded"
+         },
+
+         {
+            "type":"echo",
+            "text":"origin cwd : ${__env.cwd_startup}"
+         },
+
+         {
+            "type":"echo",
+            "text":"base cwd : ${__env.cwd_base}"
          }
     ]
 }

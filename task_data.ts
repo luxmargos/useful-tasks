@@ -4,7 +4,7 @@ export interface TaskContext {
 }
 
 export interface Task {
-    type:'git-repo-prepare'|'symlink'|'cmd'|'set-value';
+    type:'git-repo-prepare'|'symlink'|'cmd'|'set-value'|'echo';
     id?:string;
     cwd?:string;
     enabled?:boolean;

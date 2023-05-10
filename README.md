@@ -4,14 +4,21 @@
 
 Useful-tasks can be used thorough command line interface
 
-### Default usage
+* Default usage
  $ useful-tasks --config=my_tasks.json
 
-### Process with including specific tasks
+* Process with including specific tasks
  $ useful-tasks --config=my_tasks.json --include=my_task_1,my_task_2
 
-### Process without some of tasks
+* Process without some of tasks
  $ useful-tasks --config=my_tasks.json --exclude=my_task_1,my_task_2
+
+## Supported Tasks
+* cmd
+* echo
+* set-value
+* symlink
+* git-repo-prepare
 
 ## Configuration
 The tasks will be processed in the order they are specified.
@@ -21,7 +28,10 @@ The tasks will be processed in the order they are specified.
 {
     "name":"Sample",
     "tasks":[
-        ...
+        {
+            "type":"echo",
+            "text":"Hello world!"
+        }
     ]
 }
 ```
@@ -153,5 +163,26 @@ All tasks have the following common properties
         }
     ]
 }
-   
+```
+
+## Tips
+
+### Referencing directories
+* Aceess to a directory at startup
+
+```json
+{
+    "type":"some_task",
+    "some_property":"${__env.cwd_startup}"
+}
+```
+
+* Access to a base directory
+The base directory is main working directory that is applied using the '--cwd' argument on the command line.
+
+```json
+{
+    "type":"some_task",
+    "some_property":"${__env.cwd_base}"
+}
 ```

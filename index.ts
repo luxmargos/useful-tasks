@@ -5,6 +5,8 @@ import debug from 'debug';
 import { Config, TAG, Task, TaskContext, TaskEcho, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, DEFAULT_VALUE_REPLACE_REGEX } from './task_data';
 import { handleTerminalCommand, handleGitRepoSetup, handleSymlink, handleGetValue, handleEcho, applyValues } from './handlers';
 
+const originCwd = path.resolve(process.cwd());
+
 const opt:CliOptions = setup();
 
 let tasksConfig:Config = {};
@@ -45,7 +47,7 @@ if(debugPat){
 }
 
 const vlog = debug(TAG);
-const originCwd = path.resolve(process.cwd());
+const baseCwd = path.resolve(process.cwd());
 
 console.log("######################################################################")
 console.log(`[${tasksConfig.name}] Start task processing`);
@@ -94,7 +96,12 @@ const runTasks = async ()=>{
     
     const context:TaskContext = {
         valueReplaceReg:new RegExp(valueReplaceRegex),
-        values:{}
+        values:{
+            __env:{
+                cwd_startup:originCwd,
+                cwd_base:baseCwd
+            }
+        }
     };
 
     const taskCount = tasks.length ?? 0;
@@ -133,14 +140,14 @@ const runTasks = async ()=>{
             await handleEcho(context, task as TaskEcho);
         }
 
-        process.chdir(originCwd);
+        process.chdir(baseCwd);
     }
 };
 
 runTasks().then(()=>{}).catch((reason:any)=>{
     throw reason;
 }).finally(()=>{
-    process.chdir(originCwd);
+    process.chdir(baseCwd);
     console.log(`[${tasksConfig.name}] Tasks completed`);
     console.log("######################################################################")
 });
