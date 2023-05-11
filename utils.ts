@@ -22,3 +22,20 @@ export const loadJsonConfig = (filePath:string)=>{
     
     return configJson;
 };
+
+export const convertHyphenTextToCamelText=(text:string)=>{
+    let result = '';
+    let textArr = text.split("-");
+    for(let i=0;i<textArr.length;i++){
+        let word = textArr[i];
+        if(i===0){
+            result = word;
+        }else{
+            if(word.length>0){
+                word = `${word[0].toUpperCase()}${word.substring(1)}`;
+            }
+            result = `${result}${word}`;
+        }
+    }
+    return result;
+}

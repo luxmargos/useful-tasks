@@ -1,6 +1,6 @@
 {
     "name": "useful-tasks",
-    "version": "0.1.9",
+    "version": "0.1.10",
     "description": "A dependency resolver for git and some of simple tasks",
     "author": {
         "name": "Jinho Yun",

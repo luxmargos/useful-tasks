@@ -96,6 +96,7 @@ if(opt.extraArgs){
     }    
 }
 
+
 console.log("######################################################################")
 console.log(`[${tasksConfig.name}] Start task processing`);
 
