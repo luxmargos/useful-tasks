@@ -23,7 +23,11 @@ export const loadJsonConfig = (filePath:string)=>{
     return configJson;
 };
 
-export const convertHyphenTextToCamelText=(text:string)=>{
+export const convertOrNotHyphenTextToCamelText=(text:string, flag:boolean)=>{
+    if(!flag){
+        return text;
+    }
+
     let result = '';
     let textArr = text.split("-");
     for(let i=0;i<textArr.length;i++){

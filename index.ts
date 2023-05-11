@@ -1,6 +1,6 @@
 import path from 'path';
 import { CliOptions, setup } from './build_cli_parser';
-import { loadJsonConfig } from './utils';
+import { convertOrNotHyphenTextToCamelText, loadJsonConfig } from './utils';
 import debug from 'debug';
 import { Config, TAG, Task, TaskContext, TaskEcho, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, DEFAULT_VALUE_REPLACE_REGEX, VALUE_FROM_ARGUMENT_PREFIX } from './task_data';
 import { handleTerminalCommand, handleGitRepoSetup, handleSymlink, handleGetValue, handleEcho, applyValues } from './handlers';
@@ -83,12 +83,12 @@ if(opt.extraArgs){
             if(prefixIndex >= 0){
                 const equalMarkIndex = extraArg.indexOf("=");
                 if(equalMarkIndex >= 0){
-                    const valName = extraArg.substring(VALUE_FROM_ARGUMENT_PREFIX.length, equalMarkIndex);
+                    const valName = convertOrNotHyphenTextToCamelText(extraArg.substring(VALUE_FROM_ARGUMENT_PREFIX.length, equalMarkIndex), opt.camelKeys);
                     const value = extraArg.substring(equalMarkIndex+1);
                     context.values[valName] = value;
                     vlog(`Set value from argument : ${valName}=${value}`);
                 }else{
-                    currentValName = extraArg.substring(VALUE_FROM_ARGUMENT_PREFIX.length);
+                    currentValName = convertOrNotHyphenTextToCamelText(extraArg.substring(VALUE_FROM_ARGUMENT_PREFIX.length), opt.camelKeys);
                     useNextElementAsValue = true;
                 }
             }    

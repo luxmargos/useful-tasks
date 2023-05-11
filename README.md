@@ -13,8 +13,11 @@ Useful-tasks can be used through a command line interface
 * Process without some of tasks
  $ useful-tasks --config=my_tasks.json --exclude=my_task_1,my_task_2
 
-* The custom values can be set using command-line parameters. Just use the prefix '--val-' followed by the key-value pair, e.g., '--val-my-key=VALUE'. You can then use this custom value in your configuration using the syntax '${my-key}'. This will have the same effect as the 'set-value' task.
+* The custom values can be set using command-line parameters. Just use the prefix '--val-' followed by the key-value pair, e.g., '--val-my-key=VALUE'. You can then use this custom value in your configuration using the syntax '${myKey}'. This will have the same effect as the 'set-value' task.
  $ useful-tasks --config=my_tasks.json --val-my-key=VALUE
+
+* You can turn off the camel case conversion by setting the '--camel-keys' parameter to false. Then you can use it with '${my-key}'.
+ $ useful-tasks --config=my_tasks.json --camel-keys=false --val-my-key=VALUE
 
 ## Supported Tasks
 * cmd
