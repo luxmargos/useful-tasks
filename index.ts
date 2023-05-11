@@ -2,7 +2,7 @@ import path from 'path';
 import { CliOptions, setup } from './build_cli_parser';
 import { loadJsonConfig } from './utils';
 import debug from 'debug';
-import { Config, TAG, Task, TaskContext, TaskEcho, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, DEFAULT_VALUE_REPLACE_REGEX } from './task_data';
+import { Config, TAG, Task, TaskContext, TaskEcho, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, DEFAULT_VALUE_REPLACE_REGEX, VALUE_FROM_ARGUMENT_PREFIX } from './task_data';
 import { handleTerminalCommand, handleGitRepoSetup, handleSymlink, handleGetValue, handleEcho, applyValues } from './handlers';
 
 const originCwd = path.resolve(process.cwd());
@@ -49,6 +49,53 @@ if(debugPat){
 const vlog = debug(TAG);
 const baseCwd = path.resolve(process.cwd());
 
+const context:TaskContext = {
+    valueReplaceReg:new RegExp(valueReplaceRegex),
+    values:{
+        __env:{
+            cwd_startup:originCwd,
+            cwd_base:baseCwd
+        }
+    }
+};
+
+
+if(opt.extraArgs){
+    vlog("Settingup values from argument");
+    let currentValName:string|undefined;
+    let useNextElementAsValue:boolean = false;
+    
+    for(let extraArg of opt.extraArgs){
+        const arg = extraArg.trim();
+        if(arg === '--'){
+            vlog("Stop parsing by '--'")
+            break;
+        }
+
+        if(useNextElementAsValue && currentValName){
+            const value = extraArg.startsWith("-") ? "":extraArg;
+            context.values[currentValName] = value;
+            vlog(`Set value from argument : ${currentValName}=${value}`);
+            currentValName = undefined;
+            useNextElementAsValue = false;
+        }else{
+            const prefixIndex = extraArg.indexOf(VALUE_FROM_ARGUMENT_PREFIX);
+            if(prefixIndex >= 0){
+                const equalMarkIndex = extraArg.indexOf("=");
+                if(equalMarkIndex >= 0){
+                    const valName = extraArg.substring(VALUE_FROM_ARGUMENT_PREFIX.length, equalMarkIndex);
+                    const value = extraArg.substring(equalMarkIndex+1);
+                    context.values[valName] = value;
+                    vlog(`Set value from argument : ${valName}=${value}`);
+                }else{
+                    currentValName = extraArg.substring(VALUE_FROM_ARGUMENT_PREFIX.length);
+                    useNextElementAsValue = true;
+                }
+            }    
+        }
+    }    
+}
+
 console.log("######################################################################")
 console.log(`[${tasksConfig.name}] Start task processing`);
 
@@ -93,16 +140,6 @@ const runTasks = async ()=>{
             }
         });
     }
-    
-    const context:TaskContext = {
-        valueReplaceReg:new RegExp(valueReplaceRegex),
-        values:{
-            __env:{
-                cwd_startup:originCwd,
-                cwd_base:baseCwd
-            }
-        }
-    };
 
     const taskCount = tasks.length ?? 0;
     for(let i=0;i<taskCount; i++){
@@ -112,7 +149,7 @@ const runTasks = async ()=>{
         const taskRepresentStr = task.id !== undefined ? `${i}/${task.id}/${task.type}` : `${i}/${task.type}`;
 
         if(task.enabled === false){
-            vlog(`Pass the task without execution => ${taskRepresentStr}`);
+            vlog(`Skip the task without execution => ${taskRepresentStr}`);
             continue;
         }else{
             vlog(`Task : ${taskRepresentStr}`)

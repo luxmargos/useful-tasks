@@ -2,7 +2,7 @@
 
 ## How to use
 
-Useful-tasks can be used thorough command line interface
+Useful-tasks can be used through a command line interface
 
 * Default usage
  $ useful-tasks --config=my_tasks.json
@@ -12,6 +12,9 @@ Useful-tasks can be used thorough command line interface
 
 * Process without some of tasks
  $ useful-tasks --config=my_tasks.json --exclude=my_task_1,my_task_2
+
+* The custom values can be set using command-line parameters. Just use the prefix '--val-' followed by the key-value pair, e.g., '--val-KEY=VALUE'. You can then use this custom value in your configuration using the syntax '${KEY}'. This will have the same effect as the 'set-value' task.
+ $ useful-tasks --config=my_tasks.json --val-KEY=VALUE
 
 ## Supported Tasks
 * cmd
@@ -69,7 +72,7 @@ All tasks have the following common properties
             //Optional. The identifier of task.
             "id":"UNIQUE TASK ID",
 
-            //Optional. If the value is false, the task will be passed without process. DEFAULT=true
+            //Optional. If the value is false, the task will be skipped without being processed. DEFAULT=true
             "enabled":true,
 
             //Optional. Current working directory. Each task can be proccessed in a different directory. DEFAULT="."

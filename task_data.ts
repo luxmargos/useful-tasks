@@ -60,3 +60,5 @@ export const TAG = "useful-tasks"
 
 /** e.g. ${value.key} */
 export const DEFAULT_VALUE_REPLACE_REGEX = "\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}";
+
+export const VALUE_FROM_ARGUMENT_PREFIX = "--val-";
