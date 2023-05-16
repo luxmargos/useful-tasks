@@ -33,7 +33,7 @@
         },
         {
             "id":"task-5",
-            "tags":["tag-a"],
+            "tags":["tag-a","tag-b"],
             "type":"output",
             "target":"fa",
             "path":"output/fa-test.txt",

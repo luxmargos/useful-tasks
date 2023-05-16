@@ -100,6 +100,14 @@ if(opt.extraArgs){
 console.log("######################################################################")
 console.log(`[${tasksConfig.name}] Start task processing`);
 
+const getTaskRepresentStr = (task:Task, i?:number)=>{ 
+    if(i !== undefined && i !== null){
+        return task.id !== undefined ? `[${i}]${task.id}/${task.type}` : `[${i}]${task.type}`;
+    }else{
+        return task.id !== undefined ? `${task.id}/${task.type}` : `${task.type}`;
+    }
+};
+
 const runTasks = async ()=>{
     let tasks:Array<Task> = tasksConfig.tasks ?? [];
 
@@ -150,13 +158,14 @@ const runTasks = async ()=>{
         });
     }
 
+    vlog(`Tasks : ${tasks.map((v,i)=>{ return getTaskRepresentStr(v,i);})}`);
+
     const taskCount = tasks.length ?? 0;
     for(let i=0;i<taskCount; i++){
         const task = tasks[i];
         applyValues(context, task);
 
-        const taskRepresentStr = task.id !== undefined ? `${i}/${task.id}/${task.type}` : `${i}/${task.type}`;
-
+        const taskRepresentStr = getTaskRepresentStr(task,i);
         if(task.enabled === false){
             vlog(`Skip the task without execution => ${taskRepresentStr}`);
             continue;

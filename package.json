@@ -1,6 +1,6 @@
 {
     "name": "useful-tasks",
-    "version": "0.1.12",
+    "version": "0.1.13",
     "description": "A dependency resolver for git and some of simple tasks",
     "author": {
         "name": "Jinho Yun",
@@ -42,7 +42,7 @@
         "test:exclude_include": "ts-node index.ts --cwd=./test --config=test_outputs.json --exclude=task-2 --include=task-2",
         "test:exclude_tag": "ts-node index.ts --cwd=./test --config=test_outputs.json --exclude=tag-a",
         "test:include_tag": "ts-node index.ts --cwd=./test --config=test_outputs.json --include=tag-a",
-        "test:exclude_include_tag": "ts-node index.ts --cwd=./test --config=test_outputs.json --exclude=tag-a --include=task-1",
+        "test:exclude_include_tag": "ts-node index.ts --cwd=./test --config=test_outputs.json --exclude=tag-a --include=tag-b",
         "test:outputs": "ts-node index.ts --cwd=./test --config=test_outputs.json",
         "test:custom_regex": "ts-node index.ts --cwd=./test --config=test_custom_value_replace_regex.json"
     },
