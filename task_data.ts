@@ -4,8 +4,9 @@ export interface TaskContext {
 }
 
 export interface Task {
-    type:'git-repo-prepare'|'symlink'|'cmd'|'set-value'|'echo';
+    type:'git-repo-prepare'|'symlink'|'cmd'|'set-value'|'output'|'fs-copy'|'fs-del';
     id?:string;
+    tags?:string | string[],
     cwd?:string;
     enabled?:boolean;
     comment?:string;
@@ -41,8 +42,20 @@ export interface TaskSetValue extends Task{
     fileFormat:'json'|'string';
 }
 
-export interface TaskEcho extends Task{
+export type TaskOutputTargets = 'console'|'file-write'|'file-append'|'c'|'fw'|'fa';
+export interface TaskOutput extends Task{
     text:string;
+    target:TaskOutputTargets;
+    path?:string;
+}
+
+export interface TaskFsCopy extends Task{
+    src:string;
+    dest:string;
+}
+
+export interface TaskFsDelete extends Task{
+    path:string;
 }
 
 export interface Config {

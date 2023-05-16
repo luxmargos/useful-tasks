@@ -43,3 +43,31 @@ export const convertOrNotHyphenTextToCamelText=(text:string, flag:boolean)=>{
     }
     return result;
 }
+
+
+
+export const containsTag = (elements:string[], tags:string[] | string | undefined | null)=>{
+    if(tags === undefined || tags === null){
+        return false;
+    }
+    
+    let targetTags = typeof(tags) === 'string' ? [tags] : tags;
+    targetTags = targetTags.map((a)=>{ return a.trim(); });
+     
+    for(const el of elements){
+        if(el.length < 1){
+            continue;
+        }
+        for(const tag of targetTags){
+            if(tag.length < 1){
+                continue;
+            }
+
+            if(el === tag){
+                return true;    
+            }
+        }        
+    }
+
+    return false;
+};

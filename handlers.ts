@@ -2,10 +2,10 @@ import fs from 'fs';
 import { execSync } from 'child_process';
 import path from 'path';
 import {CheckRepoActions, ResetMode, simpleGit} from 'simple-git';
-
+import fsExtra, { copySync, mkdirpSync } from 'fs-extra'
 import { removeSync } from 'fs-extra';
 import debug from 'debug';
-import { TAG, Task, TaskContext, TaskEcho, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand } from './task_data';
+import { TAG, Task, TaskContext, TaskOutput, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, TaskOutputTargets, TaskFsCopy, TaskFsDelete } from './task_data';
 
 const vlog = debug(TAG);
 
@@ -131,8 +131,52 @@ export const handleGetValue = async (context:TaskContext, task:TaskSetValue)=>{
     context.values[task.key] = value;
 }
 
-export const handleEcho = async (context:TaskContext, task:TaskEcho)=>{
-    console.log(task.text);
+export const handleOutput = async (context:TaskContext, task:TaskOutput)=>{
+    const text = task.text ?? '';
+    const target:TaskOutputTargets = (task.target ?? 'c').trim() as TaskOutputTargets;
+    const targetPath = task.path;
+    
+    if(target === 'c' || target === 'console'){
+        console.log(text);
+    }else{
+        if(!targetPath){
+            throw new Error(`The parameter 'path' is required for a target '${target}'!`);
+        }
+
+        const resolvedPath = path.resolve(targetPath);
+        const dir = path.dirname(resolvedPath);
+        if(!fs.existsSync(dir)){
+            mkdirpSync(dir);
+        }
+
+        if(target == 'fa' || target == 'file-append'){
+            let err;
+            let fd;
+            try{
+                fd = fs.openSync(resolvedPath,'a');
+                fs.appendFileSync(fd, text, 'utf8');
+            }catch(e){
+                err = e;
+            }finally{
+                if(fd !== undefined){
+                    fs.closeSync(fd);
+                }
+            }
+
+            if(err){
+                throw err;
+            }
+        }else{
+            fs.writeFileSync(resolvedPath, text);
+        }
+    }
+}
+
+export const handleFsCopy = async (context:TaskContext, task:TaskFsCopy)=>{
+    copySync(task.src, task.dest);
+}
+export const handleFsDelete = async (context:TaskContext, task:TaskFsDelete)=>{
+    removeSync(task.path);
 }
 
 export const applyValues = async (context:TaskContext, task:Task)=>{

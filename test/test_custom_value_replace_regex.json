@@ -18,7 +18,7 @@
             "fileFormat":"string"
         },
         {
-            "type":"echo",
+            "type":"output",
             "text":"I found a value ##key_of_value.a## and ##key_of_value.b##"
         }
     ]

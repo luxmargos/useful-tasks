@@ -1,0 +1,35 @@
+{
+    "name":"Sample",
+    "env":{
+        "verbose":true,
+        "verboseGit":true
+    },
+    "tasks":[
+        {
+            "type":"output",
+            "target":"fw",
+            "path":"output/copy-test-src/test.txt",
+            "text":"copy-test"
+        },
+        {
+            "type":"output",
+            "target":"fw",
+            "path":"output/delete-test/test.txt",
+            "text":"delete-test"
+        },
+        {
+            "type":"fs-copy",
+            "src":"output/copy-test-src/test.txt",
+            "dest":"output/copy-test.dest.txt"
+        },
+        {
+            "type":"fs-copy",
+            "src":"output/copy-test-src",
+            "dest":"output/copy-test-dest"
+        },
+        {
+            "type":"fs-del",
+            "path":"output/delete-test"
+        }
+    ]
+}

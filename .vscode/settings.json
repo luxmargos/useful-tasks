@@ -6,5 +6,8 @@
             "args": ["-ExecutionPolicy", "Bypass"]
         }
     },
-    "terminal.integrated.defaultProfile.windows": "PowerShell"
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "files.associations": {
+        "*.json": "jsonc"
+    }
 }

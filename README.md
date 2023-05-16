@@ -21,10 +21,12 @@ Useful-tasks can be used through a command line interface
 
 ## Supported Tasks
 * cmd
-* echo
+* output
 * set-value
 * symlink
 * git-repo-prepare
+* fs-copy
+* fs-del
 
 ## Configuration
 The tasks will be processed in the order they are specified.
@@ -35,7 +37,7 @@ The tasks will be processed in the order they are specified.
     "name":"Sample",
     "tasks":[
         {
-            "type":"echo",
+            "type":"output",
             "text":"Hello world!"
         }
     ]
@@ -74,6 +76,9 @@ All tasks have the following common properties
             
             //Optional. The identifier of task.
             "id":"UNIQUE TASK ID",
+
+            //Optional.
+            "tags":[],
 
             //Optional. If the value is false, the task will be skipped without being processed. DEFAULT=true
             "enabled":true,
@@ -158,14 +163,31 @@ All tasks have the following common properties
 
         {
             //To output a text
-            "type":"echo",
-            "text":"Hello world!"
+            "type":"output",
+            "text":"Hello world!",
+            //Optional. 'console' or 'c', 'file-write' or 'fw', 'file-append' or 'fa'. Default="console"
+            "target":"file-write",
+            //Optional. But required on "target" is "file".
+            "path":"my-output.txt"
+        },
+        
+        {
+            //To output a text with the value of 'set-value' that was previously set.
+            "type":"output",
+            "text":"I found a value ${key_of_value.a}!"
         },
 
         {
-            //To output a text with the value of 'set-value' that was previously set.
-            "type":"echo",
-            "text":"I found a value ${key_of_value.a}!"
+            //To copy a file or directory
+            "type":"fs-copy",
+            "src":"copy-source.txt",
+            "dest":"copy-destination.txt",
+        },
+
+        {
+            //To delete a file or directory
+            "type":"fs-del",
+            "path":"delete-target.txt"
         }
     ]
 }

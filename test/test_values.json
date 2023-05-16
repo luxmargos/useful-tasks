@@ -46,43 +46,43 @@
         },
 
         {
-            "type":"echo",
+            "type":"output",
             "text":"I found a value ${key_of_value.a}!"
          },
 
          {
-            "type":"echo",
+            "type":"output",
             "text":"${key_of_value.a},${key_of_value.b},${key_of_value.a}"
          },
 
          {
-            "type":"echo",
+            "type":"output",
             "text":"${v2}"
          },
 
          {
-            "type":"echo",
+            "type":"output",
             "text":"Getting value from a json file=${file_val_json.a}"
          },
 
          {
-            "type":"echo",
+            "type":"output",
             "text":"Getting value from a text file=${file_val_text}"
          },
 
          {
             "id":"excluded_task",
-            "type":"echo",
+            "type":"output",
             "text":"I'm excluded"
          },
 
          {
-            "type":"echo",
+            "type":"output",
             "text":"origin cwd : ${__env.cwd_startup}"
          },
 
          {
-            "type":"echo",
+            "type":"output",
             "text":"base cwd : ${__env.cwd_base}"
          }
     ]

@@ -24,8 +24,8 @@ export const setup = ()=> {
     program.name('useful-tasks').version(packageJson.version)
     .option('--cwd <string>','Change working directory')
     .option('--config <string>','A path of json configuraion', DEFAULT_CONFIG)
-    .option('-i, --include <items>','Include specified task IDs to process. Comma separated e.g. my_task_01, my_task_02')
-    .option('-e, --exclude <items>','Exclude specified task IDs from process. Comma separated e.g. my_task_01, my_task_02')
+    .option('-i, --include <items>','This parameter allows you to include certain tasks from the processing based on their task ID or tags.  Comma separated e.g. my_task_01, my_task_02')
+    .option('-e, --exclude <items>','This parameter allows you to exclude certain tasks from the processing based on their task ID or tags. Comma separated e.g. my_task_01, my_task_02')
     .option('--camel-keys <boolean>','Specify whether to use camel case for the key of the value. If the value is true, the paramter "--val-my-key" will be converted to "myKey" otherwise it will be "my-key"', DEFAULT_USE_CAMEL)
     .allowUnknownOption(true);
     

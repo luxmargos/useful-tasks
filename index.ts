@@ -1,9 +1,9 @@
 import path from 'path';
 import { CliOptions, setup } from './build_cli_parser';
-import { convertOrNotHyphenTextToCamelText, loadJsonConfig } from './utils';
+import { containsTag, convertOrNotHyphenTextToCamelText, loadJsonConfig } from './utils';
 import debug from 'debug';
-import { Config, TAG, Task, TaskContext, TaskEcho, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, DEFAULT_VALUE_REPLACE_REGEX, VALUE_FROM_ARGUMENT_PREFIX } from './task_data';
-import { handleTerminalCommand, handleGitRepoSetup, handleSymlink, handleGetValue, handleEcho, applyValues } from './handlers';
+import { Config, TAG, Task, TaskContext, TaskOutput, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, DEFAULT_VALUE_REPLACE_REGEX, VALUE_FROM_ARGUMENT_PREFIX, TaskFsCopy, TaskFsDelete } from './task_data';
+import { handleTerminalCommand, handleGitRepoSetup, handleSymlink, handleGetValue, handleOutput, applyValues, handleFsCopy, handleFsDelete } from './handlers';
 
 const originCwd = path.resolve(process.cwd());
 
@@ -124,19 +124,27 @@ const runTasks = async ()=>{
         }
     }
 
+
     if(opt.exclude && opt.exclude.length > 0){
-        vlog(`Excluding tasks by specified IDs : ${opt.exclude}`);
+        const excludes = (opt.exclude ?? []).map((a)=>{ return a.trim(); });
+
+        vlog(`Excluding tasks by specified IDs or Tags : ${excludes}`);
             tasks = tasks.filter((value:Task, index:number, array:Task[])=>{
-            if(value.id === undefined || value.id === null || opt.exclude?.includes(value.id) === false){
+            if(value.id === undefined || value.id === null || (excludes.includes(value.id) === false && containsTag(excludes, value.tags) === false)){
                 return value;
             }
         });
  
     }    
     if(opt.include && opt.include.length > 0){
-        vlog(`Including tasks by specified IDs : ${opt.include}`);
+        const includes = (opt.include ?? []).map((a)=>{ return a.trim(); });
+        vlog(`Including tasks by specified IDs or Tags : ${includes}`);
         tasks = tasks.filter((value:Task, index:number, array:Task[])=>{
-            if(value.id !== undefined && value.id !== null && opt.include?.includes(value.id) === true){
+            if(value.id !== undefined && value.id !== null && includes?.includes(value.id) === true){
+                return value;
+            }
+
+            if(containsTag(includes, value.tags) == true){
                 return value;
             }
         });
@@ -174,8 +182,12 @@ const runTasks = async ()=>{
             await handleTerminalCommand(context, task as TaskTerminalCommand);
         }else if(task.type === 'set-value'){
             await handleGetValue(context, task as TaskSetValue);
-        }else if(task.type === 'echo'){
-            await handleEcho(context, task as TaskEcho);
+        }else if(task.type === 'output'){
+            await handleOutput(context, task as TaskOutput);
+        }else if(task.type === 'fs-copy'){
+            await handleFsCopy(context, task as TaskFsCopy);
+        }else if(task.type === 'fs-del'){
+            await handleFsDelete(context, task as TaskFsDelete);
         }
 
         process.chdir(baseCwd);
