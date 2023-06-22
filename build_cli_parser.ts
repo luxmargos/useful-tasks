@@ -26,7 +26,7 @@ export const setup = ()=> {
     .option('--config <string>','A path of json configuraion', DEFAULT_CONFIG)
     .option('-i, --include <items>','This parameter allows you to include certain tasks from the processing based on their task ID or tags.  Comma separated e.g. my_task_01, my_task_02')
     .option('-e, --exclude <items>','This parameter allows you to exclude certain tasks from the processing based on their task ID or tags. Comma separated e.g. my_task_01, my_task_02')
-    .option('--camel-keys <boolean>','Specify whether to use camel case for the key of the value. If the value is true, the paramter "--val-my-key" will be converted to "myKey" otherwise it will be "my-key"', DEFAULT_USE_CAMEL)
+    .option('--camel-keys <boolean>','Specify whether to use camel case for the key of the variable. If the value is true, the paramter "--var-my-key" will be converted to "myKey" otherwise it will be "my-key"', DEFAULT_USE_CAMEL)
     .allowUnknownOption(true);
     
     program.parse();

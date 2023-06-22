@@ -2,11 +2,10 @@ import path from 'path';
 import { CliOptions, setup } from './build_cli_parser';
 import { containsTag, convertOrNotHyphenTextToCamelText, loadJsonConfig } from './utils';
 import debug from 'debug';
-import { Config, TAG, Task, TaskContext, TaskOutput, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, DEFAULT_VALUE_REPLACE_REGEX, VALUE_FROM_ARGUMENT_PREFIX, TaskFsCopy, TaskFsDelete } from './task_data';
-import { handleTerminalCommand, handleGitRepoSetup, handleSymlink, handleGetValue, handleOutput, applyValues, handleFsCopy, handleFsDelete } from './handlers';
+import { Config, TAG, Task, TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, DEFAULT_REPLACE_REGEX, VAR_FROM_ARGUMENT_PREFIX, TaskFsCopy, TaskFsDelete, TaskEnvVar, ENV_VAR_FROM_ARGUMENT_PREFIX } from './task_data';
+import { handleTerminalCommand, handleGitRepoSetup, handleSymlink, handleSetVar, handleOutput, applyVariables, handleFsCopy, handleFsDelete, handleEnvVar, searchExtraKeyValue, setTaskVar, setEnvVar } from './handlers';
 
 const originCwd = path.resolve(process.cwd());
-
 const opt:CliOptions = setup();
 
 let tasksConfig:Config = {};
@@ -16,7 +15,7 @@ tasksConfig = loadJsonConfig(configFilePath);
 
 let debugPat:string = '';
 
-let valueReplaceRegex = DEFAULT_VALUE_REPLACE_REGEX;
+let replaceRegex = DEFAULT_REPLACE_REGEX;
 if(tasksConfig.env && typeof(tasksConfig.env) === 'object'){
     const env = tasksConfig.env;
     if(env.verbose){
@@ -27,19 +26,19 @@ if(tasksConfig.env && typeof(tasksConfig.env) === 'object'){
         debugPat = `${debugPat},simple-git,simple-git:*`;
     }
 
-    if(env.valueReplaceRegex){
-        valueReplaceRegex = env.valueReplaceRegex;
+    if(env.replaceRegex){
+        replaceRegex = env.replaceRegex;
     }
 }
 
-if(typeof(valueReplaceRegex) !== 'string'){
-    throw new Error(`valueReplaceRegex '${valueReplaceRegex}'  must be a string`);
+if(typeof(replaceRegex) !== 'string'){
+    throw new Error(`replaceRegex '${replaceRegex}'  must be a string`);
 }
-if(valueReplaceRegex.length < 1){
-    throw new Error(`valueReplaceRegex '${valueReplaceRegex}' cannot be empty`);
+if(replaceRegex.length < 1){
+    throw new Error(`replaceRegex '${replaceRegex}' cannot be empty`);
 }
-if(valueReplaceRegex.indexOf('(') < 0 || valueReplaceRegex.indexOf(')') < 0){
-    throw new Error(`valueReplaceRegex '${valueReplaceRegex}' must contain regex group express '(' and ')'`);
+if(replaceRegex.indexOf('(') < 0 || replaceRegex.indexOf(')') < 0){
+    throw new Error(`replaceRegex '${replaceRegex}' must contain regex group express '(' and ')'`);
 }
 
 if(debugPat){
@@ -50,8 +49,8 @@ const vlog = debug(TAG);
 const baseCwd = path.resolve(process.cwd());
 
 const context:TaskContext = {
-    valueReplaceReg:new RegExp(valueReplaceRegex),
-    values:{
+    replaceRegex:new RegExp(replaceRegex),
+    vars:{
         __env:{
             cwd_startup:originCwd,
             cwd_base:baseCwd
@@ -59,43 +58,17 @@ const context:TaskContext = {
     }
 };
 
-
 if(opt.extraArgs){
-    vlog("Settingup values from argument");
-    let currentValName:string|undefined;
-    let useNextElementAsValue:boolean = false;
-    
-    for(let extraArg of opt.extraArgs){
-        const arg = extraArg.trim();
-        if(arg === '--'){
-            vlog("Stop parsing by '--'")
-            break;
-        }
+    vlog("Setting up the variables from the additional arguments");
+    searchExtraKeyValue(opt.extraArgs, VAR_FROM_ARGUMENT_PREFIX, opt.camelKeys, (key:string, value:string)=>{
+        setTaskVar(context, key, value);
+    });
 
-        if(useNextElementAsValue && currentValName){
-            const value = extraArg.startsWith("-") ? "":extraArg;
-            context.values[currentValName] = value;
-            vlog(`Set value from argument : ${currentValName}=${value}`);
-            currentValName = undefined;
-            useNextElementAsValue = false;
-        }else{
-            const prefixIndex = extraArg.indexOf(VALUE_FROM_ARGUMENT_PREFIX);
-            if(prefixIndex >= 0){
-                const equalMarkIndex = extraArg.indexOf("=");
-                if(equalMarkIndex >= 0){
-                    const valName = convertOrNotHyphenTextToCamelText(extraArg.substring(VALUE_FROM_ARGUMENT_PREFIX.length, equalMarkIndex), opt.camelKeys);
-                    const value = extraArg.substring(equalMarkIndex+1);
-                    context.values[valName] = value;
-                    vlog(`Set value from argument : ${valName}=${value}`);
-                }else{
-                    currentValName = convertOrNotHyphenTextToCamelText(extraArg.substring(VALUE_FROM_ARGUMENT_PREFIX.length), opt.camelKeys);
-                    useNextElementAsValue = true;
-                }
-            }    
-        }
-    }    
+    vlog("Setting up the environment variables from the additional arguments");
+    searchExtraKeyValue(opt.extraArgs, ENV_VAR_FROM_ARGUMENT_PREFIX, opt.camelKeys, (key:string, value:string)=>{
+        setEnvVar(context, key, value);
+    });
 }
-
 
 console.log("######################################################################")
 console.log(`[${tasksConfig.name}] Start task processing`);
@@ -137,9 +110,9 @@ const runTasks = async ()=>{
         const excludes = (opt.exclude ?? []).map((a)=>{ return a.trim(); });
 
         vlog(`Excluding tasks by specified IDs or Tags : ${excludes}`);
-            tasks = tasks.filter((value:Task, index:number, array:Task[])=>{
-            if(value.id === undefined || value.id === null || (excludes.includes(value.id) === false && containsTag(excludes, value.tags) === false)){
-                return value;
+            tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
+            if(taskItem.id === undefined || taskItem.id === null || (excludes.includes(taskItem.id) === false && containsTag(excludes, taskItem.tags) === false)){
+                return taskItem;
             }
         });
  
@@ -147,13 +120,13 @@ const runTasks = async ()=>{
     if(opt.include && opt.include.length > 0){
         const includes = (opt.include ?? []).map((a)=>{ return a.trim(); });
         vlog(`Including tasks by specified IDs or Tags : ${includes}`);
-        tasks = tasks.filter((value:Task, index:number, array:Task[])=>{
-            if(value.id !== undefined && value.id !== null && includes?.includes(value.id) === true){
-                return value;
+        tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
+            if(taskItem.id !== undefined && taskItem.id !== null && includes?.includes(taskItem.id) === true){
+                return taskItem;
             }
 
-            if(containsTag(includes, value.tags) == true){
-                return value;
+            if(containsTag(includes, taskItem.tags) == true){
+                return taskItem;
             }
         });
     }
@@ -163,7 +136,7 @@ const runTasks = async ()=>{
     const taskCount = tasks.length ?? 0;
     for(let i=0;i<taskCount; i++){
         const task = tasks[i];
-        applyValues(context, task);
+        applyVariables(context, task);
 
         const taskRepresentStr = getTaskRepresentStr(task,i);
         if(task.enabled === false){
@@ -189,8 +162,10 @@ const runTasks = async ()=>{
             await handleSymlink(context, task as TaskSymlink);
         }else if(task.type === 'cmd'){
             await handleTerminalCommand(context, task as TaskTerminalCommand);
-        }else if(task.type === 'set-value'){
-            await handleGetValue(context, task as TaskSetValue);
+        }else if(task.type === 'set-var'){
+            await handleSetVar(context, task as TaskSetVar);
+        }else if(task.type === 'env-var'){
+            await handleEnvVar(context, task as TaskEnvVar);
         }else if(task.type === 'output'){
             await handleOutput(context, task as TaskOutput);
         }else if(task.type === 'fs-copy'){

@@ -5,7 +5,9 @@ import {CheckRepoActions, ResetMode, simpleGit} from 'simple-git';
 import fsExtra, { copySync, mkdirpSync } from 'fs-extra'
 import { removeSync } from 'fs-extra';
 import debug from 'debug';
-import { TAG, Task, TaskContext, TaskOutput, TaskSetValue, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, TaskOutputTargets, TaskFsCopy, TaskFsDelete } from './task_data';
+import { TAG, Task, TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, TaskOutputTargets, TaskFsCopy, TaskFsDelete, TaskEnvVar } from './task_data';
+import { convertOrNotHyphenTextToCamelText, loadJson } from './utils';
+import json5 from 'json5';
 
 const vlog = debug(TAG);
 
@@ -105,30 +107,69 @@ export const handleTerminalCommand = async (context:TaskContext, task:TaskTermin
     })
 }
 
-export const handleGetValue = async (context:TaskContext, task:TaskSetValue)=>{
+export const setTaskVar = (context:TaskContext, key:string, value:any)=>{
+    vlog(`Sets the variable ${key}=${value}`);
+    context.vars[key] = value;
+}
+
+export const handleSetVar = async (context:TaskContext, task:TaskSetVar)=>{
     if(task.key === undefined || !task.key || typeof(task.key) !== 'string' || task.key.length < 1){
         throw new Error(`Invalid key ${task.key}. It must be a string.`);
     }
     
-    let value = task.value;
-    if(task.valueType === 'file'){
-        if(typeof(value) !== 'string'){
-            throw new Error(`The "value" must contain path of a file with "valueType":"${task.valueType}"`);
+    let taskVar = task.var;
+    if(task.varType === 'file'){
+        if(typeof(taskVar) !== 'string'){
+            throw new Error(`The "var" must contain path of a file with "varType":"${task.varType}"`);
         }
         
-        const valuePath = path.resolve(value);
-        if(!fs.existsSync(valuePath)){
-            throw new Error(`File "${valuePath}" does not exist to use as a value`);
+        const varsPath = path.resolve(taskVar);
+        if(!fs.existsSync(varsPath)){
+            throw new Error(`File "${varsPath}" does not exist to use as a variable`);
         }
 
-        value = fs.readFileSync(valuePath ,{encoding:'utf8'});
+        taskVar = fs.readFileSync(varsPath ,{encoding:'utf8'});
         if(task.fileFormat === 'json'){
-            value = JSON.parse(value);
+            taskVar = json5.parse(taskVar);
         }
     }
 
-    vlog(`Setting up the value ${value} for a key ${task.key}`);
-    context.values[task.key] = value;
+    setTaskVar(context, task.key, taskVar);
+}
+
+export const setEnvVar = (context:TaskContext, key:string, value:any)=>{
+    var valueType = typeof(value);
+    if(valueType !== 'string' && valueType !== 'number' && valueType !== 'boolean'){
+        vlog(`Ignoring the invalid typed(${valueType}) environment variable ${key}=${value}`);
+    }else{
+        const stringVal = String(value);
+        if(stringVal.length < 1){
+            vlog(`Ignoring the invalid environment variable ${key}=${value}`);
+        }else{
+            vlog(`Sets the environment variable ${key}=${value}`);
+            process.env[key] = String(value);
+        }
+    }
+}
+
+export const handleEnvVar = async (context:TaskContext, task:TaskEnvVar)=>{
+    let taskVar = task.var;
+    if(task.varType === 'file'){
+        if(typeof(taskVar) !== 'string'){
+            throw new Error(`The "var" must contain path of a file with "varType":"${task.varType}"`);
+        }
+        
+        const varsPath = path.resolve(taskVar);
+        taskVar = loadJson(varsPath);
+    }
+
+    if(typeof(taskVar) !== 'object'){
+        throw new Error(`The content of the "var" must be in the form of key-value pairs. For example: {"KEY_A":"value_a", "KEY_B":"value_b"}`);
+    }
+
+    Object.keys(taskVar).forEach(key => {
+        setEnvVar(context, key, taskVar[key]);
+    });
 }
 
 export const handleOutput = async (context:TaskContext, task:TaskOutput)=>{
@@ -179,13 +220,13 @@ export const handleFsDelete = async (context:TaskContext, task:TaskFsDelete)=>{
     removeSync(task.path);
 }
 
-export const applyValues = async (context:TaskContext, task:Task)=>{
+export const applyVariables = async (context:TaskContext, task:Task)=>{
     const anyTypeTask:any = task as any;
         Object.keys(anyTypeTask).forEach(key => {
             if(anyTypeTask[key] !== undefined && typeof(anyTypeTask[key]) ==='string'){
                 let valueOfKey:string = anyTypeTask[key];
                 while(true){
-                    const match = context.valueReplaceReg.exec(valueOfKey);
+                    const match = context.replaceRegex.exec(valueOfKey);
                     if(match === null || match === undefined){
                         break;
                     }
@@ -193,13 +234,13 @@ export const applyValues = async (context:TaskContext, task:Task)=>{
                     const matchedStr = match[0];
                     const varPath = match[1];
 
-                    let currentValue = context.values;
+                    let currentVar = context.vars;
                     if(varPath.length > 0){
                         const varPaths = varPath.split(".");
                         for(let i=0; i<varPaths.length;i++){
                             const varEl = varPaths[i];
-                            if(currentValue.hasOwnProperty(varEl)){
-                                currentValue = currentValue[varEl];
+                            if(currentVar.hasOwnProperty(varEl)){
+                                currentVar = currentVar[varEl];
                             }else{
                                 throw new Error(`The value of ${varPath} could not be found!`);
                             }
@@ -207,7 +248,7 @@ export const applyValues = async (context:TaskContext, task:Task)=>{
                     }
 
                     const valuePrefix = valueOfKey.substring(0, match.index);
-                    const valueReplace = `${currentValue}`;
+                    const valueReplace = `${currentVar}`;
                     const valueSuffix = valueOfKey.substring(match.index+matchedStr.length);                    
                     valueOfKey = `${valuePrefix}${valueReplace}${valueSuffix}`;
                     vlog(`Updated value ${valueOfKey}`);
@@ -216,4 +257,38 @@ export const applyValues = async (context:TaskContext, task:Task)=>{
                 anyTypeTask[key] = valueOfKey;
             }
         });
+};
+
+
+export const searchExtraKeyValue = (extraArgs:string[], fmt:string, convertToCamelKeys:boolean, callback:(key:string, value:string)=>void)=>{
+    let currentVarName:string|undefined;
+    let useNextElementAsVar:boolean = false;
+    
+    for(let extraArg of extraArgs){
+        const arg = extraArg.trim();
+        if(arg === '--'){
+            vlog("Stop parsing by '--'")
+            break;
+        }
+
+        if(useNextElementAsVar && currentVarName){
+            const value = extraArg.startsWith("-") ? "":extraArg;
+            callback(currentVarName, value);
+            currentVarName = undefined;
+            useNextElementAsVar = false;
+        }else{
+            const prefixIndex = extraArg.indexOf(fmt);
+            if(prefixIndex >= 0){
+                const equalMarkIndex = extraArg.indexOf("=");
+                if(equalMarkIndex >= 0){
+                    const varName = convertOrNotHyphenTextToCamelText(extraArg.substring(fmt.length, equalMarkIndex), convertToCamelKeys);
+                    const value = extraArg.substring(equalMarkIndex+1);
+                    callback(varName, value);
+                }else{
+                    currentVarName = convertOrNotHyphenTextToCamelText(extraArg.substring(fmt.length), convertToCamelKeys);
+                    useNextElementAsVar = true;
+                }
+            }    
+        }
+    }
 };

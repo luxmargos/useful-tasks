@@ -13,16 +13,17 @@ Useful-tasks can be used through a command line interface
 * Process without some of tasks
  $ useful-tasks --config=my_tasks.json --exclude=my_task_1,my_task_2
 
-* The custom values can be set using command-line parameters. Just use the prefix '--val-' followed by the key-value pair, e.g., '--val-my-key=VALUE'. You can then use this custom value in your configuration using the syntax '${myKey}'. This will have the same effect as the 'set-value' task.
- $ useful-tasks --config=my_tasks.json --val-my-key=VALUE
+* The custom variables can be set using command-line parameters. Just use the prefix '--var-' followed by the key-value pair, e.g., '--var-my-key=VALUE'. You can then use this custom variable in your configuration using the syntax '${myKey}'. This will have the same effect as the 'set-var' task.
+ $ useful-tasks --config=my_tasks.json --var-my-key=VALUE
 
 * You can turn off the camel case conversion by setting the '--camel-keys' parameter to false. Then you can use it with '${my-key}'.
- $ useful-tasks --config=my_tasks.json --camel-keys=false --val-my-key=VALUE
+ $ useful-tasks --config=my_tasks.json --camel-keys=false --var-my-key=VALUE
 
 ## Supported Tasks
 * cmd
 * output
-* set-value
+* set-var
+* env-var
 * symlink
 * git-repo-prepare
 * fs-copy
@@ -54,8 +55,8 @@ The tasks will be processed in the order they are specified.
         "verbose":false,
         //Optional. To see what happens with 'git-repo-prepare' task.
         "verboseGit":false,
-        //Optional. The regular expression used for value replacement. A default regex is targeting a format such as '${VALUE_REFERENCE}'. DEFAULT="\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}"
-        "valueReplaceRegex":"..."
+        //Optional. The regular expression used for replacing parts of the text with variables. The default regex targets the format '${VARIABLE_KEY}'. DEFAULT="\$\{([a-zA-Z0-9\.\-_]*)\}"
+        "replaceRegex":"..."
     },
     "tasks":[
         ...
@@ -141,24 +142,55 @@ All tasks have the following common properties
         },
 
         {
-            //The value can be set and subsequently used by all following tasks. 
-            "type":"set-value",
+            //The variable can be set and subsequently used by all following tasks. 
+            "type":"set-var",
 
-            //This represents the key for the value. All subsequent tasks will access the value using this key.
-            "key":"key_of_value",
+            //This represents the key for the variable. All subsequent tasks will access the variable using this key.
+            "key":"access_key_to_var",
 
-            //The value can be a type such as 'string', 'number', 'object' or 'file path'
-            "value":{
-                "a":"value-a",
-                "b":"value-b"
+            //The variable can be a type such as 'string', 'number', 'object' for "varType":"value"
+            "var":"text",
+            "var":1,
+            //To access nested variable from another task, use the expression 'access_key_to_var.a'
+            "var":{
+                "a":"value of a",
+                "b":{
+                    "c":"value of c"
+                }
             },
+            //The variable can be a path of the file for the "varType":"file"
+            "var":"path/of/json/file.json",
 
-            //Optional. It can be used as either 'value' or 'file.' If the 'valueType' is 'file,' the 'value' must be a file path. DEFAULT="value"
-            "valueType":"value",
+            //Optional. It can be used as either 'value' or 'file.' If the 'varType' is 'file,' the 'var' must be a file path. DEFAULT="value"
+            "varType":"value",
 
-            //Optional. This option applies when the 'valueIsFile' parameter is set to 'file', and can be set to either 'json' or 'string'. 
-            //When set to 'json', the value in the file will be parsed as JSON. DEFAULT="string"
+            //Optional. This option applies when the 'varType' parameter is set to 'file', and can be set to either 'json' or 'string'. 
+            //When set to 'json', the content of the file will be parsed as JSON. DEFAULT="string"
             "fileFormat":"string"
+        },
+
+        {
+            //Set the environment variable that usable while process is running
+            "type":"env-var",
+
+            //Set the variable name and text.
+            "var":{
+                "ENV_VAR_1":"HELLO",
+                "ENV_VAR_2":"WORLD"
+            },
+            //The variable can be a path of the file for the "varType":"file"
+            //The example content of the file.json
+            //{
+            //  "ENV_VAR_1":"HELLO",
+            //  "ENV_VAR_2":"WORLD"    
+            //}
+            "var":"path/of/json/file.json",
+
+
+            //Optional. It can be used as either 'dict' or 'file.' 
+            //If the 'varType' is 'file,' the 'var' must be a file path and its content must be a json formatted.
+            //DEFAULT="dict"
+            "varType":"dict"
         },
 
         {
@@ -172,7 +204,7 @@ All tasks have the following common properties
         },
         
         {
-            //To output a text with the value of 'set-value' that was previously set.
+            //To output a text with the value of 'set-var' that was previously set.
             "type":"output",
             "text":"I found a value ${key_of_value.a}!"
         },

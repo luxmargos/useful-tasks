@@ -1,10 +1,10 @@
 export interface TaskContext {
-    valueReplaceReg:RegExp;
-    values:any;
+    replaceRegex:RegExp;
+    vars:any;
 }
 
 export interface Task {
-    type:'git-repo-prepare'|'symlink'|'cmd'|'set-value'|'output'|'fs-copy'|'fs-del';
+    type:'git-repo-prepare'|'symlink'|'cmd'|'set-var'|'output'|'fs-copy'|'fs-del'|'fs-exist'|'env-var';
     id?:string;
     tags?:string | string[],
     cwd?:string;
@@ -35,11 +35,16 @@ export interface TaskTerminalCommand extends Task{
 }
 
 
-export interface TaskSetValue extends Task{
+export interface TaskSetVar extends Task{
     key:string;
-    value:string|number|any|boolean;
-    valueType:'value'|'file';
+    var:string|number|any|boolean;
+    varType:'value'|'file';
     fileFormat:'json'|'string';
+}
+
+export interface TaskEnvVar extends Task{
+    var:any;
+    varType:'dict'|'file';
 }
 
 export type TaskOutputTargets = 'console'|'file-write'|'file-append'|'c'|'fw'|'fa';
@@ -64,7 +69,7 @@ export interface Config {
     env?:{
         verbose?:boolean;
         verboseGit?:boolean;
-        valueReplaceRegex?:string;
+        replaceRegex?:string;
     };
     tasks?:Array<Task>;
 }
@@ -72,6 +77,7 @@ export interface Config {
 export const TAG = "useful-tasks"
 
 /** e.g. ${value.key} */
-export const DEFAULT_VALUE_REPLACE_REGEX = "\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}";
+export const DEFAULT_REPLACE_REGEX = "\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}";
 
-export const VALUE_FROM_ARGUMENT_PREFIX = "--val-";
+export const VAR_FROM_ARGUMENT_PREFIX = "--var-";
+export const ENV_VAR_FROM_ARGUMENT_PREFIX = "--env-";

@@ -7,41 +7,41 @@
     "tasks":[
         //comment test
         {
-            "type":"set-value",
+            "type":"set-var",
             "key":"file_val_json",
-            "value":"value_from_file.json",
-            "valueType":"file",
+            "var":"var_from_file.json",
+            "varType":"file",
             "fileFormat":"json"
         },
 
         {
-            "type":"set-value",
+            "type":"set-var",
             "key":"file_val_text",
-            "value":"value_from_file.txt",
-            "valueType":"file",
+            "var":"var_from_file.txt",
+            "varType":"file",
             "fileFormat":"string"
         },
 
         {
-            "type":"set-value",
+            "type":"set-var",
             "id":"my_task_1",
             "enabled":true,
             "key":"key_of_value",
-            "value":{
+            "var":{
                 "a":"value-a",
                 "b":"value-b"
             },
-            "valueType":"value",
+            "varType":"value",
             "fileFormat":"string"
         },
 
         {
-            "type":"set-value",
+            "type":"set-var",
             "id":"my_task_2",
             "enabled":true,
             "key":"v2",
-            "value":[1,2,3],
-            "valueType":"value",
+            "var":[1,2,3],
+            "varType":"value",
             "fileFormat":"string"
         },
 

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import json5 from 'json5';
 
-const loadJson = (filePath:string)=>{
+export const loadJson = (filePath:string)=>{
     if(!fs.existsSync(filePath)){
         throw new Error(`The Path '${filePath}' does not exists!`);
     }

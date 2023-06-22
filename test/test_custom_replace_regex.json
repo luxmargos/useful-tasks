@@ -3,23 +3,23 @@
     "env":{
         "verbose":true,
         "verboseGit":true,
-        "valueReplaceRegex":"##([a-zA-Z0-9\\.\\-_]*)##"
+        "replaceRegex":"##([a-zA-Z0-9\\.\\-_]*)##"
     },
     
     "tasks":[
         {
-            "type":"set-value",
-            "key":"key_of_value",
-            "value":{
+            "type":"set-var",
+            "key":"key_of_var",
+            "var":{
                 "a":"value-a",
                 "b":"value-b"
             },
-            "valueType":"value",
+            "varType":"value",
             "fileFormat":"string"
         },
         {
             "type":"output",
-            "text":"I found a value ##key_of_value.a## and ##key_of_value.b##"
+            "text":"I found a value key_of_var.a=##key_of_var.a## and key_of_var.b=##key_of_var.b##"
         }
     ]
 }
