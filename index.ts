@@ -139,7 +139,7 @@ const runTasks = async ()=>{
     if(opt.exclude && opt.exclude.length > 0){
         const excludeItems = opt.exclude;
 
-        vlog(`Excluding tasks by specified IDs or Tags : ${excludeItems}`);
+        vlog(`Excluding tasks by specified IDs or Tags : --exclude=${excludeItems}`);
             tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
             if(containsTag(excludeItems, taskItem.__compare__elements) === false){
                 return taskItem;
@@ -149,27 +149,26 @@ const runTasks = async ()=>{
     if(opt.excludeCta && opt.excludeCta.length > 0){
         const excludesItems = opt.excludeCta;
 
-        vlog(`Excluding tasks by specified IDs or Tags : ${excludesItems}`);
+        vlog(`Excluding tasks by specified IDs or Tags : --exclude-cta=${excludesItems}`);
             tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
             if(containsAllTag(excludesItems, taskItem.__compare__elements) === false){
                 return taskItem;
             }
         });
     }
-    if(opt.include && opt.include.length > 0){
+    const hasIncludeFilters = opt.include && opt.include.length > 0;
+    const hasIncludeCTAFilters = opt.includeCta && opt.includeCta.length > 0;
+    if(hasIncludeFilters || hasIncludeCTAFilters){
         const includeItems = opt.include;
-        vlog(`Including tasks by specified IDs or Tags : ${includeItems}`);
+        const includeCtaItems = opt.includeCta;
+
+        vlog(`Including tasks by specified IDs or Tags : --include=${includeItems} / --include-cta=${includeCtaItems}`);
         tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
-            if(containsTag(includeItems, taskItem.__compare__elements) === true){
-                return taskItem;
-            }
-        });
-    }
-    if(opt.includeCta && opt.includeCta.length > 0){
-        const includeItems = opt.includeCta;
-        vlog(`Including tasks by specified IDs or Tags : ${includeItems}`);
-        tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
-            if(containsAllTag(includeItems, taskItem.__compare__elements) === true){
+            if(
+                (hasIncludeFilters && containsTag(includeItems!, taskItem.__compare__elements) === true)
+                ||
+                (hasIncludeCTAFilters && containsAllTag(includeCtaItems!, taskItem.__compare__elements) === true)
+            ){
                 return taskItem;
             }
         });

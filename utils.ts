@@ -47,6 +47,10 @@ export const convertOrNotHyphenTextToCamelText=(text:string, flag:boolean)=>{
 
 
 export const containsTag = (elements:string[], tags:string[])=>{
+    if(elements.length < 1){
+        return false;
+    }
+    
     for(const el of elements){
         for(const tag of tags){
             if(el === tag){
@@ -59,6 +63,9 @@ export const containsTag = (elements:string[], tags:string[])=>{
 };
 
 export const containsAllTag = (elements:string[], tags:string[])=>{
+    if(elements.length < 1){
+        return false;
+    }
     for(const el of elements){
         let contained = false;
         for(const tag of tags){
