@@ -33,7 +33,6 @@ export const setup = ()=> {
     program.parse();
 
     const opts = program.opts();
-    console.log("OPTS",opts);
 
     const typedOptions = opts as CliOptions;
     typedOptions.include = fixStringArrayArgument(typedOptions.include);
