@@ -1,6 +1,6 @@
 import path from 'path';
 import { CliOptions, setup } from './build_cli_parser';
-import { containsTag, convertOrNotHyphenTextToCamelText, loadJsonConfig } from './utils';
+import { containsAllTag, containsTag, convertOrNotHyphenTextToCamelText, loadJsonConfig } from './utils';
 import debug from 'debug';
 import { Config, TAG, Task, TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, DEFAULT_REPLACE_REGEX, VAR_FROM_ARGUMENT_PREFIX, TaskFsCopy, TaskFsDelete, TaskEnvVar, ENV_VAR_FROM_ARGUMENT_PREFIX } from './task_data';
 import { handleTerminalCommand, handleGitRepoSetup, handleSymlink, handleSetVar, handleOutput, applyVariables, handleFsCopy, handleFsDelete, handleEnvVar, searchExtraKeyValue, setTaskVar, setEnvVar } from './handlers';
@@ -101,31 +101,75 @@ const runTasks = async ()=>{
                 if(otherTask.id !== undefined && otherTask.id === task.id){
                     throw new Error(`The task id '${task.id}' must be unique`);
                 }
-            }    
+            }
+        }
+
+        
+        task.__compare__elements = [];
+        if(task.id){
+            task.id = task.id.trim()
+            task.__compare__elements.push(task.id.trim());
+        }
+        if(task.tags){
+            const printInvalidTags = (tags:any)=>{
+                vlog(`Ignoring invalid tags '${tags}'`);
+            };
+            if(typeof(task.tags) === 'string'){
+                if(task.tags.length > 0){
+                    task.tags = task.tags.trim();
+                    task.__compare__elements.push(task.tags);
+                }else{
+                    printInvalidTags(task.tags);
+                }
+            }else if(Array.isArray(task.tags)){
+                task.tags = task.tags.map((value:string)=>value.trim());
+                for(const tag of task.tags){
+                    if(typeof(tag) === 'string' && tag.length>0){
+                        task.__compare__elements.push(tag);
+                    }else{
+                        printInvalidTags(tag);
+                    }
+                }
+            }else{
+                printInvalidTags(task.tags);
+            }
         }
     }
 
-
     if(opt.exclude && opt.exclude.length > 0){
-        const excludes = (opt.exclude ?? []).map((a)=>{ return a.trim(); });
+        const excludeItems = opt.exclude;
 
-        vlog(`Excluding tasks by specified IDs or Tags : ${excludes}`);
+        vlog(`Excluding tasks by specified IDs or Tags : ${excludeItems}`);
             tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
-            if(taskItem.id === undefined || taskItem.id === null || (excludes.includes(taskItem.id) === false && containsTag(excludes, taskItem.tags) === false)){
+            if(containsTag(excludeItems, taskItem.__compare__elements) === false){
                 return taskItem;
             }
         });
- 
-    }    
-    if(opt.include && opt.include.length > 0){
-        const includes = (opt.include ?? []).map((a)=>{ return a.trim(); });
-        vlog(`Including tasks by specified IDs or Tags : ${includes}`);
-        tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
-            if(taskItem.id !== undefined && taskItem.id !== null && includes?.includes(taskItem.id) === true){
+    }
+    if(opt.excludeCta && opt.excludeCta.length > 0){
+        const excludesItems = opt.excludeCta;
+
+        vlog(`Excluding tasks by specified IDs or Tags : ${excludesItems}`);
+            tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
+            if(containsAllTag(excludesItems, taskItem.__compare__elements) === false){
                 return taskItem;
             }
-
-            if(containsTag(includes, taskItem.tags) == true){
+        });
+    }
+    if(opt.include && opt.include.length > 0){
+        const includeItems = opt.include;
+        vlog(`Including tasks by specified IDs or Tags : ${includeItems}`);
+        tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
+            if(containsTag(includeItems, taskItem.__compare__elements) === true){
+                return taskItem;
+            }
+        });
+    }
+    if(opt.includeCta && opt.includeCta.length > 0){
+        const includeItems = opt.includeCta;
+        vlog(`Including tasks by specified IDs or Tags : ${includeItems}`);
+        tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
+            if(containsAllTag(includeItems, taskItem.__compare__elements) === true){
                 return taskItem;
             }
         });

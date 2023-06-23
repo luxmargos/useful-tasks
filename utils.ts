@@ -46,23 +46,9 @@ export const convertOrNotHyphenTextToCamelText=(text:string, flag:boolean)=>{
 
 
 
-export const containsTag = (elements:string[], tags:string[] | string | undefined | null)=>{
-    if(tags === undefined || tags === null){
-        return false;
-    }
-    
-    let targetTags = typeof(tags) === 'string' ? [tags] : tags;
-    targetTags = targetTags.map((a)=>{ return a.trim(); });
-     
+export const containsTag = (elements:string[], tags:string[])=>{
     for(const el of elements){
-        if(el.length < 1){
-            continue;
-        }
-        for(const tag of targetTags){
-            if(tag.length < 1){
-                continue;
-            }
-
+        for(const tag of tags){
             if(el === tag){
                 return true;    
             }
@@ -70,4 +56,20 @@ export const containsTag = (elements:string[], tags:string[] | string | undefine
     }
 
     return false;
+};
+
+export const containsAllTag = (elements:string[], tags:string[])=>{
+    for(const el of elements){
+        let contained = false;
+        for(const tag of tags){
+            if(tag === el){
+                contained = true;
+                break;
+            }
+        }        
+        if(!contained){
+            return false;
+        }        
+    }
+    return true;
 };

@@ -9,33 +9,38 @@ export interface CliOptions {
     cwd?:string;
     config:string;
     include?:string[];
+    includeCta?:string[];
     exclude?:string[];
+    excludeCta?:string[];
     camelKeys:boolean;
     extraArgs?:string[];
 }
 
 export const setup = ()=> {
-    console.log("######################################################################")
-    console.log("Useful Tasks : Parsing cli-arguments");
-
     // console.log('cwd', process.cwd());
     // console.log('argv', process.argv);
 
     program.name('useful-tasks').version(packageJson.version)
     .option('--cwd <string>','Change working directory')
-    .option('--config <string>','A path of json configuraion', DEFAULT_CONFIG)
-    .option('-i, --include <items>','This parameter allows you to include certain tasks from the processing based on their task ID or tags.  Comma separated e.g. my_task_01, my_task_02')
-    .option('-e, --exclude <items>','This parameter allows you to exclude certain tasks from the processing based on their task ID or tags. Comma separated e.g. my_task_01, my_task_02')
+    .option('-c, --config <string>','A path of json configuraion', DEFAULT_CONFIG)
+    .option('-i, --include <items>','Include tasks that contain at least one of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02')
+    .option('-a, --include-cta <items>','Include tasks that contain all of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02')
+    .option('-e, --exclude <items>','Exclude tasks that contain at least one of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02')
+    .option('-x, --exclude-cta <items>','Exclude tasks that contain all of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02')
     .option('--camel-keys <boolean>','Specify whether to use camel case for the key of the variable. If the value is true, the paramter "--var-my-key" will be converted to "myKey" otherwise it will be "my-key"', DEFAULT_USE_CAMEL)
     .allowUnknownOption(true);
     
     program.parse();
 
     const opts = program.opts();
+    console.log("OPTS",opts);
 
     const typedOptions = opts as CliOptions;
     typedOptions.include = fixStringArrayArgument(typedOptions.include);
+    typedOptions.includeCta = fixStringArrayArgument(typedOptions.includeCta);
     typedOptions.exclude = fixStringArrayArgument(typedOptions.exclude);
+    typedOptions.excludeCta = fixStringArrayArgument(typedOptions.excludeCta);
+    
     if(typedOptions.camelKeys !== undefined && typeof(typedOptions.camelKeys) === 'string'){
         let v:string = typedOptions.camelKeys;
         v = v.trim().toLowerCase();
@@ -60,7 +65,7 @@ export const setup = ()=> {
     return typedOptions;
 }
 
-const fixStringArrayArgument = (value:string|string[]|undefined)=>{
+const fixStringArrayArgument = (value:string|string[]|undefined, skipEmptyItem:boolean = true)=>{
     if(!value){
         return [];
     }
@@ -69,10 +74,17 @@ const fixStringArrayArgument = (value:string|string[]|undefined)=>{
         const result:string[] = [];
         const arr = value.split(',');
         arr.forEach((value)=>{
-            result.push(value.trim());
+            const trimedValue = value.trim();
+            if(skipEmptyItem){
+                if(trimedValue.length > 0){
+                    result.push(trimedValue);
+                }
+            }else{
+                result.push(trimedValue);
+            }
         });
         return result;
     }
     
-    return value;
+    return [];
 };

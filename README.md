@@ -1,8 +1,24 @@
-
-
 ## How to use
 
 Useful-tasks can be used through a command line interface
+
+ $ useful-tasks --help
+
+```text
+Usage: useful-tasks [options]
+
+Options:
+  -V, --version              output the version number
+  --cwd <string>             Change working directory
+  -c, --config <string>      A path of json configuraion (default: "useful_tasks.json")
+  -i, --include <items>      Include tasks that contain at least one of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02
+  -a, --include-cta <items>  Include tasks that contain all of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02
+  -e, --exclude <items>      Exclude tasks that contain at least one of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02
+  -x, --exclude-cta <items>  Exclude tasks that contain all of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02
+  --camel-keys <boolean>     Specify whether to use camel case for the key of the variable. If the value is true, the paramter "--var-my-key" will be converted to "myKey" otherwise it will be "my-key" (default: true)
+  -h, --help                 display help for command
+```
+
 
 * Default usage
  $ useful-tasks --config=my_tasks.json

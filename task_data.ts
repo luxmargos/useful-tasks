@@ -10,6 +10,7 @@ export interface Task {
     cwd?:string;
     enabled?:boolean;
     comment?:string;
+    __compare__elements:string[];
 }
 
 export interface TaskGitCheckout extends Task{
