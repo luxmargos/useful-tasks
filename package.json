@@ -10,7 +10,7 @@
         "type": "git",
         "url": "https://github.com/luxmargos/useful-tasks.git"
     },
-    "type": "module",
+    "type": "commonjs",
     "engines": {
         "node": ">=4.2.0"
     },
