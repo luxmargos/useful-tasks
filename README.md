@@ -1,3 +1,17 @@
+# Useful tasks
+
+A CLI task runner that utilizes JSON-based configuration and processes tasks sequentially.
+This project was initiated to resolve git repository dependencies without using git submodules.
+It aims to be useful for setting up a workspace with complex dependencies and multiple preparation steps.
+
+## Installation
+
+* Use globally
+  $ npm install -g useful-tasks
+
+* Project locally
+  $ npm insatll useful-tasks --save-dev
+
 ## How to use
 
 Useful-tasks can be used through a command line interface
@@ -91,10 +105,10 @@ All tasks have the following common properties
             //Required
             "type":"TASK TYPE",
             
-            //Optional. The identifier of task.
-            "id":"UNIQUE TASK ID",
+            //Optional. The identifier of task. It also used for including or excluding specific tasks.
+            "id":"<UNIQUE TASK ID>",
 
-            //Optional.
+            //Optional. Used by include or exclude specific tasks.
             "tags":[],
 
             //Optional. If the value is false, the task will be skipped without being processed. DEFAULT=true
@@ -117,7 +131,7 @@ All tasks have the following common properties
             "type":"git-repo-prepare",
 
             //A path of git(local) repository
-            "localPath":"...",
+            "localPath":"./path/of/local/git/repository",
 
             //Optional. Set a value if you want to use a different binary of git. DEFAULT="git"
             "bin":"git",
@@ -243,8 +257,9 @@ All tasks have the following common properties
 
 ## Tips
 
-### Referencing directories
-* Aceess to a directory at startup
+### Accessing default variables
+
+#### Aceess to a startup directory 
 
 ```json
 {
@@ -253,7 +268,7 @@ All tasks have the following common properties
 }
 ```
 
-* Access to a base directory
+#### Access to a base directory
 The base directory is main working directory that is applied using the '--cwd' argument on the command line.
 
 ```json

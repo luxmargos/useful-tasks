@@ -1,18 +1,22 @@
 {
     "name": "useful-tasks",
-    "version": "0.1.17",
-    "description": "A dependency resolver for git and some of simple tasks",
+    "version": "0.1.18",
+    "description": "A CLI task runner that utilizes JSON-based configuration and processes tasks sequentially",
     "author": {
         "name": "Jinho Yun",
         "email": "owlflyx12@gmail.com"
     },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/luxmargos/useful-tasks.git"
+    },
+    "entryPoint": "dist/index.js",
     "bin": {
-        "useful-tasks": "bin/cli.js"
+        "useful-tasks": "dist/index.js"
     },
     "engines": {
         "node": ">=4.2.0"
     },
-    "entryPoint": "dist/index.js",
     "license": "MIT",
     "keywords": [
         "git",
@@ -27,14 +31,11 @@
         "json5": "^2.2.3",
         "simple-git": "^3.18.0"
     },
-    "type": "commonjs",
     "scripts": {
         "start": "npm run build && node dist/index.js",
         "start:ts": "ts-node index.ts",
-        "build": "npm run build:bin && npm run build:common",
-        "build:common": "esbuild index.ts --platform=node --sourcemap --bundle --outdir=dist --minify",
-        "build:bin": "esbuild cli.ts --platform=node --sourcemap --bundle --outdir=bin --minify",
-        "build:types": "tsc --emitDeclarationOnly --declaration --project tsconfig.json",
+        "build": "tsup",
+        "watch":"tsup --watch",
         "test:fs": "ts-node index.ts --cwd=./test --config=test_fs.json",
         "test:vars": "ts-node index.ts --cwd=./test --config=test_vars.json",
         "test:exclude": "ts-node index.ts --cwd=./test --config=test_outputs.json --exclude=task-1,task-3",
@@ -50,8 +51,8 @@
         "@types/commander": "^2.12.2",
         "@types/debug": "^4.1.7",
         "@types/fs-extra": "^9.0.13",
-        "esbuild": "^0.17.18",
         "ts-node": "^10.9.1",
+        "tsup": "^7.0.0",
         "typescript": "^4.8.4"
     }
 }

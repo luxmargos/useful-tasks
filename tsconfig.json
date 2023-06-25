@@ -6,10 +6,10 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "outDir": "./dist",
+    "outDir": "./bin",
     //directory structure of output
-    "rootDir": ".",
-    "baseUrl": ".",
+    "rootDir": "src",
+    "baseUrl": "src",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,

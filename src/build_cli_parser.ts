@@ -1,11 +1,10 @@
 import { program } from 'commander';
-import packageJson from './package.json'
 import path from 'path';
 
 export const DEFAULT_CONFIG = "useful_tasks.json";
 export const DEFAULT_USE_CAMEL = true;
 
-export interface CliOptions {
+export interface Options {
     cwd?:string;
     config:string;
     include?:string[];
@@ -20,7 +19,7 @@ export const setup = ()=> {
     // console.log('cwd', process.cwd());
     // console.log('argv', process.argv);
 
-    program.name('useful-tasks').version(packageJson.version)
+    program.name('useful-tasks').version(process.env.npm_package_version!)
     .option('--cwd <string>','Change working directory')
     .option('-c, --config <string>','A path of json configuraion', DEFAULT_CONFIG)
     .option('-i, --include <items>','Include tasks that contain at least one of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02')
@@ -34,7 +33,7 @@ export const setup = ()=> {
 
     const opts = program.opts();
 
-    const typedOptions = opts as CliOptions;
+    const typedOptions = opts as Options;
     typedOptions.include = fixStringArrayArgument(typedOptions.include);
     typedOptions.includeCta = fixStringArrayArgument(typedOptions.includeCta);
     typedOptions.exclude = fixStringArrayArgument(typedOptions.exclude);
@@ -53,7 +52,7 @@ export const setup = ()=> {
     }
     typedOptions.extraArgs = [...program.args ?? []];
 
-    console.log(`Using options : ${JSON.stringify(typedOptions, undefined, 2)}`);
+    // console.log(`Using options : ${JSON.stringify(typedOptions, undefined, 2)}`);
     // console.log(`Extra arguments`, program.args);
 
     if(typedOptions.cwd){
@@ -61,7 +60,7 @@ export const setup = ()=> {
     }
     console.log("######################################################################")
 
-    return typedOptions;
+    return {typedOptions, program};
 }
 
 const fixStringArrayArgument = (value:string|string[]|undefined, skipEmptyItem:boolean = true)=>{
