@@ -12,8 +12,13 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
     let configFilePath = path.resolve(opt.config);
     try{
         tasksConfig = loadJsonConfig(configFilePath);
-    }catch(e){
-        console.log(e);
+    }catch(e:any){
+        if(e instanceof Error){
+            console.log(e.message);
+        }else{
+            console.log(e);
+        }
+        console.log("");
         program.help();
     }
     

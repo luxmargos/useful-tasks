@@ -4,7 +4,7 @@ import json5 from 'json5';
 
 export const loadJson = (filePath:string)=>{
     if(!fs.existsSync(filePath)){
-        throw new Error(`The Path '${filePath}' does not exists!`);
+        throw new Error(`ERROR: The Path '${filePath}' does not exists!`);
     }
 
     const fileString = fs.readFileSync(filePath, {encoding:'utf-8'});
