@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import path from 'path';
 import { Options, setup } from './build_cli_parser';
 import { Command } from 'commander';
