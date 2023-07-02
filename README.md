@@ -244,6 +244,12 @@ All tasks have the following common properties
             "type":"fs-copy",
             "src":"copy-source.txt",
             "dest":"copy-destination.txt",
+
+            //Optional.
+            "options":{
+                //Default=true
+                "overwite":true
+            }
         },
 
         {

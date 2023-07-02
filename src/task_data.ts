@@ -1,3 +1,6 @@
+import fse from 'fs-extra';
+
+
 export interface TaskContext {
     replaceRegex:RegExp;
     vars:any;
@@ -58,6 +61,7 @@ export interface TaskOutput extends Task{
 export interface TaskFsCopy extends Task{
     src:string;
     dest:string;
+    options?:fse.CopySyncOptions;
 }
 
 export interface TaskFsDelete extends Task{

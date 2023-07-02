@@ -214,8 +214,9 @@ export const handleOutput = async (context:TaskContext, task:TaskOutput)=>{
 }
 
 export const handleFsCopy = async (context:TaskContext, task:TaskFsCopy)=>{
-    copySync(task.src, task.dest);
+    copySync(task.src, task.dest, task.options);
 }
+
 export const handleFsDelete = async (context:TaskContext, task:TaskFsDelete)=>{
     removeSync(task.path);
 }
