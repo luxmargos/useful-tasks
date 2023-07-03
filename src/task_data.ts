@@ -2,12 +2,18 @@ import fse from 'fs-extra';
 
 
 export interface TaskContext {
+    originCwd:string;
+    baseCwd:string;
     replaceRegex:RegExp;
     vars:any;
 }
 
+export const allTaskTypes = ['git-repo-prepare','symlink','cmd','set-var','output','fs-copy','fs-del','env-var','sub-tasks'] as const;
+type TasksTuple = typeof allTaskTypes;
+export type TaskType = TasksTuple[number];
+
 export interface Task {
-    type:'git-repo-prepare'|'symlink'|'cmd'|'set-var'|'output'|'fs-copy'|'fs-del'|'fs-exist'|'env-var';
+    type:TaskType;
     id?:string;
     tags?:string | string[],
     cwd?:string;
@@ -61,11 +67,17 @@ export interface TaskOutput extends Task{
 export interface TaskFsCopy extends Task{
     src:string;
     dest:string;
-    options?:fse.CopySyncOptions;
+    options?:{
+        conflict:'overwrite'|'skip'
+    };
 }
 
 export interface TaskFsDelete extends Task{
     path:string;
+}
+
+export interface TaskSubTasks extends Task{
+    args:string;
 }
 
 export interface Config {

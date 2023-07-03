@@ -1,6 +1,6 @@
 {
     "name": "useful-tasks",
-    "version": "0.1.19",
+    "version": "0.1.20",
     "description": "A CLI task runner that utilizes JSON-based configuration and processes tasks sequentially",
     "author": {
         "name": "Jinho Yun",
@@ -20,10 +20,10 @@
     "bin": {
         "useful-tasks": "dist/index.js"
     },
-    "exports":{
-        ".":{
-            "require":"./dist/index.js",
-            "import":"./dist/index.mjs"
+    "exports": {
+        ".": {
+            "require": "./dist/index.js",
+            "import": "./dist/index.mjs"
         }
     },
     "license": "MIT",
@@ -38,13 +38,16 @@
         "debug": "^4.3.4",
         "fs-extra": "^10.1.0",
         "json5": "^2.2.3",
-        "simple-git": "^3.18.0"
+        "simple-git": "^3.18.0",
+        "string-argv": "^0.3.2"
     },
     "scripts": {
         "start": "npm run build && node dist/index.js",
         "start:ts": "ts-node src/index.ts",
         "build": "tsup",
-        "watch":"tsup --watch",
+        "watch": "tsup --watch",
+        "print_help":"ts-node src/index.ts --help",
+        "test": "npm run test:fs && npm run test:fs2 && npm run test:vars && npm run test:exclude && npm run test:include && npm run test:exclude_include && npm run test:exclude_tag && npm run test:include_tag && npm run test:exclude_include_tag && npm run test:outputs && npm run test:custom_regex && npm run test:sub_tasks",
         "test:fs": "ts-node src/index.ts --cwd=./test --config=test_fs.json",
         "test:fs2": "ts-node src/index.ts --cwd=./test --config=test_fs2.json",
         "test:vars": "ts-node src/index.ts --cwd=./test --config=test_vars.json",
@@ -55,7 +58,10 @@
         "test:include_tag": "ts-node src/index.ts --cwd=./test --config=test_outputs.json --include=tag-a",
         "test:exclude_include_tag": "ts-node src/index.ts --cwd=./test --config=test_outputs.json --exclude=tag-a --include=tag-b",
         "test:outputs": "ts-node src/index.ts --cwd=./test --config=test_outputs.json",
-        "test:custom_regex": "ts-node src/index.ts --cwd=./test --config=test_custom_replace_regex.json"
+        "test:custom_regex": "ts-node src/index.ts --cwd=./test --config=test_custom_replace_regex.json",
+        "test:sub_tasks": "ts-node src/index.ts --cwd=./test --config=test_sub_tasks.json",
+        "test:cwd_mode_restore":"ts-node src/index.ts --cwd=./test --config=test_cwd_mode.json --cwd-mode=restore",
+        "test:cwd_mode_keep":"ts-node src/index.ts --cwd=./test --config=test_cwd_mode.json --cwd-mode=keep"
     },
     "devDependencies": {
         "@types/commander": "^2.12.2",

@@ -1,8 +1,15 @@
-import { program } from 'commander';
+import { Command } from 'commander';
 import path from 'path';
 
 export const DEFAULT_CONFIG = "useful_tasks.json";
 export const DEFAULT_USE_CAMEL = true;
+
+export const CwdRestore = 'restore';
+export const CwdKeep = 'keep';
+
+export const cwdModes = [CwdRestore, CwdKeep] as const;
+type CwdModeTuple = typeof cwdModes;
+export type CwdMode = CwdModeTuple[number];
 
 export interface Options {
     cwd?:string;
@@ -12,13 +19,21 @@ export interface Options {
     exclude?:string[];
     excludeCta?:string[];
     camelKeys:boolean;
+    cwdMode?:CwdMode;
+    cwdModeIsContinue?:boolean;
     extraArgs?:string[];
 }
 
-export const setup = ()=> {
+
+const argDesc = {
+    cwdMode:`Choose between ${cwdModes.map((v)=>`'${v}'`).join(' or ')}. If you use 'cwd' property in a specific task, consider using this parameter. This parameter determines the behavior of the current working directory (CWD) when each task ends. In '${CwdRestore}' mode, the CWD will be restored to its original state (or the one specified at --cwd) when each task ends, while in '${CwdKeep}' mode, the CWD will remain unchanged.`
+}
+
+export const setup = (userArgv?:string[])=> {
     // console.log('cwd', process.cwd());
     // console.log('argv', process.argv);
 
+    const program = new Command();
     program.name('useful-tasks').version(process.env.npm_package_version!)
     .option('--cwd <string>','Change working directory')
     .option('-c, --config <string>','A path of json configuraion', DEFAULT_CONFIG)
@@ -27,17 +42,25 @@ export const setup = ()=> {
     .option('-e, --exclude <items>','Exclude tasks that contain at least one of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02')
     .option('-x, --exclude-cta <items>','Exclude tasks that contain all of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02')
     .option('--camel-keys <boolean>','Specify whether to use camel case for the key of the variable. If the value is true, the paramter "--var-my-key" will be converted to "myKey" otherwise it will be "my-key"', DEFAULT_USE_CAMEL)
+    .option('--cwd-mode <string>',argDesc.cwdMode, CwdRestore)
     .allowUnknownOption(true);
     
-    program.parse();
+    if(userArgv !== undefined){
+        program.parse(userArgv, {from:'user'});
+    }else{
+        program.parse();
+    }
 
     const opts = program.opts();
+    // console.log(opts);
 
     const typedOptions = opts as Options;
     typedOptions.include = fixStringArrayArgument(typedOptions.include);
     typedOptions.includeCta = fixStringArrayArgument(typedOptions.includeCta);
     typedOptions.exclude = fixStringArrayArgument(typedOptions.exclude);
     typedOptions.excludeCta = fixStringArrayArgument(typedOptions.excludeCta);
+    
+    typedOptions.cwdModeIsContinue = typedOptions.cwdMode === CwdKeep;
     
     if(typedOptions.camelKeys !== undefined && typeof(typedOptions.camelKeys) === 'string'){
         let v:string = typedOptions.camelKeys;
@@ -58,9 +81,10 @@ export const setup = ()=> {
     if(typedOptions.cwd){
         process.chdir(path.resolve(typedOptions.cwd));
     }
-    console.log("######################################################################")
 
-    return {typedOptions, program};
+    // console.log("######################################################################")
+
+    return {opt:typedOptions, program};
 }
 
 const fixStringArrayArgument = (value:string|string[]|undefined, skipEmptyItem:boolean = true)=>{

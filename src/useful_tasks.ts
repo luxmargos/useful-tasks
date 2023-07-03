@@ -2,9 +2,10 @@ import path from 'path';
 import { Options, setup } from './build_cli_parser';
 import { containsAllTag, containsTag, convertOrNotHyphenTextToCamelText, loadJsonConfig } from './utils';
 import debug from 'debug';
-import { Config, TAG, Task, TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, DEFAULT_REPLACE_REGEX, VAR_FROM_ARGUMENT_PREFIX, TaskFsCopy, TaskFsDelete, TaskEnvVar, ENV_VAR_FROM_ARGUMENT_PREFIX } from './task_data';
-import { handleTerminalCommand, handleGitRepoSetup, handleSymlink, handleSetVar, handleOutput, applyVariables, handleFsCopy, handleFsDelete, handleEnvVar, searchExtraKeyValue, setTaskVar, setEnvVar } from './handlers';
+import { Config, TAG, Task, TaskContext, DEFAULT_REPLACE_REGEX, VAR_FROM_ARGUMENT_PREFIX,  ENV_VAR_FROM_ARGUMENT_PREFIX } from './task_data';
+import { applyVariables, searchExtraKeyValue, setTaskVar, setEnvVar } from './task_utils';
 import { Command } from 'commander';
+import { handlerMap } from './handler_map';
 
 export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
     let tasksConfig:Config = {};
@@ -58,6 +59,8 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
     const baseCwd = path.resolve(process.cwd());
     
     const context:TaskContext = {
+        originCwd,
+        baseCwd,
         replaceRegex:new RegExp(replaceRegex),
         vars:{
             __env:{
@@ -79,8 +82,8 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
         });
     }
     
-    console.log("######################################################################")
-    console.log(`[${tasksConfig.name}] Start task processing`);
+    vlog("");
+    vlog(`[${tasksConfig.name}] Start task processing`);
     
     const getTaskRepresentStr = (task:Task, i?:number)=>{ 
         if(i !== undefined && i !== null){
@@ -93,9 +96,10 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
     const runTasks = async ()=>{
         let tasks:Array<Task> = tasksConfig.tasks ?? [];
     
-        // Validate task IDs
         for(let i=0;i<tasks.length;i++){
             const task = tasks[i];
+
+            // Validate task IDs
             if(task.id !== undefined && task.id !== null){
                 if(typeof(task.id) !== 'string'){
                     throw new Error(`The task id must be a 'string' type`);
@@ -112,7 +116,10 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
                     }
                 }
             }
-    
+
+            if(!task.type || !(task.type in handlerMap)){
+                throw new Error(`Found the invalid task type '${task.type}'`);
+            }
             
             task.__compare__elements = [];
             if(task.id){
@@ -192,10 +199,10 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
     
             const taskRepresentStr = getTaskRepresentStr(task,i);
             if(task.enabled === false){
-                vlog(`Skip the task without execution => ${taskRepresentStr}`);
+                vlog(`\n### Skip the task without execution => ${taskRepresentStr}`);
                 continue;
             }else{
-                vlog(`Task : ${taskRepresentStr}`)
+                vlog(`\n### Task : ${taskRepresentStr}`)
             }
     
             if(task.comment){
@@ -208,25 +215,12 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
                 process.chdir(taskCwd);
             }
             
-            if(task.type === 'git-repo-prepare'){
-                await handleGitRepoSetup(context, task as TaskGitCheckout);
-            }else if(task.type === 'symlink'){
-                await handleSymlink(context, task as TaskSymlink);
-            }else if(task.type === 'cmd'){
-                await handleTerminalCommand(context, task as TaskTerminalCommand);
-            }else if(task.type === 'set-var'){
-                await handleSetVar(context, task as TaskSetVar);
-            }else if(task.type === 'env-var'){
-                await handleEnvVar(context, task as TaskEnvVar);
-            }else if(task.type === 'output'){
-                await handleOutput(context, task as TaskOutput);
-            }else if(task.type === 'fs-copy'){
-                await handleFsCopy(context, task as TaskFsCopy);
-            }else if(task.type === 'fs-del'){
-                await handleFsDelete(context, task as TaskFsDelete);
-            }
+            const taskHandler = handlerMap[task.type];
+            await taskHandler(context, task);
     
-            process.chdir(baseCwd);
+            if(!opt.cwdModeIsContinue){
+                process.chdir(baseCwd);
+            }
         }
     };
     
@@ -234,8 +228,7 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
         throw reason;
     }).finally(()=>{
         process.chdir(baseCwd);
-        console.log(`[${tasksConfig.name}] Tasks completed`);
-        console.log("######################################################################")
+        vlog(`[${tasksConfig.name}] Tasks completed`);
+        vlog("");
     });
-    
 };

@@ -30,24 +30,31 @@ Options:
   -e, --exclude <items>      Exclude tasks that contain at least one of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02
   -x, --exclude-cta <items>  Exclude tasks that contain all of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02
   --camel-keys <boolean>     Specify whether to use camel case for the key of the variable. If the value is true, the paramter "--var-my-key" will be converted to "myKey" otherwise it will be "my-key" (default: true)
+  --cwd-mode <string>        Choose between 'restore' or 'keep'. If you use 'cwd' property in a specific task, consider using this parameter. This parameter determines the behavior of the current working directory (CWD) when each task ends. In 'restore' mode, the
+                             CWD will be restored to its original state (or the one specified at --cwd) when each task ends, while in 'keep' mode, the CWD will remain unchanged. (default: "restore")
   -h, --help                 display help for command
 ```
 
 
 * Default usage
- $ useful-tasks --config=my_tasks.json
+
+```zsh useful-tasks --config=my_tasks.json```
 
 * Process with including specific tasks
- $ useful-tasks --config=my_tasks.json --include=my_task_1,my_task_2
+
+```zsh useful-tasks --config=my_tasks.json --include=my_task_1,my_task_2```
 
 * Process without some of tasks
- $ useful-tasks --config=my_tasks.json --exclude=my_task_1,my_task_2
+
+```zsh useful-tasks --config=my_tasks.json --exclude=my_task_1,my_task_2```
 
 * The custom variables can be set using command-line parameters. Just use the prefix '--var-' followed by the key-value pair, e.g., '--var-my-key=VALUE'. You can then use this custom variable in your configuration using the syntax '${myKey}'. This will have the same effect as the 'set-var' task.
- $ useful-tasks --config=my_tasks.json --var-my-key=VALUE
+
+ ```zsh useful-tasks --config=my_tasks.json --var-my-key=VALUE```
 
 * You can turn off the camel case conversion by setting the '--camel-keys' parameter to false. Then you can use it with '${my-key}'.
- $ useful-tasks --config=my_tasks.json --camel-keys=false --var-my-key=VALUE
+
+ ```zsh useful-tasks --config=my_tasks.json --camel-keys=false --var-my-key=VALUE```
 
 ## Supported Tasks
 * cmd
@@ -55,15 +62,17 @@ Options:
 * set-var
 * env-var
 * symlink
-* git-repo-prepare
 * fs-copy
 * fs-del
+* git-repo-prepare
+* sub-tasks
+
 
 ## Configuration
 The tasks will be processed in the order they are specified.
 
 ### A basic structure
-```json
+```json5
 {
     "name":"Sample",
     "tasks":[
@@ -76,7 +85,7 @@ The tasks will be processed in the order they are specified.
 ```
 
 ### Environment configuration
-```json
+```json5
 {
     "name":"Sample",
     //Optional.
@@ -85,7 +94,8 @@ The tasks will be processed in the order they are specified.
         "verbose":false,
         //Optional. To see what happens with 'git-repo-prepare' task.
         "verboseGit":false,
-        //Optional. The regular expression used for replacing parts of the text with variables. The default regex targets the format '${VARIABLE_KEY}'. DEFAULT="\$\{([a-zA-Z0-9\.\-_]*)\}"
+        //Optional. The regular expression used for replacing parts of the text with variables. The default regex targets the format '${VARIABLE_KEY}'. 
+        //DEFAULT="\$\{([a-zA-Z0-9\.\-_]*)\}"
         "replaceRegex":"..."
     },
     "tasks":[
@@ -97,7 +107,7 @@ The tasks will be processed in the order they are specified.
 ### Common Task structure
 All tasks have the following common properties
 
-```json
+```json5
 {
     "name":"Sample",
     "tasks":[
@@ -111,10 +121,12 @@ All tasks have the following common properties
             //Optional. Used by include or exclude specific tasks.
             "tags":[],
 
-            //Optional. If the value is false, the task will be skipped without being processed. DEFAULT=true
+            //Optional. If the value is false, the task will be skipped without being processed.
+            //DEFAULT=true
             "enabled":true,
 
-            //Optional. Current working directory. Each task can be proccessed in a different directory. DEFAULT="."
+            //Optional. Current working directory. Each task can be proccessed in a different directory. 
+            //DEFAULT="."
             "cwd":"...",
         }
     ]
@@ -122,47 +134,10 @@ All tasks have the following common properties
 ```
 
 ### Tasks
-```json
+```json5
 {
     "name":"Sample",
     "tasks":[
-         {
-            //This task sets up a Git repository. The main purpose is to prepare the Git repository to be usable, utilizing various Git commands such as clone, checkout, reset, fetch, and clean.
-            "type":"git-repo-prepare",
-
-            //A path of git(local) repository
-            "localPath":"./path/of/local/git/repository",
-
-            //Optional. Set a value if you want to use a different binary of git. DEFAULT="git"
-            "bin":"git",
-            
-            //Optional. Leave it empty if using local repository.
-            "url":"https://.../xxx.git",
-
-            //Optional. Specify a branch(local) that you want to use
-            "branch":"master",
-            
-            //Optional. Use a specific commit hash, tag or another branch(e.g origin/master)
-            "startPoint":"origin/master",
-            
-            //Optional.
-            "updateSubmodules":false
-        },
-        {
-            "type":"symlink",
-            
-            //"TARGET PATH of SYMLINK"
-            "target":"./symlink_target",
-            
-            //"SYMLINK DESTINATION PATH"
-            "path":"./symlink_path",
-            
-            //Remove an existing path and recreate a symlink each time the process is executed
-            "forced":true,
-            
-            //'dir', 'file', 'junction'
-            "linkType":"dir"
-        },
         {
             //Run a terminal command
             "type":"cmd",
@@ -191,11 +166,13 @@ All tasks have the following common properties
             //The variable can be a path of the file for the "varType":"file"
             "var":"path/of/json/file.json",
 
-            //Optional. It can be used as either 'value' or 'file.' If the 'varType' is 'file,' the 'var' must be a file path. DEFAULT="value"
+            //Optional. It can be used as either 'value' or 'file.' If the 'varType' is 'file,' the 'var' must be a file path.
+            //DEFAULT="value"
             "varType":"value",
 
             //Optional. This option applies when the 'varType' parameter is set to 'file', and can be set to either 'json' or 'string'. 
-            //When set to 'json', the content of the file will be parsed as JSON. DEFAULT="string"
+            //When set to 'json', the content of the file will be parsed as JSON.
+            //DEFAULT="string"
             "fileFormat":"string"
         },
 
@@ -212,7 +189,7 @@ All tasks have the following common properties
             //The example content of the file.json
             //{
             //  "ENV_VAR_1":"HELLO",
-            //  "ENV_VAR_2":"WORLD"    
+            //  "ENV_VAR_2":"WORLD"
             //}
             "var":"path/of/json/file.json",
 
@@ -227,7 +204,8 @@ All tasks have the following common properties
             //To output a text
             "type":"output",
             "text":"Hello world!",
-            //Optional. 'console' or 'c', 'file-write' or 'fw', 'file-append' or 'fa'. Default="console"
+            //Optional. 'console' or 'c', 'file-write' or 'fw', 'file-append' or 'fa'. 
+            //Default="console"
             "target":"file-write",
             //Optional. But required on "target" is "file".
             "path":"my-output.txt"
@@ -247,8 +225,9 @@ All tasks have the following common properties
 
             //Optional.
             "options":{
-                //Default=true
-                "overwite":true
+                //Optional. 'skip' or 'overwrite'
+                //Default="overwrite"
+                "conflict":"overwrite"
             }
         },
 
@@ -256,12 +235,100 @@ All tasks have the following common properties
             //To delete a file or directory
             "type":"fs-del",
             "path":"delete-target.txt"
+        },
+
+        {
+            "type":"symlink",
+            
+            //"TARGET PATH of SYMLINK"
+            "target":"./symlink_target",
+            
+            //"SYMLINK DESTINATION PATH"
+            "path":"./symlink_path",
+            
+            //Remove an existing path and recreate a symlink each time the process is executed
+            "forced":true,
+            
+            //'dir', 'file', 'junction'
+            "linkType":"dir"
+        },
+
+        {
+            //Run another 'useful-tasks' process as a single task with specified arguments
+            "type":"sub-tasks",
+
+            //This is same with 'useful-tasks -c another_tasks.json'
+            "args":"-c another_tasks.json",
+        },
+
+        {
+            //This task sets up a Git repository. The main purpose is to prepare the Git repository to be usable, utilizing various Git commands such as clone, checkout, reset, fetch, and clean.
+            "type":"git-repo-prepare",
+
+            //A path of git(local) repository
+            "localPath":"./path/of/local/git/repository",
+
+            //Optional. Set a value if you want to use a different binary of git.
+            //DEFAULT="git"
+            "bin":"git",
+            
+            //Optional. Leave it empty if using local repository.
+            "url":"https://.../xxx.git",
+
+            //Optional. Specify a branch(local) that you want to use
+            "branch":"master",
+            
+            //Optional. Use a specific commit hash, tag or another branch(e.g origin/master)
+            "startPoint":"origin/master",
+            
+            //Optional.
+            "updateSubmodules":false
         }
     ]
 }
 ```
 
 ## Tips
+
+### Json5 formatting
+
+The default JSON parser used is json5, allowing you to write tasks with comments and line breaks.
+
+```json5
+{
+    //my comment
+    "type":"output",
+    "text":"HELLO \
+world!!!"
+}
+```
+
+### Replacement string with 'set-var' 
+
+The values specified in the 'set-var' task can replace any string properties in the subsequent tasks, except for the 'id' and 'tags' properties.
+
+```json5
+{
+    "tasks":[
+        {
+            "type":"set-var",
+            "key":"myVar",
+            "var":"HELLO set-var"
+        },
+        {
+            "type":"output",
+            "text":"The message: ${myVar}"
+        },
+    ]
+}
+```
+
+will output
+
+```
+The message: Hello set-var
+```
+
 
 ### Accessing default variables
 

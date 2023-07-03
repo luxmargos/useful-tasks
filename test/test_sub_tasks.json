@@ -1,0 +1,14 @@
+{
+    "name":"Sample",
+    "env":{
+        "verbose":true,
+        "verboseGit":true
+    },
+
+    "tasks":[
+        {
+            "type":"sub-tasks",
+            "args":"-c test_outputs.json -i task-3"
+        }
+    ]
+}

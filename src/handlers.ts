@@ -2,12 +2,12 @@ import fs from 'fs';
 import { execSync } from 'child_process';
 import path from 'path';
 import {CheckRepoActions, ResetMode, simpleGit} from 'simple-git';
-import fsExtra, { copySync, mkdirpSync } from 'fs-extra'
-import { removeSync } from 'fs-extra';
+import { copySync, mkdirpSync, removeSync } from 'fs-extra'
 import debug from 'debug';
-import { TAG, Task, TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, TaskOutputTargets, TaskFsCopy, TaskFsDelete, TaskEnvVar } from './task_data';
-import { convertOrNotHyphenTextToCamelText, loadJson } from './utils';
+import { TAG, TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, TaskOutputTargets, TaskFsCopy, TaskFsDelete, TaskEnvVar } from './task_data';
+import { loadJson } from './utils';
 import json5 from 'json5';
+import { setEnvVar, setTaskVar } from './task_utils';
 
 const vlog = debug(TAG);
 
@@ -107,10 +107,6 @@ export const handleTerminalCommand = async (context:TaskContext, task:TaskTermin
     })
 }
 
-export const setTaskVar = (context:TaskContext, key:string, value:any)=>{
-    vlog(`Sets the variable ${key}=${value}`);
-    context.vars[key] = value;
-}
 
 export const handleSetVar = async (context:TaskContext, task:TaskSetVar)=>{
     if(task.key === undefined || !task.key || typeof(task.key) !== 'string' || task.key.length < 1){
@@ -137,20 +133,6 @@ export const handleSetVar = async (context:TaskContext, task:TaskSetVar)=>{
     setTaskVar(context, task.key, taskVar);
 }
 
-export const setEnvVar = (context:TaskContext, key:string, value:any)=>{
-    var valueType = typeof(value);
-    if(valueType !== 'string' && valueType !== 'number' && valueType !== 'boolean'){
-        vlog(`Ignoring the invalid typed(${valueType}) environment variable ${key}=${value}`);
-    }else{
-        const stringVal = String(value);
-        if(stringVal.length < 1){
-            vlog(`Ignoring the invalid environment variable ${key}=${value}`);
-        }else{
-            vlog(`Sets the environment variable ${key}=${value}`);
-            process.env[key] = String(value);
-        }
-    }
-}
 
 export const handleEnvVar = async (context:TaskContext, task:TaskEnvVar)=>{
     let taskVar = task.var;
@@ -214,82 +196,16 @@ export const handleOutput = async (context:TaskContext, task:TaskOutput)=>{
 }
 
 export const handleFsCopy = async (context:TaskContext, task:TaskFsCopy)=>{
-    copySync(task.src, task.dest, task.options);
+    let overwrite = task?.options?.conflict !== 'skip';
+
+    /** @deprecated support migrate from '0.1.18' */ 
+    if(task.options && 'overwrite' in task?.options && typeof(task?.options?.overwrite) === 'boolean'){
+        overwrite = task.options.overwrite;
+    }
+    
+    copySync(task.src, task.dest,{overwrite});
 }
 
 export const handleFsDelete = async (context:TaskContext, task:TaskFsDelete)=>{
     removeSync(task.path);
 }
-
-export const applyVariables = async (context:TaskContext, task:Task)=>{
-    const anyTypeTask:any = task as any;
-        Object.keys(anyTypeTask).forEach(key => {
-            if(anyTypeTask[key] !== undefined && typeof(anyTypeTask[key]) ==='string'){
-                let valueOfKey:string = anyTypeTask[key];
-                while(true){
-                    const match = context.replaceRegex.exec(valueOfKey);
-                    if(match === null || match === undefined){
-                        break;
-                    }
-                    
-                    const matchedStr = match[0];
-                    const varPath = match[1];
-
-                    let currentVar = context.vars;
-                    if(varPath.length > 0){
-                        const varPaths = varPath.split(".");
-                        for(let i=0; i<varPaths.length;i++){
-                            const varEl = varPaths[i];
-                            if(currentVar.hasOwnProperty(varEl)){
-                                currentVar = currentVar[varEl];
-                            }else{
-                                throw new Error(`The value of ${varPath} could not be found!`);
-                            }
-                        }
-                    }
-
-                    const valuePrefix = valueOfKey.substring(0, match.index);
-                    const valueReplace = `${currentVar}`;
-                    const valueSuffix = valueOfKey.substring(match.index+matchedStr.length);                    
-                    valueOfKey = `${valuePrefix}${valueReplace}${valueSuffix}`;
-                    vlog(`Updated value ${valueOfKey}`);
-                }
-                
-                anyTypeTask[key] = valueOfKey;
-            }
-        });
-};
-
-
-export const searchExtraKeyValue = (extraArgs:string[], fmt:string, convertToCamelKeys:boolean, callback:(key:string, value:string)=>void)=>{
-    let currentVarName:string|undefined;
-    let useNextElementAsVar:boolean = false;
-    
-    for(let extraArg of extraArgs){
-        const arg = extraArg.trim();
-        if(arg === '--'){
-            vlog("Stop parsing by '--'")
-            break;
-        }
-
-        if(useNextElementAsVar && currentVarName){
-            const value = extraArg.startsWith("-") ? "":extraArg;
-            callback(currentVarName, value);
-            currentVarName = undefined;
-            useNextElementAsVar = false;
-        }else{
-            const prefixIndex = extraArg.indexOf(fmt);
-            if(prefixIndex >= 0){
-                const equalMarkIndex = extraArg.indexOf("=");
-                if(equalMarkIndex >= 0){
-                    const varName = convertOrNotHyphenTextToCamelText(extraArg.substring(fmt.length, equalMarkIndex), convertToCamelKeys);
-                    const value = extraArg.substring(equalMarkIndex+1);
-                    callback(varName, value);
-                }else{
-                    currentVarName = convertOrNotHyphenTextToCamelText(extraArg.substring(fmt.length), convertToCamelKeys);
-                    useNextElementAsVar = true;
-                }
-            }    
-        }
-    }
-};
