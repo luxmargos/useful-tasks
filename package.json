@@ -1,6 +1,6 @@
 {
     "name": "useful-tasks",
-    "version": "0.1.20",
+    "version": "0.1.21",
     "description": "A CLI task runner that utilizes JSON-based configuration and processes tasks sequentially",
     "author": {
         "name": "Jinho Yun",
@@ -28,10 +28,13 @@
     },
     "license": "MIT",
     "keywords": [
+        "cli",
+        "terminal",
+        "task",
+        "fs",
         "git",
         "symlink",
-        "dependency",
-        "task"
+        "dependency"
     ],
     "dependencies": {
         "commander": "^9.4.0",

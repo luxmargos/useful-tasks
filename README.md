@@ -7,16 +7,18 @@ It aims to be useful for setting up a workspace with complex dependencies and mu
 ## Installation
 
 * Use globally
-  $ npm install -g useful-tasks
+
+```npm install -g useful-tasks```
 
 * Project locally
-  $ npm insatll useful-tasks --save-dev
+
+```npm insatll useful-tasks --save-dev```
 
 ## How to use
 
 Useful-tasks can be used through a command line interface
 
- $ useful-tasks --help
+```useful-tasks --help```
 
 ```text
 Usage: useful-tasks [options]
@@ -38,23 +40,23 @@ Options:
 
 * Default usage
 
-```zsh useful-tasks --config=my_tasks.json```
+```useful-tasks --config=my_tasks.json```
 
 * Process with including specific tasks
 
-```zsh useful-tasks --config=my_tasks.json --include=my_task_1,my_task_2```
+```useful-tasks --config=my_tasks.json --include=my_task_1,my_task_2```
 
 * Process without some of tasks
 
-```zsh useful-tasks --config=my_tasks.json --exclude=my_task_1,my_task_2```
+```useful-tasks --config=my_tasks.json --exclude=my_task_1,my_task_2```
 
 * The custom variables can be set using command-line parameters. Just use the prefix '--var-' followed by the key-value pair, e.g., '--var-my-key=VALUE'. You can then use this custom variable in your configuration using the syntax '${myKey}'. This will have the same effect as the 'set-var' task.
 
- ```zsh useful-tasks --config=my_tasks.json --var-my-key=VALUE```
+ ```useful-tasks --config=my_tasks.json --var-my-key=VALUE```
 
 * You can turn off the camel case conversion by setting the '--camel-keys' parameter to false. Then you can use it with '${my-key}'.
 
- ```zsh useful-tasks --config=my_tasks.json --camel-keys=false --var-my-key=VALUE```
+ ```useful-tasks --config=my_tasks.json --camel-keys=false --var-my-key=VALUE```
 
 ## Supported Tasks
 * cmd
