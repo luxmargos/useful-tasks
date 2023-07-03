@@ -1,5 +1,4 @@
-import fse from 'fs-extra';
-
+import { LogLevel } from './build_cli_parser';
 
 export interface TaskContext {
     originCwd:string;
@@ -84,14 +83,19 @@ export interface Config {
     name?:string;
     
     env?:{
+        logLevel?:LogLevel;
+        /** @deprecated */
         verbose?:boolean;
+        /** @deprecated */
         verboseGit?:boolean;
         replaceRegex?:string;
     };
     tasks?:Array<Task>;
 }
 
-export const TAG = "useful-tasks"
+export const LOG_TAG = "useful-tasks";
+export const TAG_DEBUG = `${LOG_TAG}:debug`;
+export const TAG_INFO = `${LOG_TAG}:info`;
 
 /** e.g. ${value.key} */
 export const DEFAULT_REPLACE_REGEX = "\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}";

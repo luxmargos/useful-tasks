@@ -1,8 +1,7 @@
 {
     "name":"Sample",
     "env":{
-        "verbose":true,
-        "verboseGit":true,
+        "logLevel":"debug",
         "replaceRegex":"##([a-zA-Z0-9\\.\\-_]*)##"
     },
     

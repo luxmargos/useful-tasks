@@ -11,6 +11,13 @@ export const cwdModes = [CwdRestore, CwdKeep] as const;
 type CwdModeTuple = typeof cwdModes;
 export type CwdMode = CwdModeTuple[number];
 
+const LogLevelInfo = 'info';
+const LogLevelDebug = 'debug';
+const LogLevelNone = 'none';
+export const logLevels = [LogLevelNone, LogLevelInfo, LogLevelDebug] as const;
+type LogLevelTuple = typeof logLevels;
+export type LogLevel = LogLevelTuple[number];
+
 export interface Options {
     cwd?:string;
     config:string;
@@ -21,6 +28,7 @@ export interface Options {
     camelKeys:boolean;
     cwdMode?:CwdMode;
     cwdModeIsContinue?:boolean;
+    logLevel?:LogLevel;
     extraArgs?:string[];
 }
 
@@ -43,6 +51,7 @@ export const setup = (userArgv?:string[])=> {
     .option('-x, --exclude-cta <items>','Exclude tasks that contain all of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02')
     .option('--camel-keys <boolean>','Specify whether to use camel case for the key of the variable. If the value is true, the paramter "--var-my-key" will be converted to "myKey" otherwise it will be "my-key"', DEFAULT_USE_CAMEL)
     .option('--cwd-mode <string>',argDesc.cwdMode, CwdRestore)
+    .option('--log-level <string>', `Specify the logging level as ${logLevels.join(',')}. This parameter takes higher priority than the 'json' configuration.`, LogLevelInfo)
     .allowUnknownOption(true);
     
     if(userArgv !== undefined){

@@ -4,6 +4,9 @@ import { Command } from 'commander';
 declare const cwdModes: readonly ["restore", "keep"];
 type CwdModeTuple = typeof cwdModes;
 type CwdMode = CwdModeTuple[number];
+declare const logLevels: readonly ["none", "info", "debug"];
+type LogLevelTuple = typeof logLevels;
+type LogLevel = LogLevelTuple[number];
 interface Options {
     cwd?: string;
     config: string;
@@ -14,6 +17,7 @@ interface Options {
     camelKeys: boolean;
     cwdMode?: CwdMode;
     cwdModeIsContinue?: boolean;
+    logLevel?: LogLevel;
     extraArgs?: string[];
 }
 

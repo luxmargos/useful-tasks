@@ -34,9 +34,9 @@ Options:
   --camel-keys <boolean>     Specify whether to use camel case for the key of the variable. If the value is true, the paramter "--var-my-key" will be converted to "myKey" otherwise it will be "my-key" (default: true)
   --cwd-mode <string>        Choose between 'restore' or 'keep'. If you use 'cwd' property in a specific task, consider using this parameter. This parameter determines the behavior of the current working directory (CWD) when each task ends. In 'restore' mode, the
                              CWD will be restored to its original state (or the one specified at --cwd) when each task ends, while in 'keep' mode, the CWD will remain unchanged. (default: "restore")
+  --log-level <string>       Specify the logging level as none,info,debug. This parameter takes higher priority than the 'json' configuration. (default: "info")
   -h, --help                 display help for command
 ```
-
 
 * Default usage
 
@@ -92,10 +92,10 @@ The tasks will be processed in the order they are specified.
     "name":"Sample",
     //Optional.
     "env":{
-        //Optional. To see what happens throughout the entire process.
-        "verbose":false,
-        //Optional. To see what happens with 'git-repo-prepare' task.
-        "verboseGit":false,
+        //Optional. Specify the logging level as 'info', 'debug', or 'none'.
+        //Default="info"
+        "logLevel":"info",
+        
         //Optional. The regular expression used for replacing parts of the text with variables. The default regex targets the format '${VARIABLE_KEY}'. 
         //DEFAULT="\$\{([a-zA-Z0-9\.\-_]*)\}"
         "replaceRegex":"..."
@@ -130,6 +130,9 @@ All tasks have the following common properties
             //Optional. Current working directory. Each task can be proccessed in a different directory. 
             //DEFAULT="."
             "cwd":"...",
+
+            //Optional. The comment will be printed before starting a task, unless you set the --log-level to none.
+            "comment":"..."
         }
     ]
 }

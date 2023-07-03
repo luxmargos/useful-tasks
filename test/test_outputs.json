@@ -1,14 +1,14 @@
 {
     "name":"Sample",
     "env":{
-        "verbose":true,
-        "verboseGit":true
+         "logLevel":"debug"
     },
     "tasks":[
         {
             "id":"task-1",
             "tags":["tag-a"],
             "type":"output",
+            "comment":"OUTPUT TASK",
             "text":"task-1!"
         },
         {

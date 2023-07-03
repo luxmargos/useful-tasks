@@ -1,8 +1,6 @@
-import debug from "debug";
-import { TAG, Task, TaskContext } from "./task_data";
+import { logv } from "./loggers";
+import { Task, TaskContext } from "./task_data";
 import { convertOrNotHyphenTextToCamelText, loadJson } from './utils';
-
-const vlog = debug(TAG);
 
 export const applyVariables = async (context:TaskContext, task:Task)=>{
     const anyTypeTask:any = task as any;
@@ -43,7 +41,7 @@ export const applyVariables = async (context:TaskContext, task:Task)=>{
                 const valueReplace = `${currentVar}`;
                 const valueSuffix = valueOfKey.substring(match.index+matchedStr.length);                    
                 valueOfKey = `${valuePrefix}${valueReplace}${valueSuffix}`;
-                vlog(`Updated value ${valueOfKey}`);
+                logv(`Updated value ${valueOfKey}`);
             }
             
             anyTypeTask[key] = valueOfKey;
@@ -59,7 +57,7 @@ export const searchExtraKeyValue = (extraArgs:string[], fmt:string, convertToCam
     for(let extraArg of extraArgs){
         const arg = extraArg.trim();
         if(arg === '--'){
-            vlog("Stop parsing by '--'")
+            logv("Stop parsing by '--'")
             break;
         }
 
@@ -87,20 +85,20 @@ export const searchExtraKeyValue = (extraArgs:string[], fmt:string, convertToCam
 
 
 export const setTaskVar = (context:TaskContext, key:string, value:any)=>{
-    vlog(`Sets the variable ${key}=${value}`);
+    logv(`Sets the variable ${key}=${value}`);
     context.vars[key] = value;
 }
 
 export const setEnvVar = (context:TaskContext, key:string, value:any)=>{
     var valueType = typeof(value);
     if(valueType !== 'string' && valueType !== 'number' && valueType !== 'boolean'){
-        vlog(`Ignoring the invalid typed(${valueType}) environment variable ${key}=${value}`);
+        logv(`Ignoring the invalid typed(${valueType}) environment variable ${key}=${value}`);
     }else{
         const stringVal = String(value);
         if(stringVal.length < 1){
-            vlog(`Ignoring the invalid environment variable ${key}=${value}`);
+            logv(`Ignoring the invalid environment variable ${key}=${value}`);
         }else{
-            vlog(`Sets the environment variable ${key}=${value}`);
+            logv(`Sets the environment variable ${key}=${value}`);
             process.env[key] = String(value);
         }
     }

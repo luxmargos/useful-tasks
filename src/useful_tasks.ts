@@ -1,11 +1,12 @@
 import path from 'path';
-import { Options, setup } from './build_cli_parser';
-import { containsAllTag, containsTag, convertOrNotHyphenTextToCamelText, loadJsonConfig } from './utils';
+import { LogLevel, Options, logLevels } from './build_cli_parser';
+import { containsAllTag, containsTag, loadJsonConfig } from './utils';
 import debug from 'debug';
-import { Config, TAG, Task, TaskContext, DEFAULT_REPLACE_REGEX, VAR_FROM_ARGUMENT_PREFIX,  ENV_VAR_FROM_ARGUMENT_PREFIX } from './task_data';
+import { Config, TAG_DEBUG, Task, TaskContext, DEFAULT_REPLACE_REGEX, VAR_FROM_ARGUMENT_PREFIX,  ENV_VAR_FROM_ARGUMENT_PREFIX, LOG_TAG, TAG_INFO } from './task_data';
 import { applyVariables, searchExtraKeyValue, setTaskVar, setEnvVar } from './task_utils';
 import { Command } from 'commander';
 import { handlerMap } from './handler_map';
+import { logi, logv } from './loggers';
 
 export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
     let tasksConfig:Config = {};
@@ -23,24 +24,45 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
         program.help();
     }
     
-    let debugPat:string = '';
+    let debugPat:string | undefined;
     
+    let logLevel:LogLevel = 'info';
     let replaceRegex = DEFAULT_REPLACE_REGEX;
     if(tasksConfig.env && typeof(tasksConfig.env) === 'object'){
         const env = tasksConfig.env;
-        if(env.verbose){
-            debugPat = `${TAG}, ${TAG}:*`;
-        }
         
-        if(env.verboseGit){
-            debugPat = `${debugPat},simple-git,simple-git:*`;
+        if(env.verbose || env.verboseGit){
+            logLevel = 'debug';
+        }
+
+        if(env.logLevel && logLevels.includes(env.logLevel)){
+            logLevel = env.logLevel;
         }
     
         if(env.replaceRegex){
             replaceRegex = env.replaceRegex;
         }
     }
+
+    //cli argument can overwrite json's logLeve
+    if(opt.logLevel && logLevels.includes(opt.logLevel)){
+        logLevel = opt.logLevel;
+    }
+
+    if(logLevel === 'debug'){
+        // debugPat = `${LOG_TAG}:*`;
+        debugPat = `${TAG_INFO},${TAG_DEBUG}`;
+        debugPat = `${debugPat},simple-git,simple-git:*`;
+    }else if(logLevel === 'info'){
+        debugPat = `${TAG_INFO}`;
+    }
     
+    if(debugPat){
+        debug.enable(debugPat);
+    }
+
+    logv(`CLI Options`, opt);
+
     if(typeof(replaceRegex) !== 'string'){
         throw new Error(`replaceRegex '${replaceRegex}'  must be a string`);
     }
@@ -51,11 +73,6 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
         throw new Error(`replaceRegex '${replaceRegex}' must contain regex group express '(' and ')'`);
     }
     
-    if(debugPat){
-        debug.enable(debugPat);
-    }
-    
-    const vlog = debug(TAG);
     const baseCwd = path.resolve(process.cwd());
     
     const context:TaskContext = {
@@ -71,19 +88,19 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
     };
     
     if(opt.extraArgs){
-        vlog("Setting up the variables from the additional arguments");
+        logv("Setting up the variables from the additional arguments");
         searchExtraKeyValue(opt.extraArgs, VAR_FROM_ARGUMENT_PREFIX, opt.camelKeys, (key:string, value:string)=>{
             setTaskVar(context, key, value);
         });
     
-        vlog("Setting up the environment variables from the additional arguments");
+        logv("Setting up the environment variables from the additional arguments");
         searchExtraKeyValue(opt.extraArgs, ENV_VAR_FROM_ARGUMENT_PREFIX, opt.camelKeys, (key:string, value:string)=>{
             setEnvVar(context, key, value);
         });
     }
     
-    vlog("");
-    vlog(`[${tasksConfig.name}] Start task processing`);
+    logi("");
+    logi(`[${tasksConfig.name}] Start task processing`);
     
     const getTaskRepresentStr = (task:Task, i?:number)=>{ 
         if(i !== undefined && i !== null){
@@ -128,7 +145,7 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
             }
             if(task.tags){
                 const printInvalidTags = (tags:any)=>{
-                    vlog(`Ignoring invalid tags '${tags}'`);
+                    logv(`Ignoring invalid tags '${tags}'`);
                 };
                 if(typeof(task.tags) === 'string'){
                     if(task.tags.length > 0){
@@ -155,7 +172,7 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
         if(opt.exclude && opt.exclude.length > 0){
             const excludeItems = opt.exclude;
     
-            vlog(`Excluding tasks by specified IDs or Tags : --exclude=${excludeItems}`);
+            logv(`Excluding tasks by specified IDs or Tags : --exclude=${excludeItems}`);
                 tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
                 if(containsTag(excludeItems, taskItem.__compare__elements) === false){
                     return taskItem;
@@ -165,7 +182,7 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
         if(opt.excludeCta && opt.excludeCta.length > 0){
             const excludesItems = opt.excludeCta;
     
-            vlog(`Excluding tasks by specified IDs or Tags : --exclude-cta=${excludesItems}`);
+            logv(`Excluding tasks by specified IDs or Tags : --exclude-cta=${excludesItems}`);
                 tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
                 if(containsAllTag(excludesItems, taskItem.__compare__elements) === false){
                     return taskItem;
@@ -178,7 +195,7 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
             const includeItems = opt.include;
             const includeCtaItems = opt.includeCta;
     
-            vlog(`Including tasks by specified IDs or Tags : --include=${includeItems} / --include-cta=${includeCtaItems}`);
+            logv(`Including tasks by specified IDs or Tags : --include=${includeItems} / --include-cta=${includeCtaItems}`);
             tasks = tasks.filter((taskItem:Task, index:number, array:Task[])=>{
                 if(
                     (hasIncludeFilters && containsTag(includeItems!, taskItem.__compare__elements) === true)
@@ -190,7 +207,7 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
             });
         }
     
-        vlog(`Tasks : ${tasks.map((v,i)=>{ return getTaskRepresentStr(v,i);})}`);
+        logi(`Tasks : ${tasks.map((v,i)=>{ return getTaskRepresentStr(v,i);})}`);
     
         const taskCount = tasks.length ?? 0;
         for(let i=0;i<taskCount; i++){
@@ -199,19 +216,21 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
     
             const taskRepresentStr = getTaskRepresentStr(task,i);
             if(task.enabled === false){
-                vlog(`\n### Skip the task without execution => ${taskRepresentStr}`);
+                logi(`\n### Skip the task without execution => ${taskRepresentStr}`);
                 continue;
             }else{
-                vlog(`\n### Task : ${taskRepresentStr}`)
+                logi(`\n### Task : ${taskRepresentStr}`)
             }
     
             if(task.comment){
-                vlog(task.comment);
+                logi(task.comment);
             }
     
+            let cwdHasChanges = false;
             if(task.cwd){
                 const taskCwd = path.resolve(task.cwd);
-                vlog(`Changing the current working directory => ${taskCwd}`);
+                logi(`Changing the current working directory => ${taskCwd}`);
+                cwdHasChanges = true;
                 process.chdir(taskCwd);
             }
             
@@ -219,6 +238,9 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
             await taskHandler(context, task);
     
             if(!opt.cwdModeIsContinue){
+                if(cwdHasChanges){
+                    logi(`Restoring the current working directory => ${baseCwd}`);
+                }
                 process.chdir(baseCwd);
             }
         }
@@ -228,7 +250,7 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
         throw reason;
     }).finally(()=>{
         process.chdir(baseCwd);
-        vlog(`[${tasksConfig.name}] Tasks completed`);
-        vlog("");
+        logv(`[${tasksConfig.name}] Tasks completed`);
+        logv("");
     });
 };

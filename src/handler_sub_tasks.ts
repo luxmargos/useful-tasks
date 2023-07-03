@@ -1,10 +1,7 @@
 import stringArgv from 'string-argv';
-import { TAG, TaskContext, TaskSubTasks } from './task_data';
-import debug from 'debug';
+import { TaskContext, TaskSubTasks } from './task_data';
 import { usefulTasks } from './useful_tasks';
 import { setup } from './build_cli_parser';
-
-const vlog = debug(TAG);
 
 export const handleSubTasks = async (context:TaskContext, task:TaskSubTasks)=>{
     if(!task.args || typeof(task.args) !== 'string'){

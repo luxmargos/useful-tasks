@@ -3,13 +3,11 @@ import { execSync } from 'child_process';
 import path from 'path';
 import {CheckRepoActions, ResetMode, simpleGit} from 'simple-git';
 import { copySync, mkdirpSync, removeSync } from 'fs-extra'
-import debug from 'debug';
-import { TAG, TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, TaskOutputTargets, TaskFsCopy, TaskFsDelete, TaskEnvVar } from './task_data';
+import { TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, TaskOutputTargets, TaskFsCopy, TaskFsDelete, TaskEnvVar } from './task_data';
 import { loadJson } from './utils';
 import json5 from 'json5';
 import { setEnvVar, setTaskVar } from './task_utils';
-
-const vlog = debug(TAG);
+import { logv } from './loggers';
 
 export const handleGitRepoSetup = async (context:TaskContext, task:TaskGitCheckout)=>{
     const localPath = path.resolve(task.localPath);
@@ -73,31 +71,31 @@ export const handleSymlink = async (context:TaskContext, task:TaskSymlink)=>{
 
     if(fs.existsSync(dstPath)){
         const lstat:fs.Stats = fs.lstatSync(dstPath);
-        vlog(`LSTAT is symlink? ${lstat.isSymbolicLink()}, is directory? ${lstat.isDirectory()}`);
+        logv(`LSTAT is symlink? ${lstat.isSymbolicLink()}, is directory? ${lstat.isDirectory()}`);
         if(task.forced){
             if(lstat.isSymbolicLink() || lstat.isFile()){
-                vlog(`Unlink ${dstPath}`);
+                logv(`Unlink ${dstPath}`);
                 fs.unlinkSync(dstPath);
             }else if(lstat.isDirectory()){
-                vlog(`Remove directory '${dstPath}'`);
+                logv(`Remove directory '${dstPath}'`);
                 removeSync(dstPath);
             }
         }
     }
 
     if(fs.existsSync(dstPath)){
-        vlog(`Could not create symbolic link cause '${dstPath}' already exists`);
+        logv(`Could not create symbolic link cause '${dstPath}' already exists`);
         // throw Error()
     }else{
-        vlog(`Create symbolic link ${target} => ${dstPath}`);
+        logv(`Create symbolic link ${target} => ${dstPath}`);
         fs.symlinkSync(target, dstPath, task.linkType);
         const lstat:fs.Stats = fs.lstatSync(dstPath);
-        vlog(`LSTAT is symlink? ${lstat.isSymbolicLink()}, is directory? ${lstat.isDirectory()}`);
+        logv(`LSTAT is symlink? ${lstat.isSymbolicLink()}, is directory? ${lstat.isDirectory()}`);
     }
 }
 
 export const handleTerminalCommand = async (context:TaskContext, task:TaskTerminalCommand)=>{
-    vlog(`Start execution... ${task.cmd}`);
+    logv(`Start execution... ${task.cmd}`);
     execSync(task.cmd,{
         shell: task.shell,
         // cwd: cwd, 
