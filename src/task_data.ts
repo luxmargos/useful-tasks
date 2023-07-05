@@ -43,16 +43,19 @@ export interface TaskTerminalCommand extends Task{
     shell?:string;
 }
 
-
 export interface TaskSetVar extends Task{
     key:string;
-    var:string|number|any|boolean;
+    value:string|number|any|boolean;
+    /** @deprecated */
+    var?:string|number|any|boolean;
     varType:'value'|'file';
     fileFormat:'json'|'string';
 }
 
 export interface TaskEnvVar extends Task{
-    var:any;
+    value:any;
+    /** @deprecated */
+    var?:any;
     varType:'dict'|'file';
 }
 
@@ -63,20 +66,44 @@ export interface TaskOutput extends Task{
     path?:string;
 }
 
+export type RegexFriendly = string | string[] | RegexData | RegexData[] | any[];
 export interface TaskFsCopy extends Task{
     src:string;
     dest:string;
     options?:{
-        conflict:'overwrite'|'skip'
+        conflict?:'overwrite'|'skip';
     };
+    
+    include?:string | string[];
+    exclude?:string | string[];
 }
 
 export interface TaskFsDelete extends Task{
     path:string;
+
+    include?:string | string[];
+    exclude?:string | string[];
 }
 
 export interface TaskSubTasks extends Task{
     args:string;
+}
+
+/**
+ * TODO: implements
+ */
+export interface RegexData {
+    pattern:string;
+    flags?:string;
+}
+
+/**
+ * TODO: implements
+ */
+export interface TaskRegexReplace extends Task {
+    files:string | string[];
+    from:string | RegexData[] | RegexData;
+    to:string | string[];
 }
 
 export interface Config {

@@ -9,7 +9,7 @@
         {
             "type":"set-var",
             "key":"key_of_var",
-            "var":{
+            "value":{
                 "a":"value-a",
                 "b":"value-b"
             },

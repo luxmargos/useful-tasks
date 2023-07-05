@@ -41,7 +41,7 @@ export const applyVariables = async (context:TaskContext, task:Task)=>{
                 const valueReplace = `${currentVar}`;
                 const valueSuffix = valueOfKey.substring(match.index+matchedStr.length);                    
                 valueOfKey = `${valuePrefix}${valueReplace}${valueSuffix}`;
-                logv(`Updated value ${valueOfKey}`);
+                logv(`Variable applied '${key}'=>'${valueOfKey}'`);
             }
             
             anyTypeTask[key] = valueOfKey;

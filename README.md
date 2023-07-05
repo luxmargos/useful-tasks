@@ -159,17 +159,17 @@ All tasks have the following common properties
             "key":"access_key_to_var",
 
             //The variable can be a type such as 'string', 'number', 'object' for "varType":"value"
-            "var":"text",
-            "var":1,
+            "value":"text",
+            "value":1,
             //To access nested variable from another task, use the expression 'access_key_to_var.a'
-            "var":{
+            "value":{
                 "a":"value of a",
                 "b":{
                     "c":"value of c"
                 }
             },
             //The variable can be a path of the file for the "varType":"file"
-            "var":"path/of/json/file.json",
+            "value":"path/of/json/file.json",
 
             //Optional. It can be used as either 'value' or 'file.' If the 'varType' is 'file,' the 'var' must be a file path.
             //DEFAULT="value"
@@ -186,7 +186,7 @@ All tasks have the following common properties
             "type":"env-var",
 
             //Set the variable name and text.
-            "var":{
+            "value":{
                 "ENV_VAR_1":"HELLO",
                 "ENV_VAR_2":"WORLD"
             },
@@ -196,7 +196,7 @@ All tasks have the following common properties
             //  "ENV_VAR_1":"HELLO",
             //  "ENV_VAR_2":"WORLD"
             //}
-            "var":"path/of/json/file.json",
+            "value":"path/of/json/file.json",
 
 
             //Optional. It can be used as either 'dict' or 'file.' 
@@ -232,14 +232,33 @@ All tasks have the following common properties
             "options":{
                 //Optional. 'skip' or 'overwrite'
                 //Default="overwrite"
-                "conflict":"overwrite"
-            }
+                "conflict":"overwrite",
+            },
+            //Optional. This option allows you to include specific files using glob patterns. The "src" path must be a directory.
+            "include": "*.txt",
+            //An array is allowed
+            "include":["foo/bar/*","bar/**/*.txt"],
+
+            //Optional. This option allows you to exclude specific files using glob patterns. The "src" path must be a directory.
+            "exclude": "*.txt",
+            //An array is allowed
+            "exclude":["foo/bar/*","bar/**/*.txt"]
         },
 
         {
             //To delete a file or directory
             "type":"fs-del",
-            "path":"delete-target.txt"
+            "path":"delete-target.txt",
+            
+            //Optional. This option allows you to include specific files using glob patterns. The "path" must be a directory.
+            "include": "*.txt",
+            //An array is allowed
+            "include":["foo/bar/*","bar/**/*.txt"],
+
+            //Optional. This option allows you to exclude specific files using glob patterns. The "path" must be a directory.
+            "exclude": "*.txt",
+            //An array is allowed
+            "exclude":["foo/bar/*","bar/**/*.txt"]
         },
 
         {
@@ -318,7 +337,7 @@ The values specified in the 'set-var' task can replace any string properties in 
         {
             "type":"set-var",
             "key":"myVar",
-            "var":"HELLO set-var"
+            "value":"HELLO set-var"
         },
         {
             "type":"output",

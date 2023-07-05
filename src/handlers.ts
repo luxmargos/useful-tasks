@@ -2,12 +2,13 @@ import fs from 'fs';
 import { execSync } from 'child_process';
 import path from 'path';
 import {CheckRepoActions, ResetMode, simpleGit} from 'simple-git';
-import { copySync, mkdirpSync, removeSync } from 'fs-extra'
-import { TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, TaskOutputTargets, TaskFsCopy, TaskFsDelete, TaskEnvVar } from './task_data';
+import { CopyOptionsSync, CopySyncOptions, copyFileSync, copySync, mkdirpSync, removeSync } from 'fs-extra'
+import { TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, TaskOutputTargets, TaskFsCopy, TaskFsDelete, TaskEnvVar, TaskRegexReplace, RegexData, RegexFriendly } from './task_data';
 import { loadJson } from './utils';
 import json5 from 'json5';
 import { setEnvVar, setTaskVar } from './task_utils';
-import { logv } from './loggers';
+import { logi, logv } from './loggers';
+import { glob, globSync } from 'glob';
 
 export const handleGitRepoSetup = async (context:TaskContext, task:TaskGitCheckout)=>{
     const localPath = path.resolve(task.localPath);
@@ -111,44 +112,55 @@ export const handleSetVar = async (context:TaskContext, task:TaskSetVar)=>{
         throw new Error(`Invalid key ${task.key}. It must be a string.`);
     }
     
-    let taskVar = task.var;
+    let value = task.value;
+    //old version support
+    if((value === undefined || value === null) && task.var){
+        value = task.var;
+    }
+
     if(task.varType === 'file'){
-        if(typeof(taskVar) !== 'string'){
-            throw new Error(`The "var" must contain path of a file with "varType":"${task.varType}"`);
+        if(typeof(value) !== 'string'){
+            throw new Error(`The "value" must contain path of a file with "varType":"${task.varType}"`);
         }
         
-        const varsPath = path.resolve(taskVar);
+        const varsPath = path.resolve(value);
         if(!fs.existsSync(varsPath)){
             throw new Error(`File "${varsPath}" does not exist to use as a variable`);
         }
 
-        taskVar = fs.readFileSync(varsPath ,{encoding:'utf8'});
+        value = fs.readFileSync(varsPath ,{encoding:'utf8'});
         if(task.fileFormat === 'json'){
-            taskVar = json5.parse(taskVar);
+            value = json5.parse(value);
         }
     }
 
-    setTaskVar(context, task.key, taskVar);
+    setTaskVar(context, task.key, value);
 }
 
 
 export const handleEnvVar = async (context:TaskContext, task:TaskEnvVar)=>{
-    let taskVar = task.var;
+    let value = task.value;
+
+    //old version support
+    if((value === undefined || value === null) && task.var){
+        value = task.var;
+    }
+    
     if(task.varType === 'file'){
-        if(typeof(taskVar) !== 'string'){
-            throw new Error(`The "var" must contain path of a file with "varType":"${task.varType}"`);
+        if(typeof(value) !== 'string'){
+            throw new Error(`The "value" must contain path of a file with "varType":"${task.varType}"`);
         }
         
-        const varsPath = path.resolve(taskVar);
-        taskVar = loadJson(varsPath);
+        const varsPath = path.resolve(value);
+        value = loadJson(varsPath);
     }
 
-    if(typeof(taskVar) !== 'object'){
-        throw new Error(`The content of the "var" must be in the form of key-value pairs. For example: {"KEY_A":"value_a", "KEY_B":"value_b"}`);
+    if(typeof(value) !== 'object'){
+        throw new Error(`The content of the "value" must be in the form of key-value pairs. For example: {"KEY_A":"value_a", "KEY_B":"value_b"}`);
     }
 
-    Object.keys(taskVar).forEach(key => {
-        setEnvVar(context, key, taskVar[key]);
+    Object.keys(value).forEach(key => {
+        setEnvVar(context, key, value[key]);
     });
 }
 
@@ -193,17 +205,137 @@ export const handleOutput = async (context:TaskContext, task:TaskOutput)=>{
     }
 }
 
+const tryConvertToRegExpArray = (v?:RegexFriendly, defaultValue?:RegExp[] | undefined):RegExp[] | undefined =>{
+    if(v === undefined){
+        return defaultValue;
+    }
+
+    const isRegexData = (v:any)=>{
+        if(typeof(v) === 'object' && 'pattern' in v && typeof(v.pattern) === 'string'){
+            return true;
+        }
+        return false;
+    };
+    const isStringOrRegexData = (s:any) => typeof(s) === 'string' || isRegexData(s);
+
+    let tempInclude:any[] = [];
+    if(typeof(v) === 'string'){
+        tempInclude = [v];
+    }else if(Array.isArray(v)){
+        tempInclude = v.filter(isStringOrRegexData);
+    }else if(isRegexData(v)){
+        tempInclude = [v];
+    }
+
+    return tempInclude.map((v:any)=>{
+        if(typeof(v) === 'string'){
+            return new RegExp(v);
+        }else if(isRegexData(v)){
+            const regexData = v as RegexData;
+            return new RegExp(regexData.pattern, regexData.flags);
+        }
+
+        throw new Error(`Invalid filter, the format is required such as 'string', {"pattern":"..."}`);
+    });
+};
+
+const resolveStringArray = (val:string | string[] | undefined | null, defaultValue:string[]):string[]=>{
+    if(val !== undefined && val !== null){
+        if(typeof(val) === 'string'){
+            return [val];
+        }else if(Array.isArray(val)){
+            return val.filter((v)=>typeof(v)==='string');
+        }
+    }
+
+    return [];
+};
+
+const runCopy = (src:string, dst:string, options:CopySyncOptions)=>{
+    logv(`Copy: ${src} => ${dst}`);
+    copySync(src,dst,options);
+};
+
 export const handleFsCopy = async (context:TaskContext, task:TaskFsCopy)=>{
-    let overwrite = task?.options?.conflict !== 'skip';
+    if(!fs.existsSync(task.src)){
+        throw new Error(`The source '${task.src}' does not exist`);
+    }
+    
+    const conflict = task?.options?.conflict;
+    let overwrite = conflict === undefined || conflict === null || (typeof(conflict) === 'string' && conflict.trim() === 'overwrite');
 
     /** @deprecated support migrate from '0.1.18' */ 
     if(task.options && 'overwrite' in task?.options && typeof(task?.options?.overwrite) === 'boolean'){
         overwrite = task.options.overwrite;
     }
+
+    const opt:CopyOptionsSync = {
+        overwrite:overwrite
+    };
     
-    copySync(task.src, task.dest,{overwrite});
+    if(fs.statSync(task.src).isDirectory() === false){
+        runCopy(task.src, task.dest, opt);
+        return;
+    }
+
+    const includes:string[] = resolveStringArray(task.include, []);
+    const excludes:string[] = resolveStringArray(task.exclude, []);
+
+    const runGlobSync = (items:string[])=>{
+        for(const f of items){
+            const from = path.join(task.src, f);
+            const to = path.join(task.dest, f);
+            runCopy(from, to, opt);
+        }
+    };
+
+    const ilen = includes.length > 0;
+    const elen = excludes.length > 0;
+    if(!ilen && elen){
+        runGlobSync(globSync('**', {ignore:excludes, cwd:task.src}));
+    }else if(ilen && !elen){
+        runGlobSync(globSync(includes, { cwd:task.src}));
+    }else if(ilen && elen){
+        runGlobSync(globSync(includes, {ignore:excludes, cwd:task.src}));
+    }else{
+        runCopy(task.src, task.dest, opt);
+    }
 }
 
+const runDelete = (path:string)=>{
+    logv(`Delete: ${path}`);
+    removeSync(path);
+};
+
 export const handleFsDelete = async (context:TaskContext, task:TaskFsDelete)=>{
-    removeSync(task.path);
+    if(!fs.existsSync(task.path)){
+        logv(`The '${task.path}' does not exist and cannot be deleted`);
+        return;
+    }
+
+    if(fs.statSync(task.path).isDirectory() === false){
+        runDelete(task.path);
+        return;
+    }
+
+    const includes:string[] = resolveStringArray(task.include, []);
+    const excludes:string[] = resolveStringArray(task.exclude, []);
+
+    const runGlobSync = (items:string[])=>{
+        for(const f of items){
+            runDelete(path.join(task.path, f));
+        }
+    };
+
+    const ilen = includes.length > 0;
+    const elen = excludes.length > 0;
+    if(!ilen && elen){
+        runGlobSync(globSync('**', {ignore:excludes, cwd:task.path}));
+    }else if(ilen && !elen){
+        runGlobSync(globSync(includes, { cwd:task.path}));
+    }else if(ilen && elen){
+        runGlobSync(globSync(includes, {ignore:excludes, cwd:task.path}));
+    }else{
+        runDelete(task.path);
+    }
 }

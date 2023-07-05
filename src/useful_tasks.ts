@@ -250,7 +250,6 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
         throw reason;
     }).finally(()=>{
         process.chdir(baseCwd);
-        logv(`[${tasksConfig.name}] Tasks completed`);
-        logv("");
+        logi(`[${tasksConfig.name}] Tasks done\n`);
     });
 };
