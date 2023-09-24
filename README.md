@@ -50,13 +50,17 @@ Options:
 
 ```useful-tasks --config=my_tasks.json --exclude=my_task_1,my_task_2```
 
-* The custom variables can be set using command-line parameters. Just use the prefix '--var-' followed by the key-value pair, e.g., '--var-my-key=VALUE'. You can then use this custom variable in your configuration using the syntax '${myKey}'. This will have the same effect as the 'set-var' task.
+* The variables can be set using command-line parameters. Just use the prefix '--var-' followed by the key-value pair, e.g., '--var-my-key=VALUE'. You can then use this custom variable in your configuration using the syntax '${myKey}'. This will have the same effect as the 'set-var' task.
 
  ```useful-tasks --config=my_tasks.json --var-my-key=VALUE```
 
 * You can turn off the camel case conversion by setting the '--camel-keys' parameter to false. Then you can use it with '${my-key}'.
 
  ```useful-tasks --config=my_tasks.json --camel-keys=false --var-my-key=VALUE```
+
+* The environment variables can be set using command-line parameters. Just use the prefix '--env-' followed by the key-value pair, e.g., '--env-my-key=VALUE'.
+
+ ```useful-tasks --config=my_tasks.json --env-my-key=VALUE```
 
 ## Supported Tasks
 * cmd
@@ -178,7 +182,11 @@ All tasks have the following common properties
             //Optional. This option applies when the 'varType' parameter is set to 'file', and can be set to either 'json' or 'string'. 
             //When set to 'json', the content of the file will be parsed as JSON.
             //DEFAULT="string"
-            "fileFormat":"string"
+            "fileFormat":"string",
+
+            //Optional. Skip setting the variable if it already exists.
+            //DEFAULT=false
+            "fallback":false
         },
 
         {
@@ -202,7 +210,11 @@ All tasks have the following common properties
             //Optional. It can be used as either 'dict' or 'file.' 
             //If the 'varType' is 'file,' the 'var' must be a file path and its content must be a json formatted.
             //DEFAULT="dict"
-            "varType":"dict"
+            "varType":"dict",
+
+            //Optional. Skip setting the environment variable if it already exists.
+            //DEFAULT=false
+            "fallback":false
         },
 
         {

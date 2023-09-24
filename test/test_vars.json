@@ -41,7 +41,8 @@
             "key":"v2",
             "value":[1,2,3],
             "varType":"value",
-            "fileFormat":"string"
+            "fileFormat":"string",
+            "isFallback":true
         },
 
         {

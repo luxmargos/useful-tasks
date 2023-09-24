@@ -46,17 +46,20 @@ export interface TaskTerminalCommand extends Task{
 export interface TaskSetVar extends Task{
     key:string;
     value:string|number|any|boolean;
-    /** @deprecated */
-    var?:string|number|any|boolean;
     varType:'value'|'file';
     fileFormat:'json'|'string';
+    isFallback?:boolean;
+
+    /** @deprecated */
+    var?:string|number|any|boolean;
 }
 
 export interface TaskEnvVar extends Task{
     value:any;
+    varType:'dict'|'file';
+    isFallback?:boolean;
     /** @deprecated */
     var?:any;
-    varType:'dict'|'file';
 }
 
 export type TaskOutputTargets = 'console'|'file-write'|'file-append'|'c'|'fw'|'fa';

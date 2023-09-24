@@ -84,12 +84,17 @@ export const searchExtraKeyValue = (extraArgs:string[], fmt:string, convertToCam
 };
 
 
-export const setTaskVar = (context:TaskContext, key:string, value:any)=>{
+export const setTaskVar = (context:TaskContext, key:string, value:any, skipForExists:boolean)=>{
+    if(skipForExists && context.vars[key] !== undefined){
+        logv(`Skips assigning the variable ${key}=${value} because it already exists.`);
+        return;
+    }
+
     logv(`Sets the variable ${key}=${value}`);
     context.vars[key] = value;
 }
 
-export const setEnvVar = (context:TaskContext, key:string, value:any)=>{
+export const setEnvVar = (context:TaskContext, key:string, value:any, skipForExists:boolean)=>{
     var valueType = typeof(value);
     if(valueType !== 'string' && valueType !== 'number' && valueType !== 'boolean'){
         logv(`Ignoring the invalid typed(${valueType}) environment variable ${key}=${value}`);
@@ -98,6 +103,11 @@ export const setEnvVar = (context:TaskContext, key:string, value:any)=>{
         if(stringVal.length < 1){
             logv(`Ignoring the invalid environment variable ${key}=${value}`);
         }else{
+            if(skipForExists && process.env[key] !== undefined){
+                logv(`Skips assigning the environment variable ${key}=${value} because it already exists.`);
+                return;
+            }
+
             logv(`Sets the environment variable ${key}=${value}`);
             process.env[key] = String(value);
         }

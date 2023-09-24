@@ -118,6 +118,10 @@ export const handleSetVar = async (context:TaskContext, task:TaskSetVar)=>{
         value = task.var;
     }
 
+    if(task.isFallback !== true){
+        task.isFallback = false;
+    }
+
     if(task.varType === 'file'){
         if(typeof(value) !== 'string'){
             throw new Error(`The "value" must contain path of a file with "varType":"${task.varType}"`);
@@ -134,7 +138,7 @@ export const handleSetVar = async (context:TaskContext, task:TaskSetVar)=>{
         }
     }
 
-    setTaskVar(context, task.key, value);
+    setTaskVar(context, task.key, value, task.isFallback);
 }
 
 
@@ -145,6 +149,11 @@ export const handleEnvVar = async (context:TaskContext, task:TaskEnvVar)=>{
     if((value === undefined || value === null) && task.var){
         value = task.var;
     }
+
+    if(task.isFallback !== true){
+        task.isFallback = false;
+    }
+    const isFallback:boolean = task.isFallback;
     
     if(task.varType === 'file'){
         if(typeof(value) !== 'string'){
@@ -160,7 +169,7 @@ export const handleEnvVar = async (context:TaskContext, task:TaskEnvVar)=>{
     }
 
     Object.keys(value).forEach(key => {
-        setEnvVar(context, key, value[key]);
+        setEnvVar(context, key, value[key], isFallback);
     });
 }
 

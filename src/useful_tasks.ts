@@ -90,12 +90,12 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
     if(opt.extraArgs){
         logv("Setting up the variables from the additional arguments");
         searchExtraKeyValue(opt.extraArgs, VAR_FROM_ARGUMENT_PREFIX, opt.camelKeys, (key:string, value:string)=>{
-            setTaskVar(context, key, value);
+            setTaskVar(context, key, value, false);
         });
     
         logv("Setting up the environment variables from the additional arguments");
         searchExtraKeyValue(opt.extraArgs, ENV_VAR_FROM_ARGUMENT_PREFIX, opt.camelKeys, (key:string, value:string)=>{
-            setEnvVar(context, key, value);
+            setEnvVar(context, key, value, false);
         });
     }
     
