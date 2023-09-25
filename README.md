@@ -295,12 +295,12 @@ All tasks have the following common properties
             //Optional. The count of loops for the entire find and replace operation. If Regular Expression is used with flags, including 'g', it is recommended to leave it as is.
             "loop":1,
 
-            //Optional. This option allows you to include specific files using glob patterns. The "src" path must be a directory.
+            //Optional. This option allows you to include specific files using glob patterns. The "path" must be a directory.
             "include": "*.txt",
             //An array is allowed
             "include":["foo/bar/*","bar/**/*.txt"],
 
-            //Optional. This option allows you to exclude specific files using glob patterns. The "src" path must be a directory.
+            //Optional. This option allows you to exclude specific files using glob patterns. The "path" must be a directory.
             "exclude": "*.txt",
             //An array is allowed
             "exclude":["foo/bar/*","bar/**/*.txt"]
