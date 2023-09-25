@@ -1,5 +1,5 @@
 import { handleSubTasks } from "./handler_sub_tasks";
-import { handleEnvVar, handleFsCopy, handleFsDelete, handleGitRepoSetup, handleOutput, handleSetVar, handleSymlink, handleTerminalCommand } from "./handlers";
+import { handleContentReplace, handleEnvVar, handleFsCopy, handleFsDelete, handleGitRepoSetup, handleOutput, handleSetVar, handleSymlink, handleTerminalCommand } from "./handlers";
 import { TaskContext, TaskType } from "./task_data";
 
 export const handlerMap:{
@@ -13,5 +13,6 @@ export const handlerMap:{
     "fs-copy":handleFsCopy,
     "fs-del":handleFsDelete,
     "env-var":handleEnvVar,
-    "sub-tasks": handleSubTasks
+    "sub-tasks": handleSubTasks,
+    "content-replace":handleContentReplace
 };

@@ -7,7 +7,7 @@ export interface TaskContext {
     vars:any;
 }
 
-export const allTaskTypes = ['git-repo-prepare','symlink','cmd','set-var','output','fs-copy','fs-del','env-var','sub-tasks'] as const;
+export const allTaskTypes = ['git-repo-prepare','symlink','cmd','set-var','output','fs-copy','fs-del','env-var','sub-tasks', 'content-replace'] as const;
 type TasksTuple = typeof allTaskTypes;
 export type TaskType = TasksTuple[number];
 
@@ -69,23 +69,23 @@ export interface TaskOutput extends Task{
     path?:string;
 }
 
-export type RegexFriendly = string | string[] | RegexData | RegexData[] | any[];
-export interface TaskFsCopy extends Task{
-    src:string;
-    dest:string;
-    options?:{
-        conflict?:'overwrite'|'skip';
-    };
-    
+export interface GlobFilters {
     include?:string | string[];
     exclude?:string | string[];
 }
 
-export interface TaskFsDelete extends Task{
-    path:string;
+export type TaskFsCopyOptions = {
+    conflict?:'overwrite'|'skip';
+};
 
-    include?:string | string[];
-    exclude?:string | string[];
+export interface TaskFsCopy extends Task, GlobFilters {
+    src:string;
+    dest:string;
+    options?:TaskFsCopyOptions;
+}
+
+export interface TaskFsDelete extends Task, GlobFilters{
+    path:string;
 }
 
 export interface TaskSubTasks extends Task{
@@ -103,10 +103,12 @@ export interface RegexData {
 /**
  * TODO: implements
  */
-export interface TaskRegexReplace extends Task {
-    files:string | string[];
-    from:string | RegexData[] | RegexData;
-    to:string | string[];
+export interface TaskContentReplace extends Task, GlobFilters {
+    path:string;
+
+    find:string | RegexData;
+    replace:string;
+    loop?:number;
 }
 
 export interface Config {

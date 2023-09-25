@@ -7,7 +7,11 @@
         {
             "type":"set-var",
             "key":"src",
-            "value":"copy-filter-del-test-src"
+            "value":"del-filter-test-src"
+        },
+        {
+            "type":"fs-del",
+            "path":"output/${src}"
         },
         {
             "type":"output",
@@ -30,8 +34,9 @@
         {
             "type":"fs-del",
             "path":"output/${src}",
-            "include":["./*"],
-            "exclude":["test.txt"]
+            // "include":["**/*.txt"],
+            // "include":["**"],
+            "exclude":["inner/**"]
         }
     ]
 }

@@ -72,7 +72,7 @@ Options:
 * fs-del
 * git-repo-prepare
 * sub-tasks
-
+* content-replace
 
 ## Configuration
 The tasks will be processed in the order they are specified.
@@ -261,7 +261,7 @@ All tasks have the following common properties
             //To delete a file or directory
             "type":"fs-del",
             "path":"delete-target.txt",
-            
+
             //Optional. This option allows you to include specific files using glob patterns. The "path" must be a directory.
             "include": "*.txt",
             //An array is allowed
@@ -272,6 +272,39 @@ All tasks have the following common properties
             //An array is allowed
             "exclude":["foo/bar/*","bar/**/*.txt"]
         },
+
+        {
+            //Find and replace the content of file
+            "type":"content-replace",
+            //Required.
+            "path":"path_to_file.txt",
+
+            //Required.
+            "find":"TEXT_TO_REPLACE",
+
+            //Required. If you want to use Regular Expression
+            "find":{
+                "pattern":"TEXT_TO_REPLACE",
+                //Opional. Regex Flags
+                "flags":"gi",
+            },
+            
+            //Required.
+            "replace":"REPLACEMENT CONTENT",
+
+            //Optional. The count of loops for the entire find and replace operation. If Regular Expression is used with flags, including 'g', it is recommended to leave it as is.
+            "loop":1,
+
+            //Optional. This option allows you to include specific files using glob patterns. The "src" path must be a directory.
+            "include": "*.txt",
+            //An array is allowed
+            "include":["foo/bar/*","bar/**/*.txt"],
+
+            //Optional. This option allows you to exclude specific files using glob patterns. The "src" path must be a directory.
+            "exclude": "*.txt",
+            //An array is allowed
+            "exclude":["foo/bar/*","bar/**/*.txt"]
+        }
 
         {
             "type":"symlink",

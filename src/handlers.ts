@@ -3,12 +3,16 @@ import { execSync } from 'child_process';
 import path from 'path';
 import {CheckRepoActions, ResetMode, simpleGit} from 'simple-git';
 import { CopyOptionsSync, CopySyncOptions, copyFileSync, copySync, mkdirpSync, removeSync } from 'fs-extra'
-import { TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, TaskOutputTargets, TaskFsCopy, TaskFsDelete, TaskEnvVar, TaskRegexReplace, RegexData, RegexFriendly } from './task_data';
+import { TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, TaskOutputTargets, TaskFsCopy, TaskFsDelete, TaskEnvVar, TaskContentReplace, RegexData } from './task_data';
 import { loadJson } from './utils';
 import json5 from 'json5';
 import { setEnvVar, setTaskVar } from './task_utils';
 import { logi, logv } from './loggers';
-import { glob, globSync } from 'glob';
+import { processWithGlobSync } from './glob_handler';
+
+const throwInvalidParamError = <T, K extends keyof T>(obj:T, key:K) => {
+    throw new Error(`The parameter '${String(key)}' has an invalid value ${obj[key]}`);
+};
 
 export const handleGitRepoSetup = async (context:TaskContext, task:TaskGitCheckout)=>{
     const localPath = path.resolve(task.localPath);
@@ -214,40 +218,6 @@ export const handleOutput = async (context:TaskContext, task:TaskOutput)=>{
     }
 }
 
-const tryConvertToRegExpArray = (v?:RegexFriendly, defaultValue?:RegExp[] | undefined):RegExp[] | undefined =>{
-    if(v === undefined){
-        return defaultValue;
-    }
-
-    const isRegexData = (v:any)=>{
-        if(typeof(v) === 'object' && 'pattern' in v && typeof(v.pattern) === 'string'){
-            return true;
-        }
-        return false;
-    };
-    const isStringOrRegexData = (s:any) => typeof(s) === 'string' || isRegexData(s);
-
-    let tempInclude:any[] = [];
-    if(typeof(v) === 'string'){
-        tempInclude = [v];
-    }else if(Array.isArray(v)){
-        tempInclude = v.filter(isStringOrRegexData);
-    }else if(isRegexData(v)){
-        tempInclude = [v];
-    }
-
-    return tempInclude.map((v:any)=>{
-        if(typeof(v) === 'string'){
-            return new RegExp(v);
-        }else if(isRegexData(v)){
-            const regexData = v as RegexData;
-            return new RegExp(regexData.pattern, regexData.flags);
-        }
-
-        throw new Error(`Invalid filter, the format is required such as 'string', {"pattern":"..."}`);
-    });
-};
-
 const resolveStringArray = (val:string | string[] | undefined | null, defaultValue:string[]):string[]=>{
     if(val !== undefined && val !== null){
         if(typeof(val) === 'string'){
@@ -259,6 +229,7 @@ const resolveStringArray = (val:string | string[] | undefined | null, defaultVal
 
     return [];
 };
+
 
 const runCopy = (src:string, dst:string, options:CopySyncOptions)=>{
     logv(`Copy: ${src} => ${dst}`);
@@ -278,36 +249,23 @@ export const handleFsCopy = async (context:TaskContext, task:TaskFsCopy)=>{
         overwrite = task.options.overwrite;
     }
 
-    const opt:CopyOptionsSync = {
-        overwrite:overwrite
-    };
+    const cpOpt:CopyOptionsSync = { overwrite };
     
-    if(fs.statSync(task.src).isDirectory() === false){
-        runCopy(task.src, task.dest, opt);
-        return;
-    }
-
-    const includes:string[] = resolveStringArray(task.include, []);
-    const excludes:string[] = resolveStringArray(task.exclude, []);
-
     const runGlobSync = (items:string[])=>{
         for(const f of items){
             const from = path.join(task.src, f);
             const to = path.join(task.dest, f);
-            runCopy(from, to, opt);
+            runCopy(from, to, cpOpt);
         }
     };
 
-    const ilen = includes.length > 0;
-    const elen = excludes.length > 0;
-    if(!ilen && elen){
-        runGlobSync(globSync('**', {ignore:excludes, cwd:task.src}));
-    }else if(ilen && !elen){
-        runGlobSync(globSync(includes, { cwd:task.src}));
-    }else if(ilen && elen){
-        runGlobSync(globSync(includes, {ignore:excludes, cwd:task.src}));
-    }else{
-        runCopy(task.src, task.dest, opt);
+    const handled = processWithGlobSync(runGlobSync, task.src, 
+        resolveStringArray(task.include, []),
+        resolveStringArray(task.exclude, []),
+        false, false);
+
+    if(!handled){
+        runCopy(task.src, task.dest, cpOpt);
     }
 }
 
@@ -322,29 +280,118 @@ export const handleFsDelete = async (context:TaskContext, task:TaskFsDelete)=>{
         return;
     }
 
-    if(fs.statSync(task.path).isDirectory() === false){
-        runDelete(task.path);
-        return;
-    }
-
-    const includes:string[] = resolveStringArray(task.include, []);
-    const excludes:string[] = resolveStringArray(task.exclude, []);
-
     const runGlobSync = (items:string[])=>{
         for(const f of items){
             runDelete(path.join(task.path, f));
         }
     };
 
-    const ilen = includes.length > 0;
-    const elen = excludes.length > 0;
-    if(!ilen && elen){
-        runGlobSync(globSync('**', {ignore:excludes, cwd:task.path}));
-    }else if(ilen && !elen){
-        runGlobSync(globSync(includes, { cwd:task.path}));
-    }else if(ilen && elen){
-        runGlobSync(globSync(includes, {ignore:excludes, cwd:task.path}));
-    }else{
+    const handled = processWithGlobSync(runGlobSync, task.path, 
+        resolveStringArray(task.include, []),
+        resolveStringArray(task.exclude, []),
+        false, false);
+
+    if(!handled){
         runDelete(task.path);
     }
 }
+
+const runFindAndReplaceWithRegex = (content:string, find:RegExp, replace:string, repeat:number):string=>{
+    var text:string = content;
+    if(repeat < 1){
+        while(find.test(text)){
+            text = text.replace(find, replace);
+        }
+    }else{
+        for(var i=0;i<repeat;i++){
+            if(find.test(text)){
+                text = text.replace(find, replace);
+            }
+        }
+    }
+    return text;
+};
+
+const runFindAndReplaceWithText = (content:string, find:string, replace:string, repeat:number):string=>{
+    var text:string = content;
+    if(repeat < 1){
+        while(text.indexOf(find) >= 0){
+            text = text.replace(find, replace);
+        }
+    }else{
+        for(var i=0;i<repeat;i++){
+            if(text.indexOf(find) >= 0){
+                text  = text.replace(find, replace);
+            }
+        }
+    }
+    return text;
+};
+
+const isRegexData = (v:any)=>{
+    if(v !== undefined && v !== null && typeof(v) === 'object' && 'pattern' in v && typeof(v.pattern) === 'string'){
+        return true;
+    }
+    return false;
+};
+
+type FindAndReplaceFunc = ((content:string, find:any, replace:string, repeat:number)=>string);
+
+const findAndReplaceWithFile = (path:string, replaceFunc:FindAndReplaceFunc, find:string | RegExp, replace:string, repeat:number) => {
+    logv(`Find and Replace: ${path}`);
+    const content:string = fs.readFileSync(path, 'utf-8');
+    const newContent = replaceFunc(content, find, replace, repeat);
+    fs.writeFileSync(path, newContent, 'utf-8');
+};
+
+export const handleContentReplace = async (context:TaskContext, task:TaskContentReplace)=>{
+    if(!fs.existsSync(task.path)){
+        logv(`The '${task.path}' does not exist`);
+        return;
+    }
+
+    if(task.replace === undefined || typeof(task.replace) !== 'string'){
+        throwInvalidParamError(task, 'replace');
+    }
+
+    let loop:number = task.loop === undefined || task.loop === null? 1 : task.loop;
+    if(typeof(loop) === 'string'){
+        loop = parseInt(loop, 10);
+    }else if(typeof(loop) !== 'number'){
+        throwInvalidParamError(task, 'loop');
+    }
+
+    let find:string | RegExp;
+    let replaceFunc:FindAndReplaceFunc;
+    if(isRegexData(task.find)){
+        const regexData = task.find as RegexData;
+        find = new RegExp(regexData.pattern, regexData.flags);
+        replaceFunc = runFindAndReplaceWithRegex;
+    }else if(typeof(task.find) === 'string'){
+        find = task.find;
+        replaceFunc = runFindAndReplaceWithText;
+    }else{
+        throwInvalidParamError(task, 'find');
+        return;
+    }
+
+    const runGlobSync = (items:string[])=>{
+        for(const f of items){
+            const itemPath:string = path.join(task.path, f);
+            if(fs.statSync(itemPath).isDirectory()){
+                continue;
+            }
+            findAndReplaceWithFile(path.join(task.path, f), replaceFunc, find, task.replace, loop);
+        }
+    };
+
+    const handled = processWithGlobSync(runGlobSync, task.path, 
+        resolveStringArray(task.include, []),
+        resolveStringArray(task.exclude, []),
+        true, true);
+
+    if(!handled){
+        findAndReplaceWithFile(task.path, replaceFunc, find, task.replace, loop);
+    }
+}
+

@@ -1,0 +1,42 @@
+{
+    "name":"Sample",
+    "env":{
+        "logLevel":"debug"
+    },
+    "tasks":[
+        {
+            "type":"fs-del",
+            "path":"output/crtest"
+        },
+        {
+            "type":"output",
+            "text":"A\nREPlACE TEST\nHELLO WORLD!!\nSpecial Characters : {}[].*()\n[]\n[]",
+            "target":"w",
+            "path":"output/crtest/test-a.txt"
+        },
+        {
+            "type":"output",
+            "text":"B\nREPlACE TEST\nHELLO WORLD!!\nSpecial Characters : {}[].*()\n[]\n[]",
+            "target":"w",
+            "path":"output/crtest/test-b.txt"
+        },
+        {
+            "type":"content-replace",
+            "comment":"Replacement with pure text",
+            "path":"output/crtest/test-a.txt",
+            "find":"[]",
+            "replace":"** REPLACED **\n",
+            "loop":2
+        },
+        {
+            "type":"content-replace",
+            "comment":"Replacement with pure text",
+            "path":"output/crtest/test-b.txt",
+            "find":{
+                "pattern":"s",
+                "flags":"gi"
+            },
+            "replace":"** REPLACED **"
+        }
+    ]
+}
