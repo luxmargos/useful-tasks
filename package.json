@@ -1,6 +1,6 @@
 {
     "name": "useful-tasks",
-    "version": "0.1.28",
+    "version": "0.1.29",
     "description": "A CLI task runner that utilizes JSON-based configuration and processes tasks sequentially",
     "author": {
         "name": "Jinho Yun",
@@ -56,7 +56,7 @@
         "start:ts": "ts-node src/index.ts",
         "build": "tsup",
         "watch": "tsup --watch",
-        "prepack": "npm run build",
+        "prepare": "npm run build",
         "print_help": "ts-node src/index.ts --help",
         "test": "npm run test:fs && npm run test:fs2 && npm run test:vars && npm run test:exclude && npm run test:include && npm run test:exclude_include && npm run test:exclude_tag && npm run test:include_tag && npm run test:exclude_include_tag && npm run test:outputs && npm run test:custom_regex && npm run test:sub_tasks && npm run test:fs_cp_filter && npm run test:fs_del_filter",
         "test:fs": "ts-node src/index.ts --cwd=./test --config=test_fs.json",
