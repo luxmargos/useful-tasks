@@ -4,6 +4,10 @@ A CLI task runner that utilizes JSON-based configuration and processes tasks seq
 This project was initiated to resolve git repository dependencies without using git submodules.
 It aims to be useful for setting up a workspace with complex dependencies and multiple preparation steps.
 
+## Support
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/luxmargos)
+
 ## Installation
 
 * Use globally
@@ -13,6 +17,18 @@ It aims to be useful for setting up a workspace with complex dependencies and mu
 * Project locally
 
 ```npm insatll useful-tasks --save-dev```
+
+## Supported Tasks
+* cmd
+* output
+* set-var
+* env-var
+* symlink
+* fs-copy
+* fs-del
+* git-repo-prepare
+* sub-tasks
+* content-replace
 
 ## How to use
 
@@ -61,18 +77,6 @@ Options:
 * The environment variables can be set using command-line parameters. Just use the prefix '--env-' followed by the key-value pair, e.g., '--env-my-key=VALUE'.
 
  ```useful-tasks --config=my_tasks.json --env-my-key=VALUE```
-
-## Supported Tasks
-* cmd
-* output
-* set-var
-* env-var
-* symlink
-* fs-copy
-* fs-del
-* git-repo-prepare
-* sub-tasks
-* content-replace
 
 ## Configuration
 The tasks will be processed in the order they are specified.
