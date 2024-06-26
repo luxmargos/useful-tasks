@@ -1,0 +1,17 @@
+{
+    "name":"Test env-var",
+    "env":{
+        "logLevel":"debug"
+    },
+    "tasks":[
+        {
+            "type":"env-var",
+            "value":"var_dot_env_style.txt",
+            "varType":"file"
+        },
+        {
+            "type":"cmd",
+            "cmd":"echo %a% , %b%, %PATH%"
+        }
+    ]
+}

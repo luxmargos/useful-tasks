@@ -4,7 +4,7 @@ import path from 'path';
 import {CheckRepoActions, ResetMode, simpleGit} from 'simple-git';
 import { CopyOptionsSync, CopySyncOptions, copyFileSync, copySync, mkdirpSync, removeSync } from 'fs-extra'
 import { TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, TaskOutputTargets, TaskFsCopy, TaskFsDelete, TaskEnvVar, TaskContentReplace, RegexData } from './task_data';
-import { loadJson } from './utils';
+import { loadFileOrThrow, loadJson, parseJson } from './utils';
 import json5 from 'json5';
 import { setEnvVar, setTaskVar } from './task_utils';
 import { logi, logv } from './loggers';
@@ -146,6 +146,43 @@ export const handleSetVar = async (context:TaskContext, task:TaskSetVar)=>{
 }
 
 
+const ENV_LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg
+
+// Parse src into an Object
+function parseEnv (src:string) {
+    const obj:any = {}
+
+    // Convert buffer to string
+    let lines = src.toString()
+
+    // Convert line breaks to same format
+    lines = lines.replace(/\r\n?/mg, '\n')
+
+    let match:RegExpExecArray | null;
+    while ((match = ENV_LINE.exec(lines)) != null) {
+        const key = match[1]
+        // Default undefined or null to empty string
+        let value = (match[2] || '')
+        // Remove whitespace
+        value = value.trim()
+        // Check if double quoted
+        const maybeQuote = value[0]
+        // Remove surrounding quotes
+        value = value.replace(/^(['"`])([\s\S]*)\1$/mg, '$2')
+        // Expand newlines if double quoted
+        if (maybeQuote === '"') {
+            value = value.replace(/\\n/g, '\n')
+            value = value.replace(/\\r/g, '\r')
+        }
+
+        // Add to object
+        obj[key] = value
+    }
+
+    return obj
+}
+
+
 export const handleEnvVar = async (context:TaskContext, task:TaskEnvVar)=>{
     let value = task.value;
 
@@ -165,7 +202,18 @@ export const handleEnvVar = async (context:TaskContext, task:TaskEnvVar)=>{
         }
         
         const varsPath = path.resolve(value);
-        value = loadJson(varsPath);
+        let obj:Record<string,any> | undefined;
+        const content = loadFileOrThrow(varsPath);
+        try{
+            obj = parseJson(content);
+        }catch(e){
+        }
+
+        if(!obj){
+            logv("Parsing with JSON failed, for now, trying to parse line literals.")
+            obj = parseEnv(content);
+        }
+        value = obj;
     }
 
     if(typeof(value) !== 'object'){

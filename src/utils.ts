@@ -2,15 +2,19 @@ import fs from 'fs';
 import path from 'path';
 import json5 from 'json5';
 
-export const loadJson = (filePath:string)=>{
+export const loadFileOrThrow = (filePath:string)=>{
     if(!fs.existsSync(filePath)){
         throw new Error(`ERROR: The Path '${filePath}' does not exists!`);
     }
 
-    const fileString = fs.readFileSync(filePath, {encoding:'utf-8'});
-    return json5.parse(fileString);
+    return fs.readFileSync(filePath, {encoding:'utf-8'});
+}
+
+export const loadJson = (filePath:string)=>{
+    return parseJson(loadFileOrThrow(filePath));
 };
 
+export const parseJson = (content:string)=>json5.parse(content);
 
 export const loadJsonConfig = (filePath:string)=>{
     let configJson = loadJson(filePath);

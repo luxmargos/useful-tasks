@@ -76,7 +76,8 @@
         "test:cwd_mode_restore": "ts-node src/index.ts --cwd=./test --config=test_cwd_mode.json --cwd-mode=restore",
         "test:cwd_mode_keep": "ts-node src/index.ts --cwd=./test --config=test_cwd_mode.json --cwd-mode=keep",
         "test:content_replace": "ts-node src/index.ts --cwd=./test --config=test_content_replace.json",
-        "test:content_replace_glob": "ts-node src/index.ts --cwd=./test --config=test_content_replace_glob.json"
+        "test:content_replace_glob": "ts-node src/index.ts --cwd=./test --config=test_content_replace_glob.json",
+        "test:env_var": "ts-node src/index.ts --cwd=./test --config=test_env_vars.json"
     },
     "devDependencies": {
         "@types/commander": "^2.12.2",

@@ -19,6 +19,10 @@ export interface Task {
     enabled?:boolean;
     comment?:string;
     __compare__elements:string[];
+
+    //TODO:
+    /** The process will not be interrupted even if errors are caught from this task. */
+    allowError?:boolean;
 }
 
 export interface TaskGitCheckout extends Task{
@@ -43,22 +47,33 @@ export interface TaskTerminalCommand extends Task{
     shell?:string;
 }
 
+//TODO: Use value as 'value', file as 'path'.
 export interface TaskSetVar extends Task{
     key:string;
-    value:string|number|any|boolean;
+    value:string|number|boolean|any;
     varType:'value'|'file';
-    fileFormat:'json'|'string';
+    //TODO: Implement lines, auto
+    fileFormat?:'json'|'string'|'lines'|'auto';
+
+    /** If the variable already exists, assigning will be skipped */
     isFallback?:boolean;
 
-    /** @deprecated */
-    var?:string|number|any|boolean;
+    /** @deprecated replaced as "value" */
+    var?:string|number|boolean|any;
 }
 
+/** TODO: Use value as a 'value', file as a 'path'. */
 export interface TaskEnvVar extends Task{
-    value:any;
+    value:object | string;
     varType:'dict'|'file';
+
+    //TODO: Implement all
+    fileFormat?:'json'|'lines'|'auto';
+
+    /** If the environment variable already exists, assigning will be skipped */
     isFallback?:boolean;
-    /** @deprecated */
+
+    /** @deprecated replaced as "value" */
     var?:any;
 }
 
@@ -92,18 +107,16 @@ export interface TaskSubTasks extends Task{
     args:string;
 }
 
-/**
- * TODO: implements
- */
 export interface RegexData {
     pattern:string;
     flags?:string;
 }
 
-/**
- * TODO: implements
- */
 export interface TaskContentReplace extends Task, GlobFilters {
+    /** 
+     * If the task includes 'include' or 'exclude', it will be handled as a directory. 
+     * Otherwise, it will be processed as a file.
+     */
     path:string;
 
     find:string | RegexData;

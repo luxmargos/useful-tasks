@@ -1,0 +1,2 @@
+a=var-from-file-a
+b=var-from-file-b
