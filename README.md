@@ -176,17 +176,24 @@ All tasks have the following common properties
                     "c":"value of c"
                 }
             },
-            //The variable can be a path of the file for the "varType":"file"
-            "value":"path/of/json/file.json",
 
-            //Optional. It can be used as either 'value' or 'file.' If the 'varType' is 'file,' the 'var' must be a file path.
-            //DEFAULT="value"
-            "varType":"value",
+            // The 'src' can be a path to a file or a directory. The processor reveals the variables from the file(s).
+            "src": "path/of/json/file.json",
 
-            //Optional. This option applies when the 'varType' parameter is set to 'file', and can be set to either 'json' or 'string'. 
-            //When set to 'json', the content of the file will be parsed as JSON.
-            //DEFAULT="string"
-            "fileFormat":"string",
+            // Optional. This option applies with the 'src' parameter and can be set to either 'json', 'lines' or 'string'. 
+            // When set to 'json', the content of the file will be parsed as JSON.
+            // DEFAULT="auto"
+            "parser": "json",
+
+            // Optional. This option allows you to include specific files using glob patterns. The "src" path must be a directory.
+            "include": "*.txt",
+            // An array is allowed
+            "include": ["foo/bar/*", "bar/**/*.txt"],
+
+            // Optional. This option allows you to exclude specific files using glob patterns. The "src" path must be a directory.
+            "exclude": "*.txt",
+            // An array is allowed
+            "exclude": ["foo/bar/*", "bar/**/*.txt"],
 
             //Optional. Skip setting the variable if it already exists.
             //DEFAULT=false
@@ -202,19 +209,30 @@ All tasks have the following common properties
                 "ENV_VAR_1":"HELLO",
                 "ENV_VAR_2":"WORLD"
             },
-            //The variable can be a path of the file for the "varType":"file"
-            //The example content of the file.json
-            //{
-            //  "ENV_VAR_1":"HELLO",
-            //  "ENV_VAR_2":"WORLD"
-            //}
-            "value":"path/of/json/file.json",
 
+            //Lines style also works.
+            "value":"\
+                ENV_VAR_1=HELLO\n\
+                ENV_VAR_2=WORLD
+            ",
 
-            //Optional. It can be used as either 'dict' or 'file.' 
-            //If the 'varType' is 'file,' the 'var' must be a file path and its content must be a json formatted.
-            //DEFAULT="dict"
-            "varType":"dict",
+            // The 'src' can be a path to a file or a directory. The processor reveals the variables from the file(s).
+            "src": "path/of/json/file.json",
+
+            // Optional. This option applies with the 'src' parameter and can be set to either 'json' or 'lines'. 
+            // When set to 'json', the content of the file will be parsed as JSON.
+            // DEFAULT="auto"
+            "parser": "json",
+
+            // Optional. This option allows you to include specific files using glob patterns. The "src" path must be a directory.
+            "include": "*.txt",
+            // An array is allowed
+            "include": ["foo/bar/*", "bar/**/*.txt"],
+
+            // Optional. This option allows you to exclude specific files using glob patterns. The "src" path must be a directory.
+            "exclude": "*.txt",
+            // An array is allowed
+            "exclude": ["foo/bar/*", "bar/**/*.txt"],
 
             //Optional. Skip setting the environment variable if it already exists.
             //DEFAULT=false

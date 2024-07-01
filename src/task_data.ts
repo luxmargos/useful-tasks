@@ -20,7 +20,7 @@ export interface Task {
     comment?:string;
     __compare__elements:string[];
 
-    //TODO:
+    //TODO:Implement allowError
     /** The process will not be interrupted even if errors are caught from this task. */
     allowError?:boolean;
 }
@@ -47,34 +47,21 @@ export interface TaskTerminalCommand extends Task{
     shell?:string;
 }
 
-//TODO: Use value as 'value', file as 'path'.
-export interface TaskSetVar extends Task{
+export interface TaskSetVar extends Task, GlobFilters {
     key:string;
-    value:string|number|boolean|any;
-    varType:'value'|'file';
-    //TODO: Implement lines, auto
-    fileFormat?:'json'|'string'|'lines'|'auto';
-
+    value?:string|number|boolean|any;
+    src?:string;
+    parser?:'json'|'lines'|'string'|'auto';
     /** If the variable already exists, assigning will be skipped */
     isFallback?:boolean;
-
-    /** @deprecated replaced as "value" */
-    var?:string|number|boolean|any;
 }
 
-/** TODO: Use value as a 'value', file as a 'path'. */
-export interface TaskEnvVar extends Task{
-    value:object | string;
-    varType:'dict'|'file';
-
-    //TODO: Implement all
-    fileFormat?:'json'|'lines'|'auto';
-
+export interface TaskEnvVar extends Task, GlobFilters {
+    value?:any;
+    src?:string;    
+    parser?:'json'|'lines'|'auto';
     /** If the environment variable already exists, assigning will be skipped */
     isFallback?:boolean;
-
-    /** @deprecated replaced as "value" */
-    var?:any;
 }
 
 export type TaskOutputTargets = 'console'|'file-write'|'file-append'|'c'|'fw'|'fa';
@@ -141,6 +128,7 @@ export interface Config {
 export const LOG_TAG = "useful-tasks";
 export const TAG_DEBUG = `${LOG_TAG}:debug`;
 export const TAG_INFO = `${LOG_TAG}:info`;
+export const TAG_WARN = `${LOG_TAG}:warn`;
 
 /** e.g. ${value.key} */
 export const DEFAULT_REPLACE_REGEX = "\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}";

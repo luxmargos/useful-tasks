@@ -2,7 +2,7 @@ import path from 'path';
 import { LogLevel, Options, logLevels } from './build_cli_parser';
 import { containsAllTag, containsTag, loadJsonConfig } from './utils';
 import debug from 'debug';
-import { Config, TAG_DEBUG, Task, TaskContext, DEFAULT_REPLACE_REGEX, VAR_FROM_ARGUMENT_PREFIX,  ENV_VAR_FROM_ARGUMENT_PREFIX, LOG_TAG, TAG_INFO } from './task_data';
+import { Config, TAG_DEBUG, Task, TaskContext, DEFAULT_REPLACE_REGEX, VAR_FROM_ARGUMENT_PREFIX,  ENV_VAR_FROM_ARGUMENT_PREFIX, LOG_TAG, TAG_INFO, TAG_WARN } from './task_data';
 import { applyVariables, searchExtraKeyValue, setTaskVar, setEnvVar } from './task_utils';
 import { Command } from 'commander';
 import { handlerMap } from './handler_map';
@@ -51,10 +51,10 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
 
     if(logLevel === 'debug'){
         // debugPat = `${LOG_TAG}:*`;
-        debugPat = `${TAG_INFO},${TAG_DEBUG}`;
+        debugPat = `${TAG_WARN},${TAG_INFO},${TAG_DEBUG}`;
         debugPat = `${debugPat},simple-git,simple-git:*`;
     }else if(logLevel === 'info'){
-        debugPat = `${TAG_INFO}`;
+        debugPat = `${TAG_WARN},${TAG_INFO}`;
     }
     
     if(debugPat){
@@ -212,7 +212,7 @@ export const usefulTasks = (originCwd:string, opt:Options, program:Command)=>{
         const taskCount = tasks.length ?? 0;
         for(let i=0;i<taskCount; i++){
             const task = tasks[i];
-            applyVariables(context, task);
+            await applyVariables(context, task);
     
             const taskRepresentStr = getTaskRepresentStr(task,i);
             if(task.enabled === false){

@@ -4,7 +4,7 @@ import path from 'path';
 import {CheckRepoActions, ResetMode, simpleGit} from 'simple-git';
 import { CopyOptionsSync, CopySyncOptions, copyFileSync, copySync, mkdirpSync, removeSync } from 'fs-extra'
 import { TaskContext, TaskOutput, TaskSetVar, TaskGitCheckout, TaskSymlink, TaskTerminalCommand, TaskOutputTargets, TaskFsCopy, TaskFsDelete, TaskEnvVar, TaskContentReplace, RegexData } from './task_data';
-import { loadFileOrThrow, loadJson, parseJson } from './utils';
+import { checkEmptyStringOrThrow, checkLegacyUsage, checkTypeOrThrow, loadFileOrThrow, loadJson, parseJson, parseLines } from './utils';
 import json5 from 'json5';
 import { setEnvVar, setTaskVar } from './task_utils';
 import { logi, logv } from './loggers';
@@ -112,117 +112,154 @@ export const handleTerminalCommand = async (context:TaskContext, task:TaskTermin
 
 
 export const handleSetVar = async (context:TaskContext, task:TaskSetVar)=>{
-    if(task.key === undefined || !task.key || typeof(task.key) !== 'string' || task.key.length < 1){
-        throw new Error(`Invalid key ${task.key}. It must be a string.`);
-    }
+    checkLegacyUsage(task,'var');
+    checkLegacyUsage(task,'varType');
+    checkLegacyUsage(task,'fileFormat');
+
+    checkTypeOrThrow('key', task.key,['string']);
+    checkEmptyStringOrThrow('key', task.key);
     
-    let value = task.value;
-    //old version support
-    if((value === undefined || value === null) && task.var){
-        value = task.var;
-    }
-
-    if(task.isFallback !== true){
-        task.isFallback = false;
-    }
-
-    if(task.varType === 'file'){
-        if(typeof(value) !== 'string'){
-            throw new Error(`The "value" must contain path of a file with "varType":"${task.varType}"`);
-        }
-        
-        const varsPath = path.resolve(value);
-        if(!fs.existsSync(varsPath)){
-            throw new Error(`File "${varsPath}" does not exist to use as a variable`);
-        }
-
-        value = fs.readFileSync(varsPath ,{encoding:'utf8'});
-        if(task.fileFormat === 'json'){
-            value = json5.parse(value);
-        }
-    }
-
-    setTaskVar(context, task.key, value, task.isFallback);
-}
-
-
-const ENV_LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg
-
-// Parse src into an Object
-function parseEnv (src:string) {
-    const obj:any = {}
-
-    // Convert buffer to string
-    let lines = src.toString()
-
-    // Convert line breaks to same format
-    lines = lines.replace(/\r\n?/mg, '\n')
-
-    let match:RegExpExecArray | null;
-    while ((match = ENV_LINE.exec(lines)) != null) {
-        const key = match[1]
-        // Default undefined or null to empty string
-        let value = (match[2] || '')
-        // Remove whitespace
-        value = value.trim()
-        // Check if double quoted
-        const maybeQuote = value[0]
-        // Remove surrounding quotes
-        value = value.replace(/^(['"`])([\s\S]*)\1$/mg, '$2')
-        // Expand newlines if double quoted
-        if (maybeQuote === '"') {
-            value = value.replace(/\\n/g, '\n')
-            value = value.replace(/\\r/g, '\r')
-        }
-
-        // Add to object
-        obj[key] = value
-    }
-
-    return obj
-}
-
-
-export const handleEnvVar = async (context:TaskContext, task:TaskEnvVar)=>{
-    let value = task.value;
-
-    //old version support
-    if((value === undefined || value === null) && task.var){
-        value = task.var;
-    }
-
     if(task.isFallback !== true){
         task.isFallback = false;
     }
     const isFallback:boolean = task.isFallback;
+
+    if(task.value !== undefined){
+        const value = task.value;
+        setTaskVar(context, task.key, value, isFallback);
+    }
     
-    if(task.varType === 'file'){
-        if(typeof(value) !== 'string'){
-            throw new Error(`The "value" must contain path of a file with "varType":"${task.varType}"`);
+    if(!task.src) return;
+    checkTypeOrThrow('src', task.src, ['string']);
+
+    const src = task.src as string;
+    const parser = task.parser || 'auto';
+    logv(`Parser = ${parser}`);
+
+    const runFunc = (filePath:string)=>{
+        const varsPath = path.resolve(filePath);
+        let obj: any | undefined;
+        const content = loadFileOrThrow(varsPath);
+
+        if(parser === 'auto' || parser === 'json'){
+            try{
+                logv("Trying to parse as JSON.");
+                obj = parseJson(content);
+            }catch(e){
+                if(parser === 'json') throw e;
+            }
         }
-        
-        const varsPath = path.resolve(value);
+
+        if(!obj && (parser === 'auto' || parser === 'lines')){
+            logv("Trying to parse as lines.")
+            obj = parseLines(content);
+        }
+
+        if(!obj && (parser === 'auto' || parser === 'string')){
+            obj = content;
+        }
+
+        setTaskVar(context, task.key, obj, isFallback);
+    };
+    
+    const runGlobSync = (items:string[])=>{
+        for(const f of items){
+            const itemPath:string = path.join(src, f);
+            if(fs.statSync(itemPath).isDirectory()){
+                continue;
+            }
+            runFunc(itemPath);
+        }
+    };
+
+    // ignore dirs, include all files on empty filters
+    const handled = processWithGlobSync(runGlobSync, src, 
+        resolveStringArray(task.include, []),
+        resolveStringArray(task.exclude, []),
+        true, true);
+
+    // expect it is a single file
+    if(!handled){
+        runFunc(src);
+    }
+}
+
+export const handleEnvVar = async (context:TaskContext, task:TaskEnvVar)=>{
+    checkLegacyUsage(task,'var');
+    checkLegacyUsage(task,'varType');
+    checkLegacyUsage(task,'fileFormat');
+    
+    if(task.isFallback !== true){
+        task.isFallback = false;
+    }
+    const isFallback:boolean = task.isFallback;
+
+    if(task.value !== undefined){
+        let value:any = task.value;
+        if(typeof(value) === 'string'){
+            logv("Trying to parse as lines.")
+            value = parseLines(value);
+        }
+    
+        Object.keys(value).forEach(key => {
+            setEnvVar(context, key, value[key], isFallback);
+        });
+    }
+
+    if(!task.src) return;
+    
+    checkTypeOrThrow('src', task.src, ['string']);
+    const src = task.src as string;
+    const parser = task.parser || 'auto';
+    logv(`Parser = ${parser}`);
+
+    const runFunc = (filePath:string)=>{
+        const varsPath = path.resolve(filePath);
         let obj:Record<string,any> | undefined;
         const content = loadFileOrThrow(varsPath);
-        try{
-            obj = parseJson(content);
-        }catch(e){
+
+        if(parser === 'auto' || parser === 'json'){
+            try{
+                logv("Trying to parse as JSON.");
+                obj = parseJson(content);
+            }catch(e){
+                if(parser === 'json') throw e;
+            }
         }
 
-        if(!obj){
-            logv("Parsing with JSON failed, for now, trying to parse line literals.")
-            obj = parseEnv(content);
+        if(!obj && (parser === 'auto' || parser === 'lines')){
+            logv("Trying to parse as lines.")
+            obj = parseLines(content);
         }
-        value = obj;
-    }
 
-    if(typeof(value) !== 'object'){
-        throw new Error(`The content of the "value" must be in the form of key-value pairs. For example: {"KEY_A":"value_a", "KEY_B":"value_b"}`);
-    }
+        if(obj){
+            const finalObj = obj;
+            Object.keys(finalObj).forEach(key => {
+                setEnvVar(context, key, finalObj[key], isFallback);
+            });
+        }
+    };
+    
+    const runGlobSync = (items:string[])=>{
+        for(const f of items){
+            const itemPath:string = path.join(src, f);
+            if(fs.statSync(itemPath).isDirectory()){
+                continue;
+            }
+            runFunc(itemPath);
+        }
+    };
 
-    Object.keys(value).forEach(key => {
-        setEnvVar(context, key, value[key], isFallback);
-    });
+    // ignore dirs, include all files on empty filters
+    const handled = processWithGlobSync(runGlobSync, src, 
+        resolveStringArray(task.include, []),
+        resolveStringArray(task.exclude, []),
+        true, true);
+
+    // expect it is a single file
+    if(!handled){
+        runFunc(src);
+    }
 }
 
 export const handleOutput = async (context:TaskContext, task:TaskOutput)=>{
@@ -307,11 +344,13 @@ export const handleFsCopy = async (context:TaskContext, task:TaskFsCopy)=>{
         }
     };
 
+    // allow dir with glob, do nothing withtout filters
     const handled = processWithGlobSync(runGlobSync, task.src, 
         resolveStringArray(task.include, []),
         resolveStringArray(task.exclude, []),
         false, false);
 
+    // copy the path is whatever
     if(!handled){
         runCopy(task.src, task.dest, cpOpt);
     }
@@ -334,11 +373,13 @@ export const handleFsDelete = async (context:TaskContext, task:TaskFsDelete)=>{
         }
     };
 
+    // allow dir with glob, do nothing withtout filters
     const handled = processWithGlobSync(runGlobSync, task.path, 
         resolveStringArray(task.include, []),
         resolveStringArray(task.exclude, []),
         false, false);
 
+    // delete the path is whatever
     if(!handled){
         runDelete(task.path);
     }
@@ -433,11 +474,13 @@ export const handleContentReplace = async (context:TaskContext, task:TaskContent
         }
     };
 
+    // ignore dirs, include all files on empty filters
     const handled = processWithGlobSync(runGlobSync, task.path, 
         resolveStringArray(task.include, []),
         resolveStringArray(task.exclude, []),
         true, true);
 
+    // expect it is a single file
     if(!handled){
         findAndReplaceWithFile(task.path, replaceFunc, find, task.replace, loop);
     }

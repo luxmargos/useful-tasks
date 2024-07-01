@@ -6,12 +6,34 @@
     "tasks":[
         {
             "type":"env-var",
-            "value":"var_dot_env_style.txt",
-            "varType":"file"
+            "value":{
+                "a":"a-value",
+                "b":"b-value"
+            }
         },
         {
-            "type":"cmd",
-            "cmd":"echo %a% , %b%, %PATH%"
+            "type":"env-var",
+            "value":"\
+                a = a-value\n\
+                b = b-value\
+            "
+        },
+        {
+            "type":"env-var",
+            "src":"var_from_file.json",
+            "parser":"json"
+        },
+        {
+            "type":"env-var",
+            "src":".",
+            "parser":"lines",
+            "include":"*.txt"
+        },
+        {
+            "type":"env-var",
+            "src":".",
+            "parser":"lines",
+            "include":["var_lines_from_file.txt","var_lines_from_file2.txt", "var_lines_from_file3.txt"]
         }
     ]
 }

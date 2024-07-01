@@ -1,0 +1,43 @@
+{
+    "name":"Sample",
+    "env":{
+        "logLevel":"debug"
+    },
+    "tasks":[
+        {
+            "type":"set-var",
+            "key":"my_json",
+            "src":"var_from_file.json",
+            "parser":"json"
+        },
+
+        {
+            "type":"output",
+            "text":"Getting value from a json file=${my_json.a}"
+        },
+
+        {
+            "type":"set-var",
+            "key":"my_lines",
+            "src":"var_lines_from_file.txt",
+            "parser":"lines"
+        },
+
+        {
+            "type":"output",
+            "text":"Getting value from a json file=${my_lines.a}"
+        },
+
+        {
+            "type":"set-var",
+            "key":"my_string",
+            "src":"var_from_file.txt",
+            "parser":"string"
+        },
+
+        {
+            "type":"output",
+            "text":"Getting value from a string file=${my_string}"
+        }
+    ]
+}

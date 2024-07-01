@@ -4,21 +4,18 @@
         "logLevel":"debug"
     },
     "tasks":[
-        //comment test
         {
             "type":"set-var",
             "key":"file_val_json",
-            "value":"var_from_file.json",
-            "varType":"file",
-            "fileFormat":"json"
+            "src":"var_from_file.json",
+            "parser":"auto"
         },
 
         {
             "type":"set-var",
             "key":"file_val_text",
             "value":"var_from_file.txt",
-            "varType":"file",
-            "fileFormat":"string"
+            "parser":"string"
         },
 
         {
@@ -29,9 +26,7 @@
             "value":{
                 "a":"value-a",
                 "b":"value-b"
-            },
-            "varType":"value",
-            "fileFormat":"string"
+            }
         },
 
         {

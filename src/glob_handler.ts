@@ -15,7 +15,7 @@ export const processWithGlobSync = (
     handler:(items:string[])=>void, cwd:string, 
     includes:string[], excludes:string[],
     skipDirs:boolean,
-    includeAllForNonFilters:boolean
+    includeAllIfNonFilters:boolean
     ):boolean =>{
 
     if(fs.statSync(cwd).isDirectory() === false){
@@ -40,7 +40,7 @@ export const processWithGlobSync = (
         //apply include and exclude
         handler(globSync(includes, {ignore:excludes, cwd, nodir}));
         return true;
-    }else if(includeAllForNonFilters){
+    }else if(includeAllIfNonFilters){
         //include all to apply skipDirs, skipFiles
         handler(globSync('**', {ignore:['.'], cwd, nodir}));
         return true;

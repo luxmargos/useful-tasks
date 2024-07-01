@@ -1,8 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import json5 from 'json5';
+import { Task } from 'task_data';
+import { logw, logv } from './loggers';
 
 export const loadFileOrThrow = (filePath:string)=>{
+    logv(`Loading file: ${filePath}`);
     if(!fs.existsSync(filePath)){
         throw new Error(`ERROR: The Path '${filePath}' does not exists!`);
     }
@@ -84,3 +87,65 @@ export const containsAllTag = (elements:string[], tags:string[])=>{
     }
     return true;
 };
+
+export const checkEmptyStringOrThrow = (name:string, value:string)=>{
+    if(!value){
+        throw new Error(`The '${name}' property must not be empty.`);
+    }
+};
+
+export const checkLegacyUsage = (task:Task, key:string) => {
+    if((task as any)[key] !== undefined)
+        logw(`The key '${key}' has been deprecated.`);
+}
+
+type TypeString = 'string'|'number'|'boolean'|'undefined'|'object'|'function'|'bigint'|'symbol';
+export const checkType = (value:any, allowedTypes:TypeString[]):boolean => {
+    if(allowedTypes.length <= 0) return true;
+    return allowedTypes.includes(typeof(value));
+}
+
+export const checkTypeOrThrow = (name:string, value:any, allowedTypes:TypeString[]):boolean => {
+    if(checkType(value, allowedTypes)){
+        return true;
+    }
+
+    const valueType = typeof(value);
+    throw new Error(`The '${name}' property has an invalid type '${valueType}' with the value '${value}'. The allowed types are ${allowedTypes}.`);
+}
+
+const ENV_LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg
+
+// Parse src into an Object
+export function parseLines (src:string) {
+    const obj:any = {}
+
+    // Convert buffer to string
+    let lines = src.toString()
+
+    // Convert line breaks to same format
+    lines = lines.replace(/\r\n?/mg, '\n')
+
+    let match:RegExpExecArray | null;
+    while ((match = ENV_LINE.exec(lines)) != null) {
+        const key = match[1]
+        // Default undefined or null to empty string
+        let value = (match[2] || '')
+        // Remove whitespace
+        value = value.trim()
+        // Check if double quoted
+        const maybeQuote = value[0]
+        // Remove surrounding quotes
+        value = value.replace(/^(['"`])([\s\S]*)\1$/mg, '$2')
+        // Expand newlines if double quoted
+        if (maybeQuote === '"') {
+            value = value.replace(/\\n/g, '\n')
+            value = value.replace(/\\r/g, '\r')
+        }
+
+        // Add to object
+        obj[key] = value
+    }
+
+    return obj
+}

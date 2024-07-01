@@ -1,6 +1,6 @@
 {
     "name": "useful-tasks",
-    "version": "0.1.29",
+    "version": "0.2.0",
     "description": "A CLI task runner that utilizes JSON-based configuration and processes tasks sequentially",
     "author": {
         "name": "Jinho Yun",
@@ -58,12 +58,13 @@
         "watch": "tsup --watch",
         "prepare": "npm run build",
         "print_help": "ts-node src/index.ts --help",
-        "test": "npm run test:fs && npm run test:fs2 && npm run test:vars && npm run test:exclude && npm run test:include && npm run test:exclude_include && npm run test:exclude_tag && npm run test:include_tag && npm run test:exclude_include_tag && npm run test:outputs && npm run test:custom_regex && npm run test:sub_tasks && npm run test:fs_cp_filter && npm run test:fs_del_filter",
+        "test": "npm run test:fs && npm run test:fs2 && npm run test:vars && npm run test:vars_parsers && npm run test:exclude && npm run test:include && npm run test:exclude_include && npm run test:exclude_tag && npm run test:include_tag && npm run test:exclude_include_tag && npm run test:outputs && npm run test:custom_regex && npm run test:sub_tasks && npm run test:fs_cp_filter && npm run test:fs_del_filter",
         "test:fs": "ts-node src/index.ts --cwd=./test --config=test_fs.json",
         "test:fs2": "ts-node src/index.ts --cwd=./test --config=test_fs2.json",
         "test:fs_cp_filter": "ts-node src/index.ts --cwd=./test --config=test_fs_copy_filter.json",
         "test:fs_del_filter": "ts-node src/index.ts --cwd=./test --config=test_fs_del_filter.json",
         "test:vars": "ts-node src/index.ts --cwd=./test --config=test_vars.json",
+        "test:vars_parsers": "ts-node src/index.ts --cwd=./test --config=test_vars_parsers.json",
         "test:exclude": "ts-node src/index.ts --cwd=./test --config=test_outputs.json --exclude=task-1,task-3",
         "test:include": "ts-node src/index.ts --cwd=./test --config=test_outputs.json --include=task-2",
         "test:exclude_include": "ts-node src/index.ts --cwd=./test --config=test_outputs.json --exclude=task-2 --include=task-2",
