@@ -16,6 +16,7 @@ import {
   TaskEnvVar,
   TaskContentReplace,
   RegexData,
+  TaskFsMakeDir,
 } from "./task_data";
 import {
   checkEmptyStringOrThrow,
@@ -418,6 +419,12 @@ export const handleFsDelete = async (context: TaskContext, task: TaskFsDelete) =
   if (!handled) {
     runDelete(task.path);
   }
+};
+
+export const handleMkdir = async (context: TaskContext, task: TaskFsMakeDir) => {
+  checkTypeOrThrow("path", task.path, ["string"]);
+  logv(`Make a directory at : ${task.path}`);
+  mkdirpSync(task.path);
 };
 
 const runFindAndReplaceWithRegex = (content: string, find: RegExp, replace: string, repeat: number): string => {

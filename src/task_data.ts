@@ -15,6 +15,7 @@ export const allTaskTypes = [
   "output",
   "fs-copy",
   "fs-del",
+  "fs-mkdir",
   "env-var",
   "sub-tasks",
   "content-replace",
@@ -98,6 +99,10 @@ export interface TaskFsCopy extends Task, GlobFilters {
 }
 
 export interface TaskFsDelete extends Task, GlobFilters {
+  path: string;
+}
+
+export interface TaskFsMakeDir extends Task {
   path: string;
 }
 

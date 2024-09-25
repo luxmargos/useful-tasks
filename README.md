@@ -26,6 +26,7 @@ It aims to be useful for setting up a workspace with complex dependencies and mu
 * symlink
 * fs-copy
 * fs-del
+* fs-mkdir
 * git-repo-prepare
 * sub-tasks
 * content-replace
@@ -293,6 +294,12 @@ All tasks have the following common properties
             "exclude": "*.txt",
             //An array is allowed
             "exclude":["foo/bar/*","bar/**/*.txt"]
+        },
+
+        {
+            //Create a directory
+            "type":"fs-mkdir",
+            "path":"path/to/directory",
         },
 
         {

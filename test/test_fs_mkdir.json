@@ -1,0 +1,16 @@
+{
+  "name": "Sample",
+  "env": {
+    "logLevel": "debug"
+  },
+  "tasks": [
+    {
+      "type": "fs-del",
+      "path": "output/mkdir-test/sub-folder/sub-folder"
+    },
+    {
+      "type": "fs-mkdir",
+      "path": "output/mkdir-test/sub-folder/sub-folder"
+    }
+  ]
+}

@@ -109,7 +109,7 @@ export const checkTypeOrThrow = (name: string, value: any, allowedTypes: TypeStr
 
   const valueType = typeof value;
   throw new Error(
-    `The '${name}' property has an invalid type '${valueType}' with the value '${value}'. The allowed types are ${allowedTypes}.`
+    `The '${name}' property has an invalid type '${valueType}' with the value '${value}'. The allowed types are [${allowedTypes}].`
   );
 };
 

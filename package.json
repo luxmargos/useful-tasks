@@ -1,92 +1,94 @@
 {
-    "name": "useful-tasks",
-    "version": "0.2.0",
-    "description": "A CLI task runner that utilizes JSON-based configuration and processes tasks sequentially",
-    "author": {
-        "name": "Jinho Yun",
-        "email": "owlflyx12@gmail.com"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/luxmargos/useful-tasks.git"
-    },
-    "type": "commonjs",
-    "engines": {
-        "node": ">=4.2.0"
-    },
-    "main": "./dist/index.js",
-    "module": "./dist/index.mjs",
-    "entryPoint": "dist/index.js",
-    "bin": {
-        "useful-tasks": "dist/index.js"
-    },
-    "exports": {
-        ".": {
-            "require": "./dist/index.js",
-            "import": "./dist/index.mjs"
-        }
-    },
-    "license": "MIT",
-    "keywords": [
-        "cli",
-        "terminal",
-        "task",
-        "fs",
-        "git",
-        "symlink",
-        "regex",
-        "batch",
-        "node-js",
-        "javascript",
-        "typescript",
-        "dependency",
-        "command"
-    ],
-    "dependencies": {
-        "commander": "^9.4.0",
-        "debug": "^4.3.4",
-        "fs-extra": "^10.1.0",
-        "glob": "^10.3.1",
-        "json5": "^2.2.3",
-        "simple-git": "^3.18.0",
-        "string-argv": "^0.3.2"
-    },
-    "scripts": {
-        "start": "npm run build && node dist/index.js",
-        "start:ts": "ts-node src/index.ts",
-        "build": "tsup",
-        "watch": "tsup --watch",
-        "prepare": "npm run build",
-        "print_help": "ts-node src/index.ts --help",
-        "test": "npm run test:fs && npm run test:fs2 && npm run test:vars && npm run test:vars_parsers && npm run test:exclude && npm run test:include && npm run test:exclude_include && npm run test:exclude_tag && npm run test:include_tag && npm run test:exclude_include_tag && npm run test:outputs && npm run test:custom_regex && npm run test:sub_tasks && npm run test:fs_cp_filter && npm run test:fs_del_filter",
-        "test:fs": "ts-node src/index.ts --cwd=./test --config=test_fs.json",
-        "test:fs2": "ts-node src/index.ts --cwd=./test --config=test_fs2.json",
-        "test:fs_cp_filter": "ts-node src/index.ts --cwd=./test --config=test_fs_copy_filter.json",
-        "test:fs_del_filter": "ts-node src/index.ts --cwd=./test --config=test_fs_del_filter.json",
-        "test:vars": "ts-node src/index.ts --cwd=./test --config=test_vars.json",
-        "test:vars_parsers": "ts-node src/index.ts --cwd=./test --config=test_vars_parsers.json",
-        "test:exclude": "ts-node src/index.ts --cwd=./test --config=test_outputs.json --exclude=task-1,task-3",
-        "test:include": "ts-node src/index.ts --cwd=./test --config=test_outputs.json --include=task-2",
-        "test:exclude_include": "ts-node src/index.ts --cwd=./test --config=test_outputs.json --exclude=task-2 --include=task-2",
-        "test:exclude_tag": "ts-node src/index.ts --cwd=./test --config=test_outputs.json --exclude=tag-a",
-        "test:include_tag": "ts-node src/index.ts --cwd=./test --config=test_outputs.json --include=tag-a",
-        "test:exclude_include_tag": "ts-node src/index.ts --cwd=./test --config=test_outputs.json --exclude=tag-a --include=tag-b",
-        "test:outputs": "ts-node src/index.ts --cwd=./test --config=test_outputs.json",
-        "test:custom_regex": "ts-node src/index.ts --cwd=./test --config=test_custom_replace_regex.json",
-        "test:sub_tasks": "ts-node src/index.ts --cwd=./test --config=test_sub_tasks.json",
-        "test:cwd_mode_restore": "ts-node src/index.ts --cwd=./test --config=test_cwd_mode.json --cwd-mode=restore",
-        "test:cwd_mode_keep": "ts-node src/index.ts --cwd=./test --config=test_cwd_mode.json --cwd-mode=keep",
-        "test:content_replace": "ts-node src/index.ts --cwd=./test --config=test_content_replace.json",
-        "test:content_replace_glob": "ts-node src/index.ts --cwd=./test --config=test_content_replace_glob.json",
-        "test:env_var": "ts-node src/index.ts --cwd=./test --config=test_env_vars.json"
-    },
-    "devDependencies": {
-        "@types/commander": "^2.12.2",
-        "@types/debug": "^4.1.7",
-        "@types/fs-extra": "^9.0.13",
-        "@types/glob": "^8.1.0",
-        "ts-node": "^10.9.1",
-        "tsup": "^7.0.0",
-        "typescript": "^4.8.4"
+  "name": "useful-tasks",
+  "version": "0.2.1",
+  "description": "A CLI task runner that utilizes JSON-based configuration and processes tasks sequentially",
+  "author": {
+    "name": "Jinho Yun",
+    "email": "owlflyx12@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luxmargos/useful-tasks.git"
+  },
+  "type": "commonjs",
+  "engines": {
+    "node": ">=4.2.0"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "entryPoint": "dist/index.js",
+  "bin": {
+    "useful-tasks": "dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
     }
+  },
+  "license": "MIT",
+  "keywords": [
+    "cli",
+    "terminal",
+    "task",
+    "fs",
+    "git",
+    "symlink",
+    "regex",
+    "batch",
+    "node-js",
+    "javascript",
+    "typescript",
+    "dependency",
+    "command"
+  ],
+  "dependencies": {
+    "commander": "^9.4.0",
+    "debug": "^4.3.4",
+    "fs-extra": "^10.1.0",
+    "glob": "^10.3.1",
+    "json5": "^2.2.3",
+    "simple-git": "^3.18.0",
+    "string-argv": "^0.3.2"
+  },
+  "scripts": {
+    "start": "npm run build && node dist/index.js",
+    "start:ts": "tsx src/index.ts",
+    "build": "tsup",
+    "watch": "tsup --watch",
+    "prepare": "npm run build",
+    "print_help": "tsx src/index.ts --help",
+    "test": "npm run test:fs && npm run test:fs2 && npm run test:vars && npm run test:vars_parsers && npm run test:exclude && npm run test:include && npm run test:exclude_include && npm run test:exclude_tag && npm run test:include_tag && npm run test:exclude_include_tag && npm run test:outputs && npm run test:custom_regex && npm run test:sub_tasks && npm run test:fs_cp_filter && npm run test:fs_del_filter",
+    "test:fs": "tsx src/index.ts --cwd=./test --config=test_fs.json",
+    "test:fs2": "tsx src/index.ts --cwd=./test --config=test_fs2.json",
+    "test:fs_cp_filter": "tsx src/index.ts --cwd=./test --config=test_fs_copy_filter.json",
+    "test:fs_del_filter": "tsx src/index.ts --cwd=./test --config=test_fs_del_filter.json",
+    "test:fs_mkdir": "tsx src/index.ts --cwd=./test --config=test_fs_mkdir.json",
+    "test:fs_mkdir_error": "tsx src/index.ts --cwd=./test --config=test_fs_mkdir_error.json",
+    "test:vars": "tsx src/index.ts --cwd=./test --config=test_vars.json",
+    "test:vars_parsers": "tsx src/index.ts --cwd=./test --config=test_vars_parsers.json",
+    "test:exclude": "tsx src/index.ts --cwd=./test --config=test_outputs.json --exclude=task-1,task-3",
+    "test:include": "tsx src/index.ts --cwd=./test --config=test_outputs.json --include=task-2",
+    "test:exclude_include": "tsx src/index.ts --cwd=./test --config=test_outputs.json --exclude=task-2 --include=task-2",
+    "test:exclude_tag": "tsx src/index.ts --cwd=./test --config=test_outputs.json --exclude=tag-a",
+    "test:include_tag": "tsx src/index.ts --cwd=./test --config=test_outputs.json --include=tag-a",
+    "test:exclude_include_tag": "tsx src/index.ts --cwd=./test --config=test_outputs.json --exclude=tag-a --include=tag-b",
+    "test:outputs": "tsx src/index.ts --cwd=./test --config=test_outputs.json",
+    "test:custom_regex": "tsx src/index.ts --cwd=./test --config=test_custom_replace_regex.json",
+    "test:sub_tasks": "tsx src/index.ts --cwd=./test --config=test_sub_tasks.json",
+    "test:cwd_mode_restore": "tsx src/index.ts --cwd=./test --config=test_cwd_mode.json --cwd-mode=restore",
+    "test:cwd_mode_keep": "tsx src/index.ts --cwd=./test --config=test_cwd_mode.json --cwd-mode=keep",
+    "test:content_replace": "tsx src/index.ts --cwd=./test --config=test_content_replace.json",
+    "test:content_replace_glob": "tsx src/index.ts --cwd=./test --config=test_content_replace_glob.json",
+    "test:env_var": "tsx src/index.ts --cwd=./test --config=test_env_vars.json"
+  },
+  "devDependencies": {
+    "@types/commander": "^2.12.2",
+    "@types/debug": "^4.1.7",
+    "@types/fs-extra": "^9.0.13",
+    "@types/glob": "^8.1.0",
+    "tsup": "^7.0.0",
+    "tsx": "^4.19.1",
+    "typescript": "^4.8.4"
+  }
 }
