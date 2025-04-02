@@ -17,8 +17,5 @@
     "moduleResolution": "node",
     "resolveJsonModule": true
   },
-  "ts-node": {
-    "esm": true
-  },
   "exclude": ["dist", "node_modules"]
 }

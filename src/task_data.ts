@@ -1,4 +1,4 @@
-import { LogLevel } from "./build_cli_parser";
+import { LogLevel } from './build_cli_parser';
 
 export interface TaskContext {
   originCwd: string;
@@ -8,17 +8,17 @@ export interface TaskContext {
 }
 
 export const allTaskTypes = [
-  "git-repo-prepare",
-  "symlink",
-  "cmd",
-  "set-var",
-  "output",
-  "fs-copy",
-  "fs-del",
-  "fs-mkdir",
-  "env-var",
-  "sub-tasks",
-  "content-replace",
+  'git-repo-prepare',
+  'cmd',
+  'set-var',
+  'output',
+  'symlink',
+  'fs-copy',
+  'fs-del',
+  'fs-mkdir',
+  'env-var',
+  'sub-tasks',
+  'content-replace',
 ] as const;
 type TasksTuple = typeof allTaskTypes;
 export type TaskType = TasksTuple[number];
@@ -50,7 +50,7 @@ export interface TaskGitCheckout extends Task {
 export interface TaskSymlink extends Task {
   target: string;
   path: string;
-  linkType?: "dir" | "file" | "junction";
+  linkType?: 'dir' | 'file' | 'junction';
   forced?: boolean;
 }
 
@@ -63,7 +63,7 @@ export interface TaskSetVar extends Task, GlobFilters {
   key: string;
   value?: string | number | boolean | any;
   src?: string;
-  parser?: "json" | "lines" | "string" | "auto";
+  parser?: 'json' | 'lines' | 'string' | 'auto';
   /** If the variable already exists, assigning will be skipped */
   isFallback?: boolean;
 }
@@ -71,12 +71,12 @@ export interface TaskSetVar extends Task, GlobFilters {
 export interface TaskEnvVar extends Task, GlobFilters {
   value?: any;
   src?: string;
-  parser?: "json" | "lines" | "auto";
+  parser?: 'json' | 'lines' | 'auto';
   /** If the environment variable already exists, assigning will be skipped */
   isFallback?: boolean;
 }
 
-export type TaskOutputTargets = "console" | "file-write" | "file-append" | "c" | "fw" | "fa";
+export type TaskOutputTargets = 'console' | 'file-write' | 'file-append' | 'c' | 'fw' | 'fa';
 export interface TaskOutput extends Task {
   text: string;
   target: TaskOutputTargets;
@@ -89,7 +89,7 @@ export interface GlobFilters {
 }
 
 export type TaskFsCopyOptions = {
-  conflict?: "overwrite" | "skip";
+  conflict?: 'overwrite' | 'skip';
 };
 
 export interface TaskFsCopy extends Task, GlobFilters {
@@ -141,13 +141,13 @@ export interface Config {
   tasks?: Array<Task>;
 }
 
-export const LOG_TAG = "useful-tasks";
+export const LOG_TAG = 'useful-tasks';
 export const TAG_DEBUG = `${LOG_TAG}:debug`;
 export const TAG_INFO = `${LOG_TAG}:info`;
 export const TAG_WARN = `${LOG_TAG}:warn`;
 
 /** e.g. ${value.key} */
-export const DEFAULT_REPLACE_REGEX = "\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}";
+export const DEFAULT_REPLACE_REGEX = '\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}';
 
-export const VAR_FROM_ARGUMENT_PREFIX = "--var-";
-export const ENV_VAR_FROM_ARGUMENT_PREFIX = "--env-";
+export const VAR_FROM_ARGUMENT_PREFIX = '--var-';
+export const ENV_VAR_FROM_ARGUMENT_PREFIX = '--env-';

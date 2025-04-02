@@ -1,10 +1,10 @@
-import stringArgv from "string-argv";
-import { TaskContext, TaskSubTasks } from "./task_data";
-import { usefulTasks } from "./useful_tasks";
-import { setup } from "./build_cli_parser";
+import stringArgv from 'string-argv';
+import { TaskContext, TaskSubTasks } from '../task_data';
+import { usefulTasks } from '../useful_tasks';
+import { setup } from '../build_cli_parser';
 
 export const handleSubTasks = async (context: TaskContext, task: TaskSubTasks) => {
-  if (!task.args || typeof task.args !== "string") {
+  if (!task.args || typeof task.args !== 'string') {
     throw new Error(`Found missing or invalid property 'args' that is required`);
   }
 

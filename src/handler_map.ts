@@ -1,30 +1,28 @@
-import { handleSubTasks } from "./handler_sub_tasks";
-import {
-  handleContentReplace,
-  handleEnvVar,
-  handleFsCopy,
-  handleFsDelete,
-  handleGitRepoSetup,
-  handleMkdir,
-  handleOutput,
-  handleSetVar,
-  handleSymlink,
-  handleTerminalCommand,
-} from "./handlers";
-import { TaskContext, TaskType } from "./task_data";
+import { handleSubTasks } from './tasks/handleSubTasks';
+import { handleContentReplace } from './tasks/handleContentReplace';
+import { handleMkdir } from 'tasks/handleFsMkdir';
+import { handleFsDelete } from 'tasks/handleFsDelete';
+import { handleFsCopy } from 'tasks/handleFsCopy';
+import { handleOutput } from 'tasks/handleOutput';
+import { handleEnvVar } from 'tasks/handleEnvVar';
+import { handleSetVar } from 'tasks/handleSetVar';
+import { handleTerminalCommand } from 'tasks/handleTerminalCommand';
+import { handleFsSymlink } from 'tasks/handleFsSymlink';
+import { handleGitRepoSetup } from 'tasks/handleGitRepoSetup';
+import { TaskContext, TaskType } from './task_data';
 
 export const handlerMap: {
   [k in TaskType]: (context: TaskContext, task: any) => Promise<void>;
 } = {
-  "git-repo-prepare": handleGitRepoSetup,
-  symlink: handleSymlink,
+  'git-repo-prepare': handleGitRepoSetup,
   cmd: handleTerminalCommand,
-  "set-var": handleSetVar,
+  'set-var': handleSetVar,
   output: handleOutput,
-  "fs-copy": handleFsCopy,
-  "fs-del": handleFsDelete,
-  "fs-mkdir": handleMkdir,
-  "env-var": handleEnvVar,
-  "sub-tasks": handleSubTasks,
-  "content-replace": handleContentReplace,
+  symlink: handleFsSymlink,
+  'fs-copy': handleFsCopy,
+  'fs-del': handleFsDelete,
+  'fs-mkdir': handleMkdir,
+  'env-var': handleEnvVar,
+  'sub-tasks': handleSubTasks,
+  'content-replace': handleContentReplace,
 };

@@ -1,8 +1,8 @@
-import fs from "fs";
-import path from "path";
-import json5 from "json5";
-import { Task } from "task_data";
-import { logw, logv } from "./loggers";
+import fs from 'fs';
+import path from 'path';
+import json5 from 'json5';
+import { Task } from 'task_data';
+import { logw, logv } from './loggers';
 
 export const loadFileOrThrow = (filePath: string) => {
   logv(`Loading file: ${filePath}`);
@@ -10,7 +10,7 @@ export const loadFileOrThrow = (filePath: string) => {
     throw new Error(`ERROR: The Path '${filePath}' does not exists!`);
   }
 
-  return fs.readFileSync(filePath, { encoding: "utf-8" });
+  return fs.readFileSync(filePath, { encoding: 'utf-8' });
 };
 
 export const loadJson = (filePath: string) => {
@@ -35,8 +35,8 @@ export const convertOrNotHyphenTextToCamelText = (text: string, flag: boolean) =
     return text;
   }
 
-  let result = "";
-  let textArr = text.split("-");
+  let result = '';
+  let textArr = text.split('-');
   for (let i = 0; i < textArr.length; i++) {
     let word = textArr[i];
     if (i === 0) {
@@ -96,7 +96,7 @@ export const checkLegacyUsage = (task: Task, key: string) => {
   if ((task as any)[key] !== undefined) logw(`The key '${key}' has been deprecated.`);
 };
 
-type TypeString = "string" | "number" | "boolean" | "undefined" | "object" | "function" | "bigint" | "symbol";
+type TypeString = 'string' | 'number' | 'boolean' | 'undefined' | 'object' | 'function' | 'bigint' | 'symbol';
 export const checkType = (value: any, allowedTypes: TypeString[]): boolean => {
   if (allowedTypes.length <= 0) return true;
   return allowedTypes.includes(typeof value);
@@ -116,7 +116,7 @@ export const checkTypeOrThrow = (name: string, value: any, allowedTypes: TypeStr
 const ENV_LINE =
   /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/gm;
 
-// Parse src into an Object
+/**  Parse src into an Object */
 export function parseLines(src: string) {
   const obj: any = {};
 
@@ -124,23 +124,23 @@ export function parseLines(src: string) {
   let lines = src.toString();
 
   // Convert line breaks to same format
-  lines = lines.replace(/\r\n?/gm, "\n");
+  lines = lines.replace(/\r\n?/gm, '\n');
 
   let match: RegExpExecArray | null;
   while ((match = ENV_LINE.exec(lines)) != null) {
     const key = match[1];
     // Default undefined or null to empty string
-    let value = match[2] || "";
+    let value = match[2] || '';
     // Remove whitespace
     value = value.trim();
     // Check if double quoted
     const maybeQuote = value[0];
     // Remove surrounding quotes
-    value = value.replace(/^(['"`])([\s\S]*)\1$/gm, "$2");
+    value = value.replace(/^(['"`])([\s\S]*)\1$/gm, '$2');
     // Expand newlines if double quoted
     if (maybeQuote === '"') {
-      value = value.replace(/\\n/g, "\n");
-      value = value.replace(/\\r/g, "\r");
+      value = value.replace(/\\n/g, '\n');
+      value = value.replace(/\\r/g, '\r');
     }
 
     // Add to object
@@ -149,3 +149,19 @@ export function parseLines(src: string) {
 
   return obj;
 }
+
+export const throwInvalidParamError = <T, K extends keyof T>(obj: T, key: K) => {
+  throw new Error(`The parameter '${String(key)}' has an invalid value ${obj[key]}`);
+};
+
+export const resolveStringArray = (val: string | string[] | undefined | null, defaultValue: string[]): string[] => {
+  if (val !== undefined && val !== null) {
+    if (typeof val === 'string') {
+      return [val];
+    } else if (Array.isArray(val)) {
+      return val.filter((v) => typeof v === 'string');
+    }
+  }
+
+  return defaultValue;
+};

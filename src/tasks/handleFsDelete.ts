@@ -1,0 +1,40 @@
+import fs from 'fs';
+import { processWithGlobSync } from 'glob_handler';
+import { logv } from 'loggers';
+import path from 'path';
+import { TaskContext, TaskFsDelete } from 'task_data';
+import { removeSync } from 'fs-extra';
+import { resolveStringArray } from 'utils';
+
+export const runDelete = (path: string) => {
+  logv(`Delete: ${path}`);
+  removeSync(path);
+};
+
+export const handleFsDelete = async (context: TaskContext, task: TaskFsDelete) => {
+  if (!fs.existsSync(task.path)) {
+    logv(`The '${task.path}' does not exist and cannot be deleted`);
+    return;
+  }
+
+  const runGlobSync = (items: string[]) => {
+    for (const f of items) {
+      runDelete(path.join(task.path, f));
+    }
+  };
+
+  // allow dir with glob, do nothing withtout filters
+  const handled = processWithGlobSync(
+    runGlobSync,
+    task.path,
+    resolveStringArray(task.include, []),
+    resolveStringArray(task.exclude, []),
+    false,
+    false
+  );
+
+  // delete the path is whatever
+  if (!handled) {
+    runDelete(task.path);
+  }
+};

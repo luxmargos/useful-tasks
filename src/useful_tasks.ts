@@ -1,7 +1,7 @@
-import path from "path";
-import { LogLevel, Options, logLevels } from "./build_cli_parser";
-import { containsAllTag, containsTag, loadJsonConfig } from "./utils";
-import debug from "debug";
+import path from 'path';
+import { LogLevel, Options, logLevels } from './build_cli_parser';
+import { containsAllTag, containsTag, loadJsonConfig } from './utils';
+import debug from 'debug';
 import {
   Config,
   TAG_DEBUG,
@@ -10,14 +10,13 @@ import {
   DEFAULT_REPLACE_REGEX,
   VAR_FROM_ARGUMENT_PREFIX,
   ENV_VAR_FROM_ARGUMENT_PREFIX,
-  LOG_TAG,
   TAG_INFO,
   TAG_WARN,
-} from "./task_data";
-import { applyVariables, searchExtraKeyValue, setTaskVar, setEnvVar } from "./task_utils";
-import { Command } from "commander";
-import { handlerMap } from "./handler_map";
-import { logi, logv } from "./loggers";
+} from './task_data';
+import { applyVariables, searchExtraKeyValue, setTaskVar, setEnvVar } from './task_utils';
+import { Command } from 'commander';
+import { handlerMap } from './handler_map';
+import { logi, logv } from './loggers';
 
 export const usefulTasks = (originCwd: string, opt: Options, program: Command) => {
   let tasksConfig: Config = {};
@@ -31,19 +30,19 @@ export const usefulTasks = (originCwd: string, opt: Options, program: Command) =
     } else {
       console.log(e);
     }
-    console.log("");
+    console.log('');
     program.help();
   }
 
   let debugPat: string | undefined;
 
-  let logLevel: LogLevel = "info";
+  let logLevel: LogLevel = 'info';
   let replaceRegex = DEFAULT_REPLACE_REGEX;
-  if (tasksConfig.env && typeof tasksConfig.env === "object") {
+  if (tasksConfig.env && typeof tasksConfig.env === 'object') {
     const env = tasksConfig.env;
 
     if (env.verbose || env.verboseGit) {
-      logLevel = "debug";
+      logLevel = 'debug';
     }
 
     if (env.logLevel && logLevels.includes(env.logLevel)) {
@@ -60,11 +59,11 @@ export const usefulTasks = (originCwd: string, opt: Options, program: Command) =
     logLevel = opt.logLevel;
   }
 
-  if (logLevel === "debug") {
+  if (logLevel === 'debug') {
     // debugPat = `${LOG_TAG}:*`;
     debugPat = `${TAG_WARN},${TAG_INFO},${TAG_DEBUG}`;
     debugPat = `${debugPat},simple-git,simple-git:*`;
-  } else if (logLevel === "info") {
+  } else if (logLevel === 'info') {
     debugPat = `${TAG_WARN},${TAG_INFO}`;
   }
 
@@ -74,13 +73,13 @@ export const usefulTasks = (originCwd: string, opt: Options, program: Command) =
 
   logv(`CLI Options`, opt);
 
-  if (typeof replaceRegex !== "string") {
+  if (typeof replaceRegex !== 'string') {
     throw new Error(`replaceRegex '${replaceRegex}'  must be a string`);
   }
   if (replaceRegex.length < 1) {
     throw new Error(`replaceRegex '${replaceRegex}' cannot be empty`);
   }
-  if (replaceRegex.indexOf("(") < 0 || replaceRegex.indexOf(")") < 0) {
+  if (replaceRegex.indexOf('(') < 0 || replaceRegex.indexOf(')') < 0) {
     throw new Error(`replaceRegex '${replaceRegex}' must contain regex group express '(' and ')'`);
   }
 
@@ -99,18 +98,18 @@ export const usefulTasks = (originCwd: string, opt: Options, program: Command) =
   };
 
   if (opt.extraArgs) {
-    logv("Setting up the variables from the additional arguments");
+    logv('Setting up the variables from the additional arguments');
     searchExtraKeyValue(opt.extraArgs, VAR_FROM_ARGUMENT_PREFIX, opt.camelKeys, (key: string, value: string) => {
       setTaskVar(context, key, value, false);
     });
 
-    logv("Setting up the environment variables from the additional arguments");
+    logv('Setting up the environment variables from the additional arguments');
     searchExtraKeyValue(opt.extraArgs, ENV_VAR_FROM_ARGUMENT_PREFIX, opt.camelKeys, (key: string, value: string) => {
       setEnvVar(context, key, value, false);
     });
   }
 
-  logi("");
+  logi('');
   logi(`[${tasksConfig.name}] Start task processing`);
 
   const getTaskRepresentStr = (task: Task, i?: number) => {
@@ -129,7 +128,7 @@ export const usefulTasks = (originCwd: string, opt: Options, program: Command) =
 
       // Validate task IDs
       if (task.id !== undefined && task.id !== null) {
-        if (typeof task.id !== "string") {
+        if (typeof task.id !== 'string') {
           throw new Error(`The task id must be a 'string' type`);
         }
 
@@ -158,7 +157,7 @@ export const usefulTasks = (originCwd: string, opt: Options, program: Command) =
         const printInvalidTags = (tags: any) => {
           logv(`Ignoring invalid tags '${tags}'`);
         };
-        if (typeof task.tags === "string") {
+        if (typeof task.tags === 'string') {
           if (task.tags.length > 0) {
             task.tags = task.tags.trim();
             task.__compare__elements.push(task.tags);
@@ -168,7 +167,7 @@ export const usefulTasks = (originCwd: string, opt: Options, program: Command) =
         } else if (Array.isArray(task.tags)) {
           task.tags = task.tags.map((value: string) => value.trim());
           for (const tag of task.tags) {
-            if (typeof tag === "string" && tag.length > 0) {
+            if (typeof tag === 'string' && tag.length > 0) {
               task.__compare__elements.push(tag);
             } else {
               printInvalidTags(tag);
