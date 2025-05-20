@@ -1,8 +1,8 @@
-import fs from 'fs';
-import { removeSync } from 'fs-extra';
-import { logv } from 'loggers';
 import path from 'path';
-import { TaskContext, TaskSymlink } from 'task_data';
+import fs from 'fs';
+import fse from 'fs-extra';
+import { logv } from '@/loggers';
+import { TaskContext, TaskSymlink } from '@/task_data';
 
 export const handleFsSymlink = async (context: TaskContext, task: TaskSymlink) => {
   const target: string = path.resolve(task.target);
@@ -17,7 +17,7 @@ export const handleFsSymlink = async (context: TaskContext, task: TaskSymlink) =
         fs.unlinkSync(dstPath);
       } else if (lstat.isDirectory()) {
         logv(`Remove directory '${dstPath}'`);
-        removeSync(dstPath);
+        fse.removeSync(dstPath);
       }
     }
   }

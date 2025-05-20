@@ -1,6 +1,6 @@
 {
   "name": "useful-tasks",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A CLI task runner that utilizes JSON-based configuration and processes tasks sequentially",
   "author": {
     "name": "Jinho Yun",
@@ -50,9 +50,10 @@
     "start:ts": "tsx src/index.ts",
     "build": "tsup",
     "watch": "tsup --watch",
-    "prepare": "npm run build",
+    "prepare": "husky && npm run build",
     "print_help": "tsx src/index.ts --help",
-    "test": "npm run test:fs && npm run test:fs2 && npm run test:vars && npm run test:vars_parsers && npm run test:exclude && npm run test:include && npm run test:exclude_include && npm run test:exclude_tag && npm run test:include_tag && npm run test:exclude_include_tag && npm run test:outputs && npm run test:custom_regex && npm run test:sub_tasks && npm run test:fs_cp_filter && npm run test:fs_del_filter",
+    "test": "jest",
+    "test:all": "npm run test:fs && npm run test:fs2 && npm run test:vars && npm run test:vars_parsers && npm run test:exclude && npm run test:include && npm run test:exclude_include && npm run test:exclude_tag && npm run test:include_tag && npm run test:exclude_include_tag && npm run test:outputs && npm run test:custom_regex && npm run test:sub_tasks && npm run test:fs_cp_filter && npm run test:fs_del_filter",
     "test:fs": "tsx src/index.ts --cwd=./test --config=test_fs.json",
     "test:fs2": "tsx src/index.ts --cwd=./test --config=test_fs2.json",
     "test:fs_cp_filter": "tsx src/index.ts --cwd=./test --config=test_fs_copy_filter.json",
@@ -68,28 +69,30 @@
     "test:include_tag": "tsx src/index.ts --cwd=./test --config=test_outputs.json --include=tag-a",
     "test:exclude_include_tag": "tsx src/index.ts --cwd=./test --config=test_outputs.json --exclude=tag-a --include=tag-b",
     "test:outputs": "tsx src/index.ts --cwd=./test --config=test_outputs.json",
-    "test:custom_regex": "tsx src/index.ts --cwd=./test --config=test_custom_replace_regex.json",
     "test:sub_tasks": "tsx src/index.ts --cwd=./test --config=test_sub_tasks.json",
-    "test:cwd_mode_restore": "tsx src/index.ts --cwd=./test --config=test_cwd_mode.json --cwd-mode=restore",
-    "test:cwd_mode_keep": "tsx src/index.ts --cwd=./test --config=test_cwd_mode.json --cwd-mode=keep",
-    "test:content_replace": "tsx src/index.ts --cwd=./test --config=test_content_replace.json",
-    "test:content_replace_glob": "tsx src/index.ts --cwd=./test --config=test_content_replace_glob.json",
     "test:env_var": "tsx src/index.ts --cwd=./test --config=test_env_vars.json"
   },
   "dependencies": {
     "commander": "^13.1.0",
     "debug": "^4.4.0",
+    "es-toolkit": "^1.36.0",
     "fs-extra": "^11.3.0",
     "glob": "^11.0.1",
     "json5": "^2.2.3",
+    "nanoid4": "npm:nanoid@^4.0.2",
     "simple-git": "^3.18.0",
-    "string-argv": "^0.3.2"
+    "string-argv": "^0.3.2",
+    "zod": "^3.24.3"
   },
   "devDependencies": {
     "@types/debug": "^4.1.12",
     "@types/fs-extra": "^11.0.4",
     "@types/glob": "^8.1.0",
+    "@types/jest": "^29.5.14",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "nanoid3": "npm:nanoid@^3.3.11",
+    "ts-jest": "^29.3.1",
     "tsup": "^8.4.0",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"

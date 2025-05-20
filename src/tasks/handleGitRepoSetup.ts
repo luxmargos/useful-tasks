@@ -1,9 +1,9 @@
-import fs from "fs";
-import path from "path";
-import simpleGit, { CheckRepoActions, ResetMode } from "simple-git";
-import { TaskContext, TaskGitCheckout } from "task_data";
+import fs from 'fs';
+import path from 'path';
+import simpleGit, { CheckRepoActions, ResetMode } from 'simple-git';
+import { TaskContext, TaskGitSetup } from 'task_data';
 
-export const handleGitRepoSetup = async (context: TaskContext, task: TaskGitCheckout) => {
+export const handleGitSetup = async (context: TaskContext, task: TaskGitSetup) => {
   const localPath = path.resolve(task.localPath);
 
   if (!fs.existsSync(localPath)) {
@@ -44,8 +44,8 @@ export const handleGitRepoSetup = async (context: TaskContext, task: TaskGitChec
       }
     }
 
-    const branch = task.branch ?? "";
-    const startPoint: string = task.startPoint ?? "";
+    const branch = task.branch ?? '';
+    const startPoint: string = task.startPoint ?? '';
 
     if (!hasLocalBranch) {
       await git.checkoutBranch(branch, startPoint);

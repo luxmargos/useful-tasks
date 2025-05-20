@@ -3,12 +3,11 @@ import path from 'path';
 import { TaskContext, TaskFsCopy } from '../task_data';
 import { logi, logv } from '../loggers';
 import fse from 'fs-extra';
-import { copySync, CopyOptionsSync } from 'fs-extra';
 import { resolveStringArray } from '../utils';
 
-export const runCopy = (src: string, dst: string, options: CopyOptionsSync) => {
+export const runCopy = (src: string, dst: string, options: fse.CopyOptionsSync) => {
   logv(`Copy: ${src} => ${dst}`);
-  copySync(src, dst, options);
+  fse.copySync(src, dst, options);
 };
 
 export const handleFsCopy = async (context: TaskContext, task: TaskFsCopy) => {
@@ -25,7 +24,7 @@ export const handleFsCopy = async (context: TaskContext, task: TaskFsCopy) => {
     overwrite = task.options.overwrite;
   }
 
-  const cpOpt: CopyOptionsSync = { overwrite };
+  const cpOpt: fse.CopyOptionsSync = { overwrite };
 
   const runGlobSync = (items: string[]) => {
     for (const f of items) {

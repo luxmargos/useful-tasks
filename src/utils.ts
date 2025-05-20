@@ -1,8 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import json5 from 'json5';
-import { Task } from 'task_data';
+import { Task, type TasksConfigInput } from 'task_data';
 import { logw, logv } from './loggers';
+import { assignIn } from 'es-toolkit/compat';
 
 export const loadFileOrThrow = (filePath: string) => {
   logv(`Loading file: ${filePath}`);
@@ -19,12 +20,12 @@ export const loadJson = (filePath: string) => {
 
 export const parseJson = (content: string) => json5.parse(content);
 
-export const loadJsonConfig = (filePath: string) => {
+export const loadJsonConfig = (filePath: string): TasksConfigInput => {
   let configJson = loadJson(filePath);
   if (configJson.extends) {
     const filePathDir = path.dirname(filePath);
     const extendsFilePath = path.resolve(filePathDir, configJson.extends);
-    configJson = Object.assign({}, configJson, loadJsonConfig(extendsFilePath));
+    configJson = assignIn({}, configJson, loadJsonConfig(extendsFilePath));
   }
 
   return configJson;
@@ -51,15 +52,17 @@ export const convertOrNotHyphenTextToCamelText = (text: string, flag: boolean) =
   return result;
 };
 
-export const containsTag = (elements: string[], tags: string[]) => {
+export const containsTag = (elements: string[], tags?: string[]) => {
   if (elements.length < 1) {
     return false;
   }
 
   for (const el of elements) {
-    for (const tag of tags) {
-      if (el === tag) {
-        return true;
+    if (tags) {
+      for (const tag of tags) {
+        if (el === tag) {
+          return true;
+        }
       }
     }
   }
@@ -67,18 +70,21 @@ export const containsTag = (elements: string[], tags: string[]) => {
   return false;
 };
 
-export const containsAllTag = (elements: string[], tags: string[]) => {
+export const containsAllTag = (elements: string[], tags?: string[]) => {
   if (elements.length < 1) {
     return false;
   }
   for (const el of elements) {
     let contained = false;
-    for (const tag of tags) {
-      if (tag === el) {
-        contained = true;
-        break;
+    if (tags) {
+      for (const tag of tags) {
+        if (tag === el) {
+          contained = true;
+          break;
+        }
       }
     }
+
     if (!contained) {
       return false;
     }

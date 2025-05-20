@@ -1,14 +1,15 @@
 import { Command } from 'commander';
 import path from 'path';
+import * as packageJson from '../package.json';
 
 export const DEFAULT_CONFIG = 'useful_tasks.json';
 export const DEFAULT_USE_CAMEL = true;
 
-export const CwdRestore = 'restore';
-export const CwdKeep = 'keep';
+export const CWD_RESTORE = 'restore';
+export const CWD_KEEP = 'keep';
 
-export const cwdModes = [CwdRestore, CwdKeep] as const;
-type CwdModeTuple = typeof cwdModes;
+export const CWD_MODES = [CWD_RESTORE, CWD_KEEP] as const;
+type CwdModeTuple = typeof CWD_MODES;
 export type CwdMode = CwdModeTuple[number];
 
 const LogLevelInfo = 'info';
@@ -27,19 +28,21 @@ export interface Options {
   excludeCta?: string[];
   camelKeys: boolean;
   cwdMode?: CwdMode;
-  cwdModeIsContinue?: boolean;
   logLevel?: LogLevel;
   extraArgs?: string[];
 }
 
 const argDesc = {
-  cwdMode: `Choose between ${cwdModes
-    .map((v) => `'${v}'`)
-    .join(
-      ' or '
-    )}. If you use 'cwd' property in a specific task, consider using this parameter. This parameter determines the behavior of the current working directory (CWD) when each task ends. In '${CwdRestore}' mode, the CWD will be restored to its original state (or the one specified at --cwd) when each task ends, while in '${CwdKeep}' mode, the CWD will remain unchanged.`,
+  cwdMode: `Choose between ${CWD_MODES.map((v) => `'${v}'`).join(
+    ' or '
+  )}. If you use 'cwd' property in a specific task, consider using this parameter. This parameter determines the behavior of the current working directory (CWD) when each task ends. In '${CWD_RESTORE}' mode, the CWD will be restored to its original state (or the one specified at --cwd) when each task ends, while in '${CWD_KEEP}' mode, the CWD will remain unchanged.`,
 };
 
+/**
+ * Initialize the command line parser and parse the arguments.
+ * @param userArgv - The command line arguments to parse. If not provided, it will use the current process arguments.
+ * @returns
+ */
 export const setup = (userArgv?: string[]) => {
   // console.log('cwd', process.cwd());
   // console.log('argv', process.argv);
@@ -47,7 +50,7 @@ export const setup = (userArgv?: string[]) => {
   const program = new Command();
   program
     .name('useful-tasks')
-    .version(process.env.npm_package_version!)
+    .version(packageJson.version)
     .option('--cwd <string>', 'Change working directory')
     .option('-c, --config <string>', 'A path of json configuraion', DEFAULT_CONFIG)
     .option(
@@ -71,7 +74,7 @@ export const setup = (userArgv?: string[]) => {
       'Specify whether to use camel case for the key of the variable. If the value is true, the paramter "--var-my-key" will be converted to "myKey" otherwise it will be "my-key"',
       DEFAULT_USE_CAMEL
     )
-    .option('--cwd-mode <string>', argDesc.cwdMode, CwdRestore)
+    .option('--cwd-mode <string>', argDesc.cwdMode)
     .option(
       '--log-level <string>',
       `Specify the logging level as ${logLevels.join(
@@ -95,8 +98,6 @@ export const setup = (userArgv?: string[]) => {
   typedOptions.includeCta = fixStringArrayArgument(typedOptions.includeCta);
   typedOptions.exclude = fixStringArrayArgument(typedOptions.exclude);
   typedOptions.excludeCta = fixStringArrayArgument(typedOptions.excludeCta);
-
-  typedOptions.cwdModeIsContinue = typedOptions.cwdMode === CwdKeep;
 
   if (typedOptions.camelKeys !== undefined && typeof typedOptions.camelKeys === 'string') {
     let v: string = typedOptions.camelKeys;

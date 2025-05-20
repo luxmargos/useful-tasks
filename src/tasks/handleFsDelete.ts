@@ -1,14 +1,16 @@
 import fs from 'fs';
-import { processWithGlobSync } from 'glob_handler';
-import { logv } from 'loggers';
 import path from 'path';
-import { TaskContext, TaskFsDelete } from 'task_data';
-import { removeSync } from 'fs-extra';
-import { resolveStringArray } from 'utils';
+// import { removeSync } from 'fs-extra';
+import fse from 'fs-extra';
+
+import { processWithGlobSync } from '@/glob_handler';
+import { logv } from '@/loggers';
+import { TaskContext, TaskFsDelete } from '@/task_data';
+import { resolveStringArray } from '@/utils';
 
 export const runDelete = (path: string) => {
   logv(`Delete: ${path}`);
-  removeSync(path);
+  fse.removeSync(path);
 };
 
 export const handleFsDelete = async (context: TaskContext, task: TaskFsDelete) => {

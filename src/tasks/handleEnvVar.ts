@@ -1,9 +1,9 @@
 import fse from 'fs-extra';
-import { processWithGlobSync } from 'glob_handler';
-import { logv } from 'loggers';
 import path from 'path';
-import { TaskContext, TaskEnvVar } from 'task_data';
-import { setEnvVar } from 'task_utils';
+import { processWithGlobSync } from '@/glob_handler';
+import { logv } from '@/loggers';
+import { TaskContext, TaskEnvVar } from '@/task_data';
+import { setEnvVar } from '@/task_utils';
 import {
   checkLegacyUsage,
   parseLines,
@@ -11,7 +11,9 @@ import {
   loadFileOrThrow,
   parseJson,
   resolveStringArray,
-} from '../utils';
+} from '@/utils';
+import { isNotNil } from 'es-toolkit';
+import { isArray } from 'es-toolkit/compat';
 
 export const handleEnvVar = async (context: TaskContext, task: TaskEnvVar) => {
   checkLegacyUsage(task, 'var');
@@ -23,16 +25,16 @@ export const handleEnvVar = async (context: TaskContext, task: TaskEnvVar) => {
   }
   const isFallback: boolean = task.isFallback;
 
-  if (task.value !== undefined) {
-    let value: any = task.value;
-    if (typeof value === 'string') {
+  if (isNotNil(task.map)) {
+    let map: any = task.map;
+    if (typeof map === 'string') {
       logv('Trying to parse as lines.');
-      value = parseLines(value);
+      map = parseLines(map);
+    } else if (typeof map === 'object' || Array.isArray(map)) {
+      Object.keys(map).forEach((key) => {
+        setEnvVar(context, key, map[key], isFallback);
+      });
     }
-
-    Object.keys(value).forEach((key) => {
-      setEnvVar(context, key, value[key], isFallback);
-    });
   }
 
   if (!task.src) return;

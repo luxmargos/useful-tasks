@@ -1,21 +1,24 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "CommonJS",
+    "module": "Preserve",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
     "outDir": "./bin",
     //directory structure of output
-    "rootDir": "src",
+    "rootDir": ".",
     "baseUrl": "src",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "allowJs": false,
-    "moduleResolution": "node",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": {
+      "@/*": ["*"]
+    }
   },
   "exclude": ["dist", "node_modules"]
 }

@@ -93,9 +93,11 @@ export const handleContentReplace = async (context: TaskContext, task: TaskConte
   const runGlobSync = (items: string[]) => {
     for (const f of items) {
       const itemPath: string = path.join(task.path, f);
-      if (fs.statSync(itemPath).isDirectory()) {
+
+      if (fs.existsSync(itemPath) && fs.statSync(itemPath).isDirectory()) {
         continue;
       }
+
       findAndReplaceWithFile(path.join(task.path, f), replaceFunc, find, task.replace, loop);
     }
   };

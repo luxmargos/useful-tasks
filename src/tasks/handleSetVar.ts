@@ -1,9 +1,9 @@
 import fs from 'fs';
-import { processWithGlobSync } from 'glob_handler';
-import { logv } from 'loggers';
 import path from 'path';
-import { TaskContext, TaskSetVar } from 'task_data';
-import { setTaskVar } from 'task_utils';
+import { processWithGlobSync } from '@/glob_handler';
+import { logv } from '@/loggers';
+import { TaskContext, TaskSetVar } from '@/task_data';
+import { setTaskVar } from '@/task_utils';
 import {
   checkLegacyUsage,
   checkTypeOrThrow,
@@ -12,7 +12,7 @@ import {
   parseJson,
   parseLines,
   resolveStringArray,
-} from 'utils';
+} from '@/utils';
 
 export const handleSetVar = async (context: TaskContext, task: TaskSetVar) => {
   checkLegacyUsage(task, 'var');

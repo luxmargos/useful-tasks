@@ -1,6 +1,6 @@
 import stringArgv from 'string-argv';
 import { TaskContext, TaskSubTasks } from '../task_data';
-import { usefulTasks } from '../useful_tasks';
+import { initUsefulTasks } from '../useful_tasks';
 import { setup } from '../build_cli_parser';
 
 export const handleSubTasks = async (context: TaskContext, task: TaskSubTasks) => {
@@ -10,5 +10,5 @@ export const handleSubTasks = async (context: TaskContext, task: TaskSubTasks) =
 
   const subArgv = stringArgv(task.args);
   const setupResult = setup(subArgv);
-  usefulTasks(context.originCwd, setupResult.opt, setupResult.program);
+  initUsefulTasks(context.originCwd, setupResult.opt, setupResult.program);
 };

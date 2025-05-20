@@ -1,6 +1,6 @@
-import { execSync } from "child_process";
-import { logv } from "loggers";
-import { TaskContext, TaskTerminalCommand } from "task_data";
+import { execSync } from 'child_process';
+import { logv } from '@/loggers';
+import { TaskContext, TaskTerminalCommand } from '@/task_data';
 
 export const handleTerminalCommand = async (context: TaskContext, task: TaskTerminalCommand) => {
   logv(`Start execution... ${task.cmd}`);
@@ -9,6 +9,6 @@ export const handleTerminalCommand = async (context: TaskContext, task: TaskTerm
     // cwd: cwd,
     env: process.env,
     stdio: [process.stdin, process.stdout, process.stderr],
-    encoding: "utf-8",
+    encoding: 'utf-8',
   });
 };
