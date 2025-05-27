@@ -3,6 +3,7 @@ import path from 'path';
 import simpleGit, { CheckRepoActions, ResetMode } from 'simple-git';
 import { TaskContext, TaskGitSetup } from 'task_data';
 
+// TODO: Check has local changes and warn or throw
 export const handleGitSetup = async (context: TaskContext, task: TaskGitSetup) => {
   const localPath = path.resolve(task.localPath);
 

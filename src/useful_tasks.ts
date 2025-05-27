@@ -1,45 +1,45 @@
 import path from 'path';
-import { CWD_KEEP, LogLevel, Options, logLevels } from './build_cli_parser';
+import { CWD_KEEP, Options } from './build_cli_parser';
+import { LogLevel, logLevels } from './loggers';
 import { containsAllTag, containsTag, loadJsonConfig } from './utils';
 import debug from 'debug';
 import os from 'os';
 import {
-  TasksConfig,
-  TAG_DEBUG,
+  TasksScript,
   Task,
   TaskContext,
   VAR_FROM_ARGUMENT_PREFIX,
   ENV_VAR_FROM_ARGUMENT_PREFIX,
-  TAG_INFO,
-  TAG_WARN,
-  TasksConfigInput,
-  TasksConfigSchema,
+  TasksScriptInput,
+  TasksScriptSchema,
   convertToRuntimeTask,
   RuntimeTask,
   AnyRuntimeTask,
 } from './task_data';
+import { TAG_DEBUG, TAG_INFO, TAG_WARN } from './loggers';
 import { replaceVarLiterals, searchExtraKeyValue, setTaskVar, setEnvVar } from './task_utils';
 import { Command } from 'commander';
 import { handlerMap } from './handler_map';
 import { logi, logv, logw } from './loggers';
 import { isNil, isNotNil } from 'es-toolkit';
+import { get } from 'es-toolkit/compat';
 
 export const usefulTasks = async (
   originCwd: string,
   opts: Options,
-  tasksConfigInput: TasksConfigInput,
+  tasksConfigInput: TasksScriptInput,
   program: Command
 ) => {
-  const tasksConfig: TasksConfig = TasksConfigSchema.parse(tasksConfigInput);
+  const script: TasksScript = TasksScriptSchema.parse(tasksConfigInput);
 
   // cli argument can overwrite json's cwdMode
-  const cwdModeIsKeep = opts.cwdMode ? opts.cwdMode === CWD_KEEP : tasksConfig.env.cwdMode === CWD_KEEP;
+  const cwdModeIsKeep = opts.cwdMode ? opts.cwdMode === CWD_KEEP : script.env.cwdMode === CWD_KEEP;
 
   let debugPat: string | undefined;
-  let logLevel: LogLevel = tasksConfig.env.logLevel;
+  let logLevel: LogLevel = script.env.logLevel;
 
-  const varReplaceRegex = tasksConfig.env.varReplaceRegex;
-  const envReplaceRegex = tasksConfig.env.envReplaceRegex;
+  const varReplaceRegex = script.env.varReplaceRegex;
+  const envReplaceRegex = script.env.envReplaceRegex;
 
   //cli argument can overwrite json's logLeve
   if (opts.logLevel && logLevels.includes(opts.logLevel)) {
@@ -58,6 +58,11 @@ export const usefulTasks = async (
     debug.enable(debugPat);
   }
 
+  // output extra messages which are specified by the cli arguments
+  if (opts.extraMessages && opts.extraMessages.length > 0) {
+    opts.extraMessages.forEach((msg) => logw(msg));
+  }
+
   logv(`CLI Options`, opts);
 
   const baseCwd = path.resolve(process.cwd());
@@ -71,8 +76,19 @@ export const usefulTasks = async (
 
     originCwd,
     baseCwd,
-    varReplaceRegex: new RegExp(varReplaceRegex),
-    envVarReplaceRegex: new RegExp(envReplaceRegex),
+    varReplaceRegexList: varReplaceRegex,
+    envVarReplaceRegexList: envReplaceRegex,
+    replaceProviders: (() => {
+      const providers = varReplaceRegex.map((regex) => ({
+        regex,
+        store: (varPath: string) => get(context.systemVars, varPath) || get(context.vars, varPath),
+      }));
+      const envProviders = envReplaceRegex.map((regex) => ({
+        regex,
+        store: (varPath: string) => get(process.env, varPath),
+      }));
+      return [...providers, ...envProviders];
+    })(),
     systemVars: {
       __env: {
         cwd_startup: originCwd,
@@ -97,7 +113,7 @@ export const usefulTasks = async (
   }
 
   logi('');
-  logi(`[${tasksConfig.name}] Start task processing`);
+  logi(`[${script.name}] Start task processing`);
 
   const getTaskRepresentStr = (task: Task, i?: number) => {
     if (i !== undefined && i !== null) {
@@ -108,7 +124,7 @@ export const usefulTasks = async (
   };
 
   const runTasks = async () => {
-    let tasks: AnyRuntimeTask[] = (tasksConfig.tasks ?? []).map(convertToRuntimeTask);
+    let tasks: AnyRuntimeTask[] = (script.tasks ?? []).map(convertToRuntimeTask);
 
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i];
@@ -182,9 +198,9 @@ export const usefulTasks = async (
       return true;
     });
 
-    if (opts.excludeCta && opts.excludeCta.length > 0) {
-      const excludesItems = opts.excludeCta;
-      logv(`Excluding tasks by specified IDs or Tags : --exclude-cta=${excludesItems}`);
+    if (opts.excludeAll && opts.excludeAll.length > 0) {
+      const excludesItems = opts.excludeAll;
+      logv(`Excluding tasks by specified IDs or Tags : --exclude-all=${excludesItems}`);
       tasks = tasks.filter((taskItem: AnyRuntimeTask) => {
         if (containsAllTag(excludesItems, taskItem.__compare__elements) === false) {
           return taskItem;
@@ -192,12 +208,12 @@ export const usefulTasks = async (
       });
     }
     const hasIncludeFilters = opts.include && opts.include.length > 0;
-    const hasIncludeCTAFilters = opts.includeCta && opts.includeCta.length > 0;
+    const hasIncludeCTAFilters = opts.includeAll && opts.includeAll.length > 0;
     if (hasIncludeFilters || hasIncludeCTAFilters) {
       const includeItems = opts.include;
-      const includeCtaItems = opts.includeCta;
+      const includeCtaItems = opts.includeAll;
 
-      logv(`Including tasks by specified IDs or Tags : --include=${includeItems} / --include-cta=${includeCtaItems}`);
+      logv(`Including tasks by specified IDs or Tags : --include=${includeItems} / --include-all=${includeCtaItems}`);
       tasks = tasks.filter((taskItem: AnyRuntimeTask) => {
         if (
           (hasIncludeFilters && containsTag(includeItems!, taskItem.__compare__elements) === true) ||
@@ -217,7 +233,7 @@ export const usefulTasks = async (
     const taskCount = tasks.length ?? 0;
     for (let i = 0; i < taskCount; i++) {
       const task = tasks[i];
-      await replaceVarLiterals(context, task);
+      await replaceVarLiterals(context.replaceProviders, task, ['type', 'id', 'tags'] satisfies (keyof Task)[]);
 
       const taskRepresentStr = getTaskRepresentStr(task, i);
       if (task.enabled === false) {
@@ -274,14 +290,14 @@ export const usefulTasks = async (
     throw error;
   } else {
     process.chdir(baseCwd);
-    logi(`[${tasksConfig.name}] Tasks done\n`);
+    logi(`[${script.name}] Tasks done\n`);
   }
 };
 
 export const initUsefulTasks = (originCwd: string, opts: Options, program: Command) => {
-  let tasksConfigInput: TasksConfigInput = {};
+  let tasksConfigInput: TasksScriptInput = {};
 
-  let configFilePath = path.resolve(opts.config);
+  let configFilePath = path.resolve(opts.script);
   try {
     tasksConfigInput = loadJsonConfig(configFilePath);
   } catch (e: any) {

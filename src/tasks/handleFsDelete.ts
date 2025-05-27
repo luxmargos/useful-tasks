@@ -26,7 +26,7 @@ export const handleFsDelete = async (context: TaskContext, task: TaskFsDelete) =
   };
 
   // allow dir with glob, do nothing withtout filters
-  const handled = processWithGlobSync(
+  const handled = await processWithGlobSync(
     runGlobSync,
     task.path,
     resolveStringArray(task.include, []),

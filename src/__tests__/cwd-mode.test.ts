@@ -1,4 +1,4 @@
-import { setup } from '@/build_cli_parser';
+import { prepare } from '@/build_cli_parser';
 import { prepareTestSuite, prepareTestInstance } from './testUtils';
 import { usefulTasks } from '@/useful_tasks';
 
@@ -8,7 +8,7 @@ describe('Test CWD modes', () => {
   it('Keep Mode', async () => {
     const itObj = prepareTestInstance(testDir);
 
-    const setupResult = setup([]);
+    const setupResult = prepare([]);
 
     await usefulTasks(
       itObj.instanceCwd,
@@ -80,7 +80,7 @@ describe('Test CWD modes', () => {
   it('Restore(default) Mode', async () => {
     const itObj = prepareTestInstance(testDir);
 
-    const setupResult = setup([]);
+    const setupResult = prepare([]);
 
     await usefulTasks(
       itObj.instanceCwd,

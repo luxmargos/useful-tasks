@@ -3,9 +3,8 @@ import path from 'path';
 import { processWithGlobSync } from '@/glob_handler';
 import { logv } from '@/loggers';
 import { TaskContext, TaskSetVar } from '@/task_data';
-import { setTaskVar } from '@/task_utils';
+import { replaceVarLiterals, setTaskVar } from '@/task_utils';
 import {
-  checkLegacyUsage,
   checkTypeOrThrow,
   checkEmptyStringOrThrow,
   loadFileOrThrow,
@@ -13,33 +12,24 @@ import {
   parseLines,
   resolveStringArray,
 } from '@/utils';
+import { isNil } from 'es-toolkit';
 
 export const handleSetVar = async (context: TaskContext, task: TaskSetVar) => {
-  checkLegacyUsage(task, 'var');
-  checkLegacyUsage(task, 'varType');
-  checkLegacyUsage(task, 'fileFormat');
-
-  checkTypeOrThrow('key', task.key, ['string']);
-  checkEmptyStringOrThrow('key', task.key);
-
-  if (task.isFallback !== true) {
-    task.isFallback = false;
-  }
   const isFallback: boolean = task.isFallback;
 
   if (task.value !== undefined) {
     const value = task.value;
     setTaskVar(context, task.key, value, isFallback);
+    while (await replaceVarLiterals(context.replaceProviders, value)) {}
   }
 
   if (!task.src) return;
-  checkTypeOrThrow('src', task.src, ['string']);
 
-  const src = task.src as string;
-  const parser = task.parser || 'auto';
+  const src = task.src;
+  const parser = task.parser;
   logv(`Parser = ${parser}`);
 
-  const runFunc = (filePath: string) => {
+  const runFunc = async (filePath: string) => {
     const varsPath = path.resolve(filePath);
     let obj: any | undefined;
     const content = loadFileOrThrow(varsPath);
@@ -53,30 +43,31 @@ export const handleSetVar = async (context: TaskContext, task: TaskSetVar) => {
       }
     }
 
-    if (!obj && (parser === 'auto' || parser === 'lines')) {
+    if (isNil(obj) && (parser === 'auto' || parser === 'lines')) {
       logv('Trying to parse as lines.');
       obj = parseLines(content);
     }
 
-    if (!obj && (parser === 'auto' || parser === 'string')) {
+    if (isNil(obj) && (parser === 'auto' || parser === 'string')) {
       obj = content;
     }
 
     setTaskVar(context, task.key, obj, isFallback);
+    while (await replaceVarLiterals(context.replaceProviders, obj)) {}
   };
 
-  const runGlobSync = (items: string[]) => {
+  const runGlobSync = async (items: string[]) => {
     for (const f of items) {
       const itemPath: string = path.join(src, f);
       if (fs.statSync(itemPath).isDirectory()) {
         continue;
       }
-      runFunc(itemPath);
+      await runFunc(itemPath);
     }
   };
 
   // ignore dirs, include all files on empty filters
-  const handled = processWithGlobSync(
+  const handled = await processWithGlobSync(
     runGlobSync,
     src,
     resolveStringArray(task.include, []),
@@ -87,6 +78,6 @@ export const handleSetVar = async (context: TaskContext, task: TaskSetVar) => {
 
   // expect it is a single file
   if (!handled) {
-    runFunc(src);
+    await runFunc(src);
   }
 };

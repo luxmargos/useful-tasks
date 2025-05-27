@@ -1,11 +1,21 @@
 import { Command } from 'commander';
-import { CWD_KEEP, CWD_RESTORE, logLevels, Options } from './build_cli_parser';
-import { string, z, ZodObject, ZodRawShape } from 'zod';
+import { CWD_KEEP, CWD_RESTORE, Options } from './build_cli_parser';
+import { logLevels } from './loggers';
+import { z, ZodObject, ZodRawShape } from 'zod';
 import os from 'os';
-import { Runtime } from 'inspector';
+import { omit } from 'es-toolkit';
 
-/** e.g. ${value.key} */
-export const DEFAULT_REPLACE_REGEX = '\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}';
+// TODO: Unescaping is required
+
+/** e.g. Match: "Text...${value.key}...", Does not match: "Text...\$value.key..." */
+/** e.g. Match: "Text...${value.key}...", Does not match: "Text...\\${value.key}..." */
+export const DEFAULT_REPLACE_REGEX = '(?<!\\\\)\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}';
+//Keep: export const DEFAULT_REPLACE_REGEX = '\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}';
+
+// TODO: Unescaping is required
+/** e.g. Match: "Text...$value.key...", Does not match: "Text...\$value.key..." */
+export const DEFAULT_REPLACE_REGEX_TRADITIONAL = '(?<!\\\\)\\$([a-zA-Z0-9\\.\\-_]*)';
+//Keep: export const DEFAULT_REPLACE_REGEX_TRADITIONAL = '\\$([a-zA-Z0-9\\.\\-_]*)';
 
 type TaskHandler<T> = (context: TaskContext, task: T) => Promise<void>;
 
@@ -60,9 +70,11 @@ export interface TaskContext {
   baseCwd: string;
 
   /** The regex to replace variable literal */
-  varReplaceRegex: RegExp;
+  varReplaceRegexList: RegExp[];
   /** The regex to replace environment variable literal */
-  envVarReplaceRegex: RegExp;
+  envVarReplaceRegexList: RegExp[];
+
+  replaceProviders: { regex: RegExp; store: (varPath: string) => any }[];
 
   /** The system variables used by the tasks */
   systemVars: {
@@ -90,6 +102,7 @@ export const TaskTypeSchema = z.union([
   z.literal('fs-copy'),
   z.literal('fs-del'),
   z.literal('fs-mkdir'),
+  z.literal('fs-touch'),
   z.literal('env-var'),
   z.literal('sub-tasks'),
   z.literal('content-replace'),
@@ -193,20 +206,44 @@ export const TaskSetVarSchema = newTaskSchemaWithGlobFilters('set-var', {
   key: z.string().nonempty(),
   value: z.union([z.string(), z.number(), z.boolean(), z.any()]),
   src: z.string().nonempty().optional(),
-  parser: z.union([z.literal('json'), z.literal('lines'), z.literal('string'), z.literal('auto')]).optional(),
+  parser: z.union([z.literal('json'), z.literal('lines'), z.literal('string'), z.literal('auto')]).default('auto'),
   /** If the variable already exists, assigning will be skipped */
-  isFallback: z.boolean().optional().describe('If the variable already exists, assigning will be skipped'),
+  isFallback: z.boolean().default(false).describe('If the variable already exists, assigning will be skipped'),
 });
 export type TaskSetVar = z.infer<typeof TaskSetVarSchema>;
 
-export const TaskEnvVarSchema = newTaskSchemaWithGlobFilters('env-var', {
-  map: z.map(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
+export const TaskEnvVarMapSchema = newTaskSchemaWithGlobFilters('env-var', {
+  map: z.union([z.string(), z.record(z.string(), z.union([z.string(), z.number(), z.boolean()]))]).optional(),
   src: z.string().nonempty().optional(),
   parser: z.union([z.literal('json'), z.literal('lines'), z.literal('auto')]).default('auto'),
   /** If the environment variable already exists, assigning will be skipped */
-  isFallback: z.boolean().optional().describe('If the environment variable already exists, assigning will be skipped'),
+  isFallback: z
+    .boolean()
+    .default(false)
+    .describe('If the environment variable already exists, assigning will be skipped'),
 });
+
+export const TaskEnvVarKVSchema = newTaskSchema('env-var', {
+  key: z.string().nonempty(),
+  value: z.string(),
+  /** If the environment variable already exists, assigning will be skipped */
+  isFallback: z
+    .boolean()
+    .default(false)
+    .describe('If the environment variable already exists, assigning will be skipped'),
+}).transform((params) => {
+  return TaskEnvVarMapSchema.parse({
+    ...omit(params, ['key', 'value']),
+    map: {
+      [params.key]: params.value,
+    },
+  } satisfies z.input<typeof TaskEnvVarMapSchema>);
+});
+
+export const TaskEnvVarSchema = z.union([TaskEnvVarMapSchema, TaskEnvVarKVSchema]);
+
 export type TaskEnvVar = z.infer<typeof TaskEnvVarSchema>;
+export type TaskEnvVarIn = z.input<typeof TaskEnvVarSchema>;
 
 export const TaskOutputTargetsSchema = z.union([
   z.literal('console').describe('Output to console'),
@@ -256,12 +293,27 @@ export const TaskFsMakeDirSchema = newTaskSchema('fs-mkdir', {
 });
 export type TaskFsMakeDir = z.infer<typeof TaskFsMakeDirSchema>;
 
-export const TaskSubTasksSchema = newTaskSchema('sub-tasks', {
-  args: z.string().optional(),
-  inherits: z
+export const TaskFsTouchSchema = newTaskSchema('fs-touch', {
+  path: z.string().nonempty(),
+});
+export type TaskFsTouch = z.infer<typeof TaskFsTouchSchema>;
+
+/**
+ * Configuration for running a set of tasks as a sub-task group.
+ * FUTURE: Add glob support for task file patterns
+ */
+export const TaskSubTasksSchema = newTaskSchemaWithGlobFilters('sub-tasks', {
+  /** The path to the task file or directory to run as a sub-task group.*/
+  src: z.string().nonempty(),
+
+  /** Configuration for inheriting context from parent task. */
+  inherit: z
     .object({ args: z.boolean().default(true), vars: z.boolean().default(true) })
-    .optional()
+    .default({ args: true, vars: true })
     .describe('Whether to inherit args and vars from the parent task.'),
+
+  /** Command-line arguments to pass to the sub-tasks. */
+  args: z.string().optional(),
 });
 export type TaskSubTasks = z.infer<typeof TaskSubTasksSchema>;
 
@@ -305,7 +357,16 @@ export type AnyRuntimeTask = RuntimeTask<Task>;
 
 export type TaskInput = z.input<typeof TaskSchema>;
 
-export const TasksConfigSchema = z.object({
+const ReplaceRegexSchema = z
+  .string()
+  .nonempty()
+  .default(DEFAULT_REPLACE_REGEX)
+  .describe('The regex to replace text with variable values')
+  .refine((value) => value.indexOf('(') >= 0 && value.indexOf(')') >= 0, {
+    message: `The Regex must contains regex group express '(' and ')'`,
+  });
+
+export const TasksScriptSchema = z.object({
   /** The name of the tasks file */
   name: z.string().optional(),
   env: z
@@ -315,22 +376,28 @@ export const TasksConfigSchema = z.object({
 
       /** The regex to replace text with variable values */
       varReplaceRegex: z
-        .string()
-        .nonempty()
-        .default(DEFAULT_REPLACE_REGEX)
+        .union([ReplaceRegexSchema, z.array(ReplaceRegexSchema)])
         .describe('The regex to replace text with variable values')
-        .refine((value) => value.indexOf('(') >= 0 && value.indexOf(')') >= 0, {
-          message: `The Regex must contains regex group express '(' and ')'`,
+        .default([DEFAULT_REPLACE_REGEX])
+        .transform((value) => {
+          if (Array.isArray(value)) {
+            return value.map((v) => new RegExp(v));
+          } else {
+            return [new RegExp(value)];
+          }
         }),
 
       /** The regex to replace text with environment variable values */
       envReplaceRegex: z
-        .string()
-        .nonempty()
-        .default(DEFAULT_REPLACE_REGEX)
+        .union([ReplaceRegexSchema, z.array(ReplaceRegexSchema)])
         .describe('The regex to replace text with environment variable values')
-        .refine((value) => value.indexOf('(') >= 0 && value.indexOf(')') >= 0, {
-          message: `The Regex must contains regex group express '(' and ')'`,
+        .default([DEFAULT_REPLACE_REGEX])
+        .transform((value) => {
+          if (Array.isArray(value)) {
+            return value.map((v) => new RegExp(v));
+          } else {
+            return [new RegExp(value)];
+          }
         }),
 
       cwdMode: z.union([z.literal(CWD_RESTORE), z.literal(CWD_KEEP)]).default(CWD_RESTORE),
@@ -338,13 +405,8 @@ export const TasksConfigSchema = z.object({
     .default({ logLevel: 'info', varReplaceRegex: DEFAULT_REPLACE_REGEX, envReplaceRegex: DEFAULT_REPLACE_REGEX }),
   tasks: z.array(TaskSchema).default([]),
 });
-export type TasksConfig = z.infer<typeof TasksConfigSchema>;
-export type TasksConfigInput = z.input<typeof TasksConfigSchema>;
-
-export const LOG_TAG = 'useful-tasks';
-export const TAG_DEBUG = `${LOG_TAG}:debug`;
-export const TAG_INFO = `${LOG_TAG}:info`;
-export const TAG_WARN = `${LOG_TAG}:warn`;
+export type TasksScript = z.infer<typeof TasksScriptSchema>;
+export type TasksScriptInput = z.input<typeof TasksScriptSchema>;
 
 export const VAR_FROM_ARGUMENT_PREFIX = '--var-';
 export const ENV_VAR_FROM_ARGUMENT_PREFIX = '--env-';

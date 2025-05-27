@@ -1,42 +1,67 @@
-import { isNil } from 'es-toolkit';
-import { logv, logw } from './loggers';
+import { logv } from './loggers';
 import { Task, TaskContext } from './task_data';
-import { convertOrNotHyphenTextToCamelText, loadJson } from './utils';
+import { convertOrNotHyphenTextToCamelText } from './utils';
 import { get, isNotNil } from 'es-toolkit/compat';
 
-export const replaceVarLiterals = async (context: TaskContext, task: Task) => {
-  const anyTypeTask: any = task as any;
-  for (const key of Object.keys(anyTypeTask)) {
-    if (typeof key !== 'string') {
+export const replaceVarLiterals = async (
+  providers: { regex: RegExp; store: (varPath: string) => any }[],
+  anyValue: any,
+  immutableValueOfKeys: string[] = [],
+  inheritValueOfKeys: boolean = false
+) => {
+  if (typeof anyValue !== 'object' && !Array.isArray(anyValue)) {
+    return false;
+  }
+
+  let hasChanges = false;
+  for (const key of Object.keys(anyValue)) {
+    // NOTE: Consider to remove this check
+    // if (typeof key !== 'string') {
+    //   continue;
+    // }
+
+    if (immutableValueOfKeys.includes(key)) {
       continue;
     }
 
-    if (key === 'id' || key === 'tags') {
-      continue;
-    }
-
-    if (anyTypeTask[key] !== undefined && typeof anyTypeTask[key] === 'string') {
-      let valueOfKey: string = anyTypeTask[key];
+    let valueOfKey: string = anyValue[key];
+    if (valueOfKey !== undefined && typeof valueOfKey === 'string') {
+      let hasChangesForCurrentKey = false;
       while (true) {
-        const envVarHandler = (value: string) => {
-          context.envVarReplaceRegex.lastIndex = 0;
-          const execArr = context.envVarReplaceRegex.exec(value);
+        const varLiteralHandler = (value: string) => {
+          let isMatched = false;
+          let canReplace = false;
+          let matchedStr: string | undefined;
+          let varPath: string | undefined;
+          let matchedVar: string | undefined;
+          let replaceText = () => value;
+          for (const provider of providers) {
+            const regex = provider.regex;
+            regex.lastIndex = 0;
+            const execArr = regex.exec(value);
+            if (isNotNil(execArr)) {
+              isMatched = true;
+              // example: Text ${var_name}, Text ${var_name.sub_name}, Text ${var_name[0]}
+              matchedStr = execArr[0];
+              // example: ${var_name}, ${var_name.sub_name}, ${var_name[0]}
+              varPath = execArr[1];
+              matchedVar = varPath ? provider.store(varPath) : undefined;
+              canReplace = isNotNil(matchedVar);
+              replaceText = () => {
+                const valuePrefix = value.substring(0, execArr.index);
+                const valueReplace = `${matchedVar}`;
+                const valueSuffix = value.substring(execArr.index + matchedStr!.length);
+                return `${valuePrefix}${valueReplace}${valueSuffix}`;
+              };
+              if (canReplace) {
+                break;
+              }
+            }
+          }
 
-          const isMatched = isNotNil(execArr);
-          // example: ${var_name}, ${var_name.sub_name}, ${var_name[0]}
-          const matchedStr = execArr?.[0];
-          // example: var_name, var_name.sub_name, var_name[0]
-          const varPath = execArr?.[1];
-          const matchedVar = varPath ? get(process.env, varPath) : undefined;
-
-          const replaceText = () => {
-            const valuePrefix = value.substring(0, execArr!.index);
-            const valueReplace = `${matchedVar}`;
-            const valueSuffix = value.substring(execArr!.index + matchedStr!.length);
-            return `${valuePrefix}${valueReplace}${valueSuffix}`;
-          };
           return {
             isMatched,
+            canReplace,
             matchedStr,
             varPath,
             matchedVar,
@@ -44,49 +69,35 @@ export const replaceVarLiterals = async (context: TaskContext, task: Task) => {
           };
         };
 
-        const varHandler = (value: string) => {
-          context.varReplaceRegex.lastIndex = 0;
-          const execArr = context.varReplaceRegex.exec(value);
+        const varLiteralHandlerResult = varLiteralHandler(valueOfKey);
 
-          const isMatched = isNotNil(execArr);
-          // example: ${var_name}, ${var_name.sub_name}, ${var_name[0]}
-          const matchedStr = execArr?.[0];
-          // example: var_name, var_name.sub_name, var_name[0]
-          const varPath = execArr?.[1];
-          const matchedVar = varPath ? get(context.systemVars, varPath) || get(context.vars, varPath) : undefined;
-
-          const replaceText = () => {
-            const valuePrefix = value.substring(0, execArr!.index);
-            const valueReplace = `${matchedVar}`;
-            const valueSuffix = value.substring(execArr!.index + matchedStr!.length);
-            return `${valuePrefix}${valueReplace}${valueSuffix}`;
-          };
-          return {
-            isMatched,
-            matchedStr,
-            varPath,
-            matchedVar,
-            replaceText,
-          };
-        };
-
-        const varHandlerResult = varHandler(valueOfKey);
-        const envVarHandlerResult = envVarHandler(valueOfKey);
-
-        if (varHandlerResult.isMatched) {
-          logv(`Variable injection: '${key}'=>'${valueOfKey}'`);
-          valueOfKey = varHandlerResult.replaceText();
-        } else if (envVarHandlerResult.isMatched) {
-          logv(`Variable injection: '${key}'=>'${valueOfKey}'`);
-          valueOfKey = envVarHandlerResult.replaceText();
+        if (varLiteralHandlerResult.canReplace) {
+          logv(`Injecting the variable literal: '${key}'=>'${valueOfKey}'`);
+          valueOfKey = varLiteralHandlerResult.replaceText();
+          hasChanges = true;
+          hasChangesForCurrentKey = true;
         } else {
           break;
         }
       }
 
-      anyTypeTask[key] = valueOfKey;
+      if (hasChangesForCurrentKey) {
+        anyValue[key] = valueOfKey;
+      }
+    } else if (typeof valueOfKey === 'object' || Array.isArray(valueOfKey)) {
+      if (inheritValueOfKeys) {
+        if (await replaceVarLiterals(providers, valueOfKey, immutableValueOfKeys, true)) {
+          hasChanges = true;
+        }
+      } else {
+        if (await replaceVarLiterals(providers, valueOfKey, [], false)) {
+          hasChanges = true;
+        }
+      }
     }
   }
+
+  return hasChanges;
 };
 
 export const searchExtraKeyValue = (

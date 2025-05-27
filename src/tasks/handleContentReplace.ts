@@ -103,7 +103,7 @@ export const handleContentReplace = async (context: TaskContext, task: TaskConte
   };
 
   // ignore dirs, include all files on empty filters
-  const handled = processWithGlobSync(
+  const handled = await processWithGlobSync(
     runGlobSync,
     task.path,
     resolveStringArray(task.include, []),

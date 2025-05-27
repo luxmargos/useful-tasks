@@ -7,18 +7,18 @@ import { globSync } from 'glob';
  * @param cwd
  * @param includes
  * @param excludes
- * @param includeAllForNonFilter
+ * @param includeAllIfNonFilters - include all to apply skipDirs, skipFiles
  * @param subOptions
  * @returns true - filters are applied, false - there was no filter to apply
  */
-export const processWithGlobSync = (
-  handler: (items: string[]) => void,
+export const processWithGlobSync = async (
+  handler: (items: string[]) => Promise<void> | void,
   cwd: string,
   includes: string[],
   excludes: string[],
   skipDirs: boolean,
   includeAllIfNonFilters: boolean
-): boolean => {
+): Promise<boolean> => {
   if (fs.statSync(cwd).isDirectory() === false) {
     return false;
   }
@@ -30,19 +30,19 @@ export const processWithGlobSync = (
   const hasExcludes: boolean = excludes.length > 0;
   if (!hasIncludes && hasExcludes) {
     //include all to apply excludes
-    handler(globSync(['**'], { ignore: [...excludes], cwd, nodir }).filter((item) => item !== '.'));
+    await handler(globSync(['**'], { ignore: [...excludes], cwd, nodir }).filter((item) => item !== '.'));
     return true;
   } else if (hasIncludes && !hasExcludes) {
     //apply includes only
-    handler(globSync(includes, { cwd, nodir }));
+    await handler(globSync(includes, { cwd, nodir }));
     return true;
   } else if (hasIncludes && hasExcludes) {
     //apply include and exclude
-    handler(globSync(includes, { ignore: excludes, cwd, nodir }));
+    await handler(globSync(includes, { ignore: excludes, cwd, nodir }));
     return true;
   } else if (includeAllIfNonFilters) {
     //include all to apply skipDirs, skipFiles
-    handler(globSync(['**'], { cwd, nodir }).filter((item) => item !== '.'));
+    await handler(globSync(['**'], { cwd, nodir }).filter((item) => item !== '.'));
     return true;
   }
 

@@ -1,8 +1,7 @@
 import { usefulTasks } from '@/useful_tasks';
-import { setup } from '@/build_cli_parser';
+import { prepare } from '@/build_cli_parser';
 import { buildTasksConfig, prepareTestSuite, prepareTestInstance as prepareTest } from '@/__tests__/testUtils';
 import fse from 'fs-extra';
-import { TaskInput } from '@/task_data';
 
 describe('Content replacing using glob', () => {
   const { testDir } = prepareTestSuite(__dirname);
@@ -27,7 +26,7 @@ Special Characters : {}**REPLACED**.*()
     const testFileA = itObj.buildTestPath('test-a.txt');
     const testFileB = itObj.buildTestPath('test-b.txt');
 
-    const setupResult = setup([]);
+    const setupResult = prepare([]);
     await usefulTasks(
       itObj.instanceCwd,
       setupResult.opt,
@@ -84,7 +83,7 @@ Special Characters : {}**REPLACED**.*()
     const testFileA = itObj.buildTestPath('test-a.txt');
     const testFileB = itObj.buildTestPath('test-b.txt');
 
-    const setupResult = setup([]);
+    const setupResult = prepare([]);
     await usefulTasks(
       itObj.instanceCwd,
       setupResult.opt,

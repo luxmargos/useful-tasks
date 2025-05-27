@@ -1,5 +1,5 @@
 import { usefulTasks } from '@/useful_tasks';
-import { setup } from '@/build_cli_parser';
+import { prepare } from '@/build_cli_parser';
 import { buildTestPath, prepareTestSuite, prepareTestInstance } from '@/__tests__/testUtils';
 import fse from 'fs-extra';
 
@@ -10,7 +10,7 @@ describe('Custom var replacing with regex', () => {
     const itObj = prepareTestInstance(testDir);
 
     const testFileA = itObj.buildTestPath('test-a.txt');
-    const setupResult = setup([]);
+    const setupResult = prepare([]);
     await usefulTasks(
       itObj.instanceCwd,
       setupResult.opt,

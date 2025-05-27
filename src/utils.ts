@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import json5 from 'json5';
-import { Task, type TasksConfigInput } from 'task_data';
+import { Task, type TasksScriptInput } from 'task_data';
 import { logw, logv } from './loggers';
 import { assignIn } from 'es-toolkit/compat';
 
@@ -20,7 +20,7 @@ export const loadJson = (filePath: string) => {
 
 export const parseJson = (content: string) => json5.parse(content);
 
-export const loadJsonConfig = (filePath: string): TasksConfigInput => {
+export const loadJsonConfig = (filePath: string): TasksScriptInput => {
   let configJson = loadJson(filePath);
   if (configJson.extends) {
     const filePathDir = path.dirname(filePath);

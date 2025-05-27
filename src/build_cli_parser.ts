@@ -1,8 +1,10 @@
 import { Command } from 'commander';
 import path from 'path';
 import * as packageJson from '../package.json';
+import { isNil, isNotNil } from 'es-toolkit';
+import { LogLevel, logLevels, logw } from './loggers';
 
-export const DEFAULT_CONFIG = 'useful_tasks.json';
+export const DEFAULT_SCRIPT_FILE_NAME = 'useful_tasks.json';
 export const DEFAULT_USE_CAMEL = true;
 
 export const CWD_RESTORE = 'restore';
@@ -12,77 +14,89 @@ export const CWD_MODES = [CWD_RESTORE, CWD_KEEP] as const;
 type CwdModeTuple = typeof CWD_MODES;
 export type CwdMode = CwdModeTuple[number];
 
-const LogLevelInfo = 'info';
-const LogLevelDebug = 'debug';
-const LogLevelNone = 'none';
-export const logLevels = [LogLevelNone, LogLevelInfo, LogLevelDebug] as const;
-type LogLevelTuple = typeof logLevels;
-export type LogLevel = LogLevelTuple[number];
-
 export interface Options {
   cwd?: string;
-  config: string;
+  script: string;
+  config?: string;
   include?: string[];
-  includeCta?: string[];
+  includeAll?: string[];
   exclude?: string[];
-  excludeCta?: string[];
+  excludeAll?: string[];
   camelKeys: boolean;
   cwdMode?: CwdMode;
   logLevel?: LogLevel;
   extraArgs?: string[];
+  extraMessages?: string[];
 }
 
 const argDesc = {
-  cwdMode: `Choose between ${CWD_MODES.map((v) => `'${v}'`).join(
-    ' or '
-  )}. If you use 'cwd' property in a specific task, consider using this parameter. This parameter determines the behavior of the current working directory (CWD) when each task ends. In '${CWD_RESTORE}' mode, the CWD will be restored to its original state (or the one specified at --cwd) when each task ends, while in '${CWD_KEEP}' mode, the CWD will remain unchanged.`,
+  cwdMode: `Choose working directory behavior:
+  - '${CWD_RESTORE}': Reset CWD after each task
+  - '${CWD_KEEP}': Keep last used CWD
+  Example: --cwd-mode=keep`,
 };
 
+export const createProgram = () => {
+  const program = new Command();
+  program
+    .name('useful-tasks')
+    .version(packageJson.version)
+    .option('--cwd <path>', 'Set working directory (e.g., --cwd=./projects)')
+    .option(
+      '-s, --script <path>',
+      `Path of script file (default: ${DEFAULT_SCRIPT_FILE_NAME})`,
+      DEFAULT_SCRIPT_FILE_NAME
+    )
+    .option(
+      '-c, --config <path>',
+      `A deprecated option, use -s, --script instead. Path of script file (default: ${DEFAULT_SCRIPT_FILE_NAME})`
+    )
+    .option(
+      '-i, --include <tags>',
+      'Include tasks with ANY matching tags/IDs\n' + 'Example: --include=tag1,tag2 matches tasks with tag1 OR tag2',
+      (val) => val.split(',').map((s) => s.trim())
+    )
+    .option(
+      '-a, --include-all <tags>',
+      'Only include tasks with ALL specified tags/IDs\n' +
+        'Example: --include-all=tag1,tag2 matches tasks with BOTH tag1 AND tag2',
+      (val) => val.split(',').map((s) => s.trim())
+    )
+    .option(
+      '-e, --exclude <tags>',
+      'Exclude tasks with ANY matching tags/IDs\n' + 'Example: --exclude=tag1,tag2 excludes tasks with tag1 OR tag2',
+      (val) => val.split(',').map((s) => s.trim())
+    )
+    .option(
+      '-x, --exclude-all <tags>',
+      'Exclude tasks with ALL specified tags/IDs\n' +
+        'Example: --exclude-all=tag1,tag2 excludes tasks with BOTH tag1 AND tag2',
+      (val) => val.split(',').map((s) => s.trim())
+    )
+    .option(
+      '--camel-keys',
+      'Convert variable keys to camelCase\n' + 'Example: --var-my-key becomes "myKey" when true',
+      DEFAULT_USE_CAMEL
+    )
+    .option('--cwd-mode <mode>', argDesc.cwdMode, CWD_RESTORE)
+    .option(
+      '--log-level <level>',
+      `Set logging level (${logLevels.join('|')})\n` + 'Example: --log-level=debug for verbose output'
+    )
+    .allowUnknownOption(true);
+
+  return program;
+};
 /**
  * Initialize the command line parser and parse the arguments.
  * @param userArgv - The command line arguments to parse. If not provided, it will use the current process arguments.
  * @returns
  */
-export const setup = (userArgv?: string[]) => {
+export const prepare = (userArgv?: string[], subTaskMode?: boolean) => {
   // console.log('cwd', process.cwd());
   // console.log('argv', process.argv);
 
-  const program = new Command();
-  program
-    .name('useful-tasks')
-    .version(packageJson.version)
-    .option('--cwd <string>', 'Change working directory')
-    .option('-c, --config <string>', 'A path of json configuraion', DEFAULT_CONFIG)
-    .option(
-      '-i, --include <items>',
-      'Include tasks that contain at least one of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02'
-    )
-    .option(
-      '-a, --include-cta <items>',
-      'Include tasks that contain all of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02'
-    )
-    .option(
-      '-e, --exclude <items>',
-      'Exclude tasks that contain at least one of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02'
-    )
-    .option(
-      '-x, --exclude-cta <items>',
-      'Exclude tasks that contain all of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02'
-    )
-    .option(
-      '--camel-keys <boolean>',
-      'Specify whether to use camel case for the key of the variable. If the value is true, the paramter "--var-my-key" will be converted to "myKey" otherwise it will be "my-key"',
-      DEFAULT_USE_CAMEL
-    )
-    .option('--cwd-mode <string>', argDesc.cwdMode)
-    .option(
-      '--log-level <string>',
-      `Specify the logging level as ${logLevels.join(
-        ','
-      )}. This parameter takes higher priority than the 'json' configuration.`
-    )
-    // Allow unknown option to allow syntax such as "--var-my-key" to be passed to the program
-    .allowUnknownOption(true);
+  const program = createProgram();
 
   if (userArgv !== undefined) {
     program.parse(userArgv, { from: 'user' });
@@ -94,10 +108,11 @@ export const setup = (userArgv?: string[]) => {
   // console.log(opts);
 
   const typedOptions = opts as Options;
-  typedOptions.include = fixStringArrayArgument(typedOptions.include);
-  typedOptions.includeCta = fixStringArrayArgument(typedOptions.includeCta);
-  typedOptions.exclude = fixStringArrayArgument(typedOptions.exclude);
-  typedOptions.excludeCta = fixStringArrayArgument(typedOptions.excludeCta);
+
+  typedOptions.include = fixStringArrayArgument(typedOptions.include, subTaskMode ? undefined : []);
+  typedOptions.includeAll = fixStringArrayArgument(typedOptions.includeAll, subTaskMode ? undefined : []);
+  typedOptions.exclude = fixStringArrayArgument(typedOptions.exclude, subTaskMode ? undefined : []);
+  typedOptions.excludeAll = fixStringArrayArgument(typedOptions.excludeAll, subTaskMode ? undefined : []);
 
   if (typedOptions.camelKeys !== undefined && typeof typedOptions.camelKeys === 'string') {
     let v: string = typedOptions.camelKeys;
@@ -119,15 +134,23 @@ export const setup = (userArgv?: string[]) => {
     process.chdir(path.resolve(typedOptions.cwd));
   }
 
+  if (typedOptions.config) {
+    typedOptions.script = typedOptions.config;
+    typedOptions.config = undefined;
+    typedOptions.extraMessages = ['You are using deprecated option --config, use -s, --script instead'];
+  }
+
   // console.log("######################################################################")
 
   return { opt: typedOptions, program };
 };
 
-const fixStringArrayArgument = (value: string | string[] | undefined, skipEmptyItem: boolean = true) => {
-  if (!value) {
-    return [];
-  }
+const fixStringArrayArgument = (
+  value: string | string[] | undefined,
+  defaultValue: string[] | undefined = [],
+  skipEmptyItem: boolean = true
+) => {
+  if (isNil(value)) return defaultValue;
 
   if (typeof value === 'string') {
     const result: string[] = [];
@@ -143,7 +166,9 @@ const fixStringArrayArgument = (value: string | string[] | undefined, skipEmptyI
       }
     });
     return result;
+  } else if (Array.isArray(value)) {
+    return value;
   }
 
-  return [];
+  return defaultValue;
 };

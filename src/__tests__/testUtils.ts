@@ -1,7 +1,7 @@
 import path from 'path';
 import fse from 'fs-extra';
 import { nanoid } from 'nanoid3';
-import { TasksConfigInput, TaskInput } from '@/task_data';
+import { TasksScriptInput, TaskInput } from '@/task_data';
 import { delay } from 'es-toolkit';
 
 export const removeTestOutputDir = (dirPath: string) => {
@@ -21,7 +21,7 @@ export const buildTestPath = (dirPath: string, subPath?: string) => {
   return dirPath;
 };
 
-export const buildTasksConfig = (tasks: TaskInput[]): TasksConfigInput => {
+export const buildTasksConfig = (tasks: TaskInput[]): TasksScriptInput => {
   return {
     name: 'Sample',
     env: {

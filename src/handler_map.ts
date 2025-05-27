@@ -10,6 +10,7 @@ import { handleTerminalCommand } from './tasks/handleTerminalCommand';
 import { handleFsSymlink } from './tasks/handleFsSymlink';
 import { handleGitSetup } from './tasks/handleGitRepoSetup';
 import { TaskContext, TaskType } from './task_data';
+import { handleFsTouch } from './tasks/handleFsTouch';
 
 export const handlerMap: {
   [k in TaskType]: (context: TaskContext, task: any) => Promise<void>;
@@ -19,6 +20,7 @@ export const handlerMap: {
   'set-var': handleSetVar,
   output: handleOutput,
   symlink: handleFsSymlink,
+  'fs-touch': handleFsTouch,
   'fs-copy': handleFsCopy,
   'fs-del': handleFsDelete,
   'fs-mkdir': handleMkdir,

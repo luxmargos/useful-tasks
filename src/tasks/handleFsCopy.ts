@@ -35,7 +35,7 @@ export const handleFsCopy = async (context: TaskContext, task: TaskFsCopy) => {
   };
 
   // allow dir with glob, do nothing withtout filters
-  const handled = processWithGlobSync(
+  const handled = await processWithGlobSync(
     runGlobSync,
     task.src,
     resolveStringArray(task.include, []),

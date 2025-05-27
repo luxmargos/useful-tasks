@@ -1,6 +1,6 @@
 import { globSync } from 'glob';
 import { buildTasksConfig, buildTestPath, prepareTestSuite, prepareTestInstance } from './testUtils';
-import { setup } from '@/build_cli_parser';
+import { prepare } from '@/build_cli_parser';
 import os from 'os';
 import { usefulTasks } from '@/useful_tasks';
 
@@ -13,7 +13,7 @@ describe('GlobTest', () => {
     const testFileA = itObj.buildTestPath('test-a.txt');
     const testFileB = itObj.buildTestPath('test-b.txt');
 
-    const setupResult = setup([]);
+    const setupResult = prepare([]);
 
     await usefulTasks(itObj.instanceCwd, setupResult.opt, buildTasksConfig([]), setupResult.program);
 
