@@ -48,8 +48,8 @@
   "scripts": {
     "start": "npm run build && node dist/index.js",
     "start:ts": "tsx src/index.ts",
-    "build:dev": "cross-env BUILD_MODE=development tsup",
-    "build:prod": "cross-env BUILD_MODE=production tsup",
+    "build:dev": "npm test && cross-env BUILD_MODE=development tsup",
+    "build:prod": "npm test && cross-env BUILD_MODE=production tsup",
     "watch": "cross-env BUILD_MODE=development tsup --watch",
     "prepare": "husky && npm run build:prod",
     "prepublishOnly": "npm test",

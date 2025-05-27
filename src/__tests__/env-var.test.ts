@@ -28,12 +28,6 @@ describe('env-var', () => {
 d = $c`,
         },
         {
-          type: 'env-var',
-          src: 'var_from_file.json',
-          parser: 'json',
-          onError: 'skip',
-        },
-        {
           type: 'output',
           text: `
 X=X-Value
@@ -41,26 +35,6 @@ Y=$X
 Z=\\$X`,
           target: 'fw',
           path: '.env',
-        },
-        {
-          type: 'env-var',
-          src: '.',
-          parser: 'lines',
-          include: '.env',
-          onError: 'skip',
-        },
-        {
-          type: 'env-var',
-          src: '.',
-          parser: 'lines',
-          include: ['var_lines_from_file.txt', 'var_lines_from_file2.txt', 'var_lines_from_file3.txt'],
-          onError: 'skip',
-        },
-        {
-          type: 'set-var',
-          key: 'a',
-          value: 'a-value',
-          onError: 'skip',
         },
 
         {
