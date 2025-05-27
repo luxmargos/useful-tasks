@@ -1,6 +1,6 @@
 .vscode
 mise.toml
-dist/
+/dist
 
 # Created by https://www.toptal.com/developers/gitignore/api/node,windows,macos
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,windows,macos
