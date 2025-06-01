@@ -180,6 +180,11 @@ export type TaskBase = z.infer<typeof TaskBaseSchema>;
 export type GlobFilters = z.infer<typeof GlobFiltersSchema>;
 
 export const TaskGitSetupSchema = newTaskSchema('git-setup', {
+  checkLocalChanges: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('Whether to check for local changes, unpushed commits, and warn or throw'),
   remote: z.string().nonempty().default('origin'),
   localPath: z.string().nonempty(),
   /** Executable git binary */

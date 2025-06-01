@@ -66,10 +66,10 @@ export const buildTaskConfigWithSampleTexts = (dirPath: string, tasks: TaskInput
   };
 };
 
-export const prepareTestSuite = (baseDir: string) => {
+export const prepareTestSuite = (baseDir: string, clearDirAfter = true, dirName = nanoid()) => {
   const baseDirAbsPath = path.resolve(baseDir);
   // const testDirRelativePath = 'test_outputs';
-  const testDirRelativePath = `test_${nanoid()}`;
+  const testDirRelativePath = `test_${dirName}`;
   const testDirAbsPath = path.resolve(baseDirAbsPath, testDirRelativePath);
 
   beforeAll(() => {
@@ -79,7 +79,9 @@ export const prepareTestSuite = (baseDir: string) => {
 
   afterAll((fn) => {
     process.chdir(baseDirAbsPath);
-    removeTestOutputDir(testDirAbsPath);
+    if (clearDirAfter) {
+      removeTestOutputDir(testDirAbsPath);
+    }
     fn();
   });
 
@@ -97,8 +99,7 @@ export const prepareTestSuite = (baseDir: string) => {
   };
 };
 
-export const prepareTestInstance = (parentDir: string) => {
-  const instanceDir = nanoid();
+export const prepareTestInstance = (parentDir: string, instanceDir = nanoid()) => {
   const instanceDirAbsPath = path.resolve(parentDir, instanceDir);
   fse.mkdirpSync(instanceDirAbsPath);
   const instanceCwd = prepareCwd(instanceDirAbsPath);
