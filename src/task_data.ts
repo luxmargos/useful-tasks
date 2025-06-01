@@ -182,7 +182,6 @@ export type GlobFilters = z.infer<typeof GlobFiltersSchema>;
 export const TaskGitSetupSchema = newTaskSchema('git-setup', {
   checkLocalChanges: z
     .boolean()
-    .optional()
     .default(true)
     .describe('Whether to check for local changes, unpushed commits, and warn or throw'),
   remote: z.string().nonempty().default('origin'),
@@ -192,7 +191,7 @@ export const TaskGitSetupSchema = newTaskSchema('git-setup', {
   url: z.string().nonempty(),
   branch: z.string().nonempty(),
   startPoint: z.string().nonempty().optional().describe('The commit hash or tag to checkout'),
-  updateSubmodules: z.union([z.array(z.string().nonempty()), z.boolean()]).optional(),
+  updateSubmodules: z.union([z.array(z.string().nonempty()), z.boolean()]).default(true),
 });
 export type TaskGitSetup = z.infer<typeof TaskGitSetupSchema>;
 
