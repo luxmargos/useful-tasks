@@ -180,13 +180,14 @@ export type TaskBase = z.infer<typeof TaskBaseSchema>;
 export type GlobFilters = z.infer<typeof GlobFiltersSchema>;
 
 export const TaskGitSetupSchema = newTaskSchema('git-setup', {
+  remote: z.string().nonempty().default('origin'),
   localPath: z.string().nonempty(),
   /** Executable git binary */
   binary: z.string().nonempty().optional(),
-  url: z.string().nonempty().optional(),
-  branch: z.string().nonempty().optional(),
-  startPoint: z.string().nonempty().optional(),
-  updateSubmodules: z.union([z.string().nonempty(), z.string().nonempty(), z.boolean()]).optional(),
+  url: z.string().nonempty(),
+  branch: z.string().nonempty(),
+  startPoint: z.string().nonempty().optional().describe('The commit hash or tag to checkout'),
+  updateSubmodules: z.union([z.array(z.string().nonempty()), z.boolean()]).optional(),
 });
 export type TaskGitSetup = z.infer<typeof TaskGitSetupSchema>;
 
