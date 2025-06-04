@@ -6,7 +6,17 @@ import path from 'path';
 import simpleGit, { CheckRepoActions, ResetMode, SimpleGit } from 'simple-git';
 import { TaskContext, TaskGitSetup } from 'task_data';
 
-// TODO: Check has local changes and warn or throw
+/**
+ * Handles the setup of a git repository.
+ *
+ * @description
+ * 
+ * This function clones the repository if it doesn't exist, adds the remote if it doesn't exist,
+ * updates submodules if specified, checks for local changes, and resets the repository to the specified branch.
+ *
+ * @param context - The task context.
+ * @param task - The task to handle.
+ */
 export const handleGitSetup = async (context: TaskContext, task: TaskGitSetup) => {
   const remote = task.remote;
   const localPath = path.resolve(task.localPath);

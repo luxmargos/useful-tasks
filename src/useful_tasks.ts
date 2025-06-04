@@ -1,5 +1,5 @@
 import path from 'path';
-import { CWD_KEEP, Options } from './build_cli_parser';
+import { CWD_KEEP, Options, RequireOptions } from './build_cli_parser';
 import { LogLevel, logLevels } from './loggers';
 import { containsAllTag, containsTag, loadJsonConfig } from './utils';
 import debug from 'debug';
@@ -26,9 +26,10 @@ import { get } from 'es-toolkit/compat';
 
 export const usefulTasks = async (
   originCwd: string,
-  opts: Options,
+  opts: RequireOptions,
   tasksConfigInput: TasksScriptInput,
-  program: Command
+  program: Command,
+  sharedVars: Record<string, any> = {}
 ) => {
   const script: TasksScript = TasksScriptSchema.parse(tasksConfigInput);
 
@@ -41,7 +42,7 @@ export const usefulTasks = async (
   const varReplaceRegex = script.env.varReplaceRegex;
   const envReplaceRegex = script.env.envReplaceRegex;
 
-  //cli argument can overwrite json's logLeve
+  //cli argument can overwrite json's logLevel
   if (opts.logLevel && logLevels.includes(opts.logLevel)) {
     logLevel = opts.logLevel;
   }
@@ -95,7 +96,7 @@ export const usefulTasks = async (
         cwd_base: baseCwd,
       },
     },
-    vars: {},
+    vars: sharedVars,
     opts,
     program,
   };
@@ -294,7 +295,12 @@ export const usefulTasks = async (
   }
 };
 
-export const initUsefulTasks = (originCwd: string, opts: Options, program: Command) => {
+export const initUsefulTasks = (
+  originCwd: string,
+  opts: RequireOptions,
+  program: Command,
+  sharedVars: Record<string, any> = {}
+) => {
   let tasksConfigInput: TasksScriptInput = {};
 
   let configFilePath = path.resolve(opts.script);
@@ -310,5 +316,5 @@ export const initUsefulTasks = (originCwd: string, opts: Options, program: Comma
     program.help();
   }
 
-  return usefulTasks(originCwd, opts, tasksConfigInput, program);
+  return usefulTasks(originCwd, opts, tasksConfigInput, program, sharedVars);
 };

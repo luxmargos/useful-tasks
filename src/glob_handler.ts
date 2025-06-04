@@ -2,14 +2,15 @@ import fs from 'fs';
 import { globSync } from 'glob';
 
 /**
+ * Processes files or directories based on glob patterns.
  *
- * @param handler
- * @param cwd
- * @param includes
- * @param excludes
- * @param includeAllIfNonFilters - include all to apply skipDirs, skipFiles
- * @param subOptions
- * @returns true - filters are applied, false - there was no filter to apply
+ * @param handler - The function to handle each file or directory.
+ * @param cwd - The current working directory.
+ * @param includes - The include patterns.
+ * @param excludes - The exclude patterns.
+ * @param skipDirs - Whether to skip directories.
+ * @param includeAllIfNonFilters - Whether to include all files if no filters are specified.
+ * @returns A promise that resolves to a boolean indicating whether any files were processed.
  */
 export const processWithGlobSync = async (
   handler: (items: string[]) => Promise<void> | void,
@@ -41,10 +42,12 @@ export const processWithGlobSync = async (
     await handler(globSync(includes, { ignore: excludes, cwd, nodir }));
     return true;
   } else if (includeAllIfNonFilters) {
-    //include all to apply skipDirs, skipFiles
+    // handle for !hasIncludes && !hasExcludes
+    // include all to apply skipDirs, skipFiles
     await handler(globSync(['**'], { cwd, nodir }).filter((item) => item !== '.'));
     return true;
   }
 
+  // handle for !hasIncludes && !hasExcludes && !includeAllIfNonFilters
   return false;
 };

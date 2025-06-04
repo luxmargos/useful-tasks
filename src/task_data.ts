@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { CWD_KEEP, CWD_RESTORE, Options } from './build_cli_parser';
+import { CWD_KEEP, CWD_RESTORE, Options, RequireOptions } from './build_cli_parser';
 import { logLevels } from './loggers';
 import { z, ZodObject, ZodRawShape } from 'zod';
 import os from 'os';
@@ -89,7 +89,7 @@ export interface TaskContext {
     [key: string]: any;
   };
 
-  opts: Options;
+  opts: RequireOptions;
   program: Command;
 }
 
@@ -312,13 +312,11 @@ export const TaskSubTasksSchema = newTaskSchemaWithGlobFilters('sub-tasks', {
   src: z.string().nonempty(),
 
   /** Configuration for inheriting context from parent task. */
-  inherit: z
-    .object({ args: z.boolean().default(true), vars: z.boolean().default(true) })
-    .default({ args: true, vars: true })
-    .describe('Whether to inherit args and vars from the parent task.'),
+  shareArgs: z.boolean().default(true).describe('Whether to share args with the sub-tasks.'),
+  shareVars: z.boolean().default(true).describe('Whether to share vars with the sub-tasks.'),
 
   /** Command-line arguments to pass to the sub-tasks. */
-  args: z.string().optional(),
+  args: z.string().default(''),
 });
 export type TaskSubTasks = z.infer<typeof TaskSubTasksSchema>;
 

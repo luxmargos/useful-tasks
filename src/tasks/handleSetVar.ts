@@ -58,7 +58,7 @@ export const handleSetVar = async (context: TaskContext, task: TaskSetVar) => {
 
   const runGlobSync = async (items: string[]) => {
     for (const f of items) {
-      const itemPath: string = path.join(src, f);
+      const itemPath: string = path.isAbsolute(f) ? f : path.join(src, f);
       if (fs.statSync(itemPath).isDirectory()) {
         continue;
       }

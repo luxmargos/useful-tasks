@@ -28,8 +28,8 @@ export const handleFsCopy = async (context: TaskContext, task: TaskFsCopy) => {
 
   const runGlobSync = (items: string[]) => {
     for (const f of items) {
-      const from = path.join(task.src, f);
-      const to = path.join(task.dest, f);
+      const from = path.isAbsolute(f) ? f : path.join(task.src, f);
+      const to = path.isAbsolute(f) ? f : path.join(task.dest, f);
       runCopy(from, to, cpOpt);
     }
   };

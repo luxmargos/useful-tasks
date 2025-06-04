@@ -1,41 +1,79 @@
 import stringArgv from 'string-argv';
 import { TaskContext, TaskSubTasks } from '../task_data';
-import { initUsefulTasks, usefulTasks } from '../useful_tasks';
-import { prepare } from '../build_cli_parser';
+import { initUsefulTasks } from '../useful_tasks';
+import { fillDefaultOptions, prepareOpts } from '../build_cli_parser';
 import fse from 'fs-extra';
-import { logv } from '@/loggers';
 import { processWithGlobSync } from '@/glob_handler';
 import { resolveStringArray } from '@/utils';
 import path from 'path';
+import { cloneDeep, isNotNil, mergeWith } from 'es-toolkit';
 
 // TODO: Implement glob filters, and entire process
 export const handleSubTasks = async (context: TaskContext, task: TaskSubTasks) => {
-  if (!task.args || typeof task.args !== 'string') {
-    throw new Error(`Found missing or invalid property 'args' that is required`);
-  }
-
   const subArgv = stringArgv(task.args);
-  const setupResult = prepare(subArgv);
+  const setupResultFromArgs = prepareOpts(subArgv);
 
-  // await usefulTasks(context.originCwd);
-  await initUsefulTasks(context.originCwd, setupResult.opt, setupResult.program);
+  const runFunc = async (scriptPath: string) => {
+    if (fse.statSync(scriptPath).isDirectory()) {
+      return;
+    }
 
-  const runGlobSync = async (items: string[]) => {
-    for (const f of items) {
-      const p = path.join(task.src, f);
+    const opts = cloneDeep(setupResultFromArgs.opts);
+    if (task.shareArgs) {
+      const mergedOpts = mergeWith(cloneDeep(context.opts), opts, (dest, src, key, target, source) => {
+        if (Array.isArray(dest)) {
+          if (isNotNil(src)) {
+            if (Array.isArray(src)) return [...dest, ...src];
+            return [...dest, src];
+          }
+          return dest;
+        }
+
+        if (isNotNil(src)) return src;
+        return dest;
+      });
+      mergedOpts.cwd = opts.cwd;
+      mergedOpts.extraMessages = opts.extraMessages;
+      mergedOpts.script = scriptPath;
+
+      if (mergedOpts.cwd) process.chdir(path.resolve(mergedOpts.cwd));
+      await initUsefulTasks(
+        context.originCwd,
+        mergedOpts,
+        setupResultFromArgs.program,
+        task.shareVars ? context.vars : {}
+      );
+    } else {
+      const requiredOpts = fillDefaultOptions(opts);
+      requiredOpts.script = scriptPath;
+      if (requiredOpts.cwd) process.chdir(path.resolve(requiredOpts.cwd));
+      await initUsefulTasks(
+        context.originCwd,
+        requiredOpts,
+        setupResultFromArgs.program,
+        task.shareVars ? context.vars : {}
+      );
     }
   };
 
-  // allow dir with glob, do nothing withtout filters
+  const runGlobSync = async (items: string[]) => {
+    for (const f of items) {
+      const p = path.isAbsolute(f) ? f : path.join(task.src, f);
+      await runFunc(p);
+    }
+  };
+
+  // ignore dirs, include all files on empty filters
   const handled = await processWithGlobSync(
     runGlobSync,
     task.src,
     resolveStringArray(task.include, []),
     resolveStringArray(task.exclude, []),
-    false,
-    false
+    true,
+    true
   );
 
   if (!handled) {
+    await runFunc(task.src);
   }
 };

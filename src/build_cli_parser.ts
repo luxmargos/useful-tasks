@@ -1,8 +1,9 @@
 import { Command } from 'commander';
 import path from 'path';
 import * as packageJson from '../package.json';
-import { isNil, isNotNil } from 'es-toolkit';
+import { cloneDeep, isNil, isNotNil } from 'es-toolkit';
 import { LogLevel, logLevels, logw } from './loggers';
+import { isEmpty } from 'es-toolkit/compat';
 
 export const DEFAULT_SCRIPT_FILE_NAME = 'useful_tasks.json';
 export const DEFAULT_USE_CAMEL = true;
@@ -16,24 +17,37 @@ export type CwdMode = CwdModeTuple[number];
 
 export interface Options {
   cwd?: string;
-  script: string;
+  script?: string;
+  /** @deprecated Use --script instead */
   config?: string;
   include?: string[];
   includeAll?: string[];
   exclude?: string[];
   excludeAll?: string[];
-  camelKeys: boolean;
+  camelKeys?: boolean;
   cwdMode?: CwdMode;
   logLevel?: LogLevel;
-  extraArgs?: string[];
+  extraArgs: string[];
   extraMessages?: string[];
+}
+
+export interface RequireOptions extends Options {
+  script: string;
+  cwdMode: CwdMode;
+  camelKeys: boolean;
+  include: string[];
+  includeAll: string[];
+  exclude: string[];
+  excludeAll: string[];
+  extraArgs: string[];
 }
 
 const argDesc = {
   cwdMode: `Choose working directory behavior:
   - '${CWD_RESTORE}': Reset CWD after each task
   - '${CWD_KEEP}': Keep last used CWD
-  Example: --cwd-mode=keep`,
+  Example: --cwd-mode=keep
+  (default: ${CWD_RESTORE})`,
 };
 
 export const createProgram = () => {
@@ -42,11 +56,7 @@ export const createProgram = () => {
     .name('useful-tasks')
     .version(packageJson.version)
     .option('--cwd <path>', 'Set working directory (e.g., --cwd=./projects)')
-    .option(
-      '-s, --script <path>',
-      `Path of script file (default: ${DEFAULT_SCRIPT_FILE_NAME})`,
-      DEFAULT_SCRIPT_FILE_NAME
-    )
+    .option('-s, --script <path>', `Path of script file (default: ${DEFAULT_SCRIPT_FILE_NAME})`)
     .option(
       '-c, --config <path>',
       `A deprecated option, use -s, --script instead. Path of script file (default: ${DEFAULT_SCRIPT_FILE_NAME})`
@@ -75,10 +85,10 @@ export const createProgram = () => {
     )
     .option(
       '--camel-keys',
-      'Convert variable keys to camelCase\n' + 'Example: --var-my-key becomes "myKey" when true',
-      DEFAULT_USE_CAMEL
+      `Convert variable keys to camelCase\n` +
+        `Example: --var-my-key becomes "myKey" when true (default: ${DEFAULT_USE_CAMEL})`
     )
-    .option('--cwd-mode <mode>', argDesc.cwdMode, CWD_RESTORE)
+    .option('--cwd-mode <mode>', argDesc.cwdMode)
     .option(
       '--log-level <level>',
       `Set logging level (${logLevels.join('|')})\n` + 'Example: --log-level=debug for verbose output'
@@ -92,7 +102,20 @@ export const createProgram = () => {
  * @param userArgv - The command line arguments to parse. If not provided, it will use the current process arguments.
  * @returns
  */
-export const prepare = (userArgv?: string[], subTaskMode?: boolean) => {
+export const prepare = (userArgv?: string[]) => {
+  const result = prepareOpts(userArgv);
+
+  if (result.opts.cwd) {
+    process.chdir(path.resolve(result.opts.cwd));
+  }
+
+  return {
+    opt: fillDefaultOptions(result.opts),
+    program: result.program,
+  };
+};
+
+export const prepareOpts = (userArgv?: string[]) => {
   // console.log('cwd', process.cwd());
   // console.log('argv', process.argv);
 
@@ -109,10 +132,10 @@ export const prepare = (userArgv?: string[], subTaskMode?: boolean) => {
 
   const typedOptions = opts as Options;
 
-  typedOptions.include = fixStringArrayArgument(typedOptions.include, subTaskMode ? undefined : []);
-  typedOptions.includeAll = fixStringArrayArgument(typedOptions.includeAll, subTaskMode ? undefined : []);
-  typedOptions.exclude = fixStringArrayArgument(typedOptions.exclude, subTaskMode ? undefined : []);
-  typedOptions.excludeAll = fixStringArrayArgument(typedOptions.excludeAll, subTaskMode ? undefined : []);
+  typedOptions.include = fixStringArrayArgument(typedOptions.include);
+  typedOptions.includeAll = fixStringArrayArgument(typedOptions.includeAll);
+  typedOptions.exclude = fixStringArrayArgument(typedOptions.exclude);
+  typedOptions.excludeAll = fixStringArrayArgument(typedOptions.excludeAll);
 
   if (typedOptions.camelKeys !== undefined && typeof typedOptions.camelKeys === 'string') {
     let v: string = typedOptions.camelKeys;
@@ -130,24 +153,37 @@ export const prepare = (userArgv?: string[], subTaskMode?: boolean) => {
   // console.log(`Using options : ${JSON.stringify(typedOptions, undefined, 2)}`);
   // console.log(`Extra arguments`, program.args);
 
-  if (typedOptions.cwd) {
-    process.chdir(path.resolve(typedOptions.cwd));
-  }
-
   if (typedOptions.config) {
     typedOptions.script = typedOptions.config;
     typedOptions.config = undefined;
     typedOptions.extraMessages = ['You are using deprecated option --config, use -s, --script instead'];
   }
 
-  // console.log("######################################################################")
+  return {
+    opts: typedOptions,
+    program,
+  };
+};
 
-  return { opt: typedOptions, program };
+export const fillDefaultOptions = (opts: Options): RequireOptions => {
+  const clonedOpts = cloneDeep(opts);
+
+  clonedOpts.script = clonedOpts.script ?? DEFAULT_SCRIPT_FILE_NAME;
+  clonedOpts.cwdMode = clonedOpts.cwdMode ?? CWD_RESTORE;
+  clonedOpts.camelKeys = clonedOpts.camelKeys ?? DEFAULT_USE_CAMEL;
+
+  if (isEmpty(clonedOpts.include)) clonedOpts.include = [];
+  if (isEmpty(clonedOpts.includeAll)) clonedOpts.includeAll = [];
+  if (isEmpty(clonedOpts.exclude)) clonedOpts.exclude = [];
+  if (isEmpty(clonedOpts.excludeAll)) clonedOpts.excludeAll = [];
+  if (isEmpty(clonedOpts.extraArgs)) clonedOpts.extraArgs = [];
+
+  return clonedOpts as RequireOptions;
 };
 
 const fixStringArrayArgument = (
   value: string | string[] | undefined,
-  defaultValue: string[] | undefined = [],
+  defaultValue: string[] | undefined = undefined,
   skipEmptyItem: boolean = true
 ) => {
   if (isNil(value)) return defaultValue;

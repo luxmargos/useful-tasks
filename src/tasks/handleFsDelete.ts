@@ -4,7 +4,7 @@ import path from 'path';
 import fse from 'fs-extra';
 
 import { processWithGlobSync } from '@/glob_handler';
-import { logv } from '@/loggers';
+import { logi, logv } from '@/loggers';
 import { TaskContext, TaskFsDelete } from '@/task_data';
 import { resolveStringArray } from '@/utils';
 
@@ -15,13 +15,13 @@ export const runDelete = (path: string) => {
 
 export const handleFsDelete = async (context: TaskContext, task: TaskFsDelete) => {
   if (!fs.existsSync(task.path)) {
-    logv(`The '${task.path}' does not exist and cannot be deleted`);
+    logi(`The '${task.path}' does not exist and cannot be deleted`);
     return;
   }
 
   const runGlobSync = (items: string[]) => {
     for (const f of items) {
-      runDelete(path.join(task.path, f));
+      runDelete(path.isAbsolute(f) ? f : path.join(task.path, f));
     }
   };
 
