@@ -1,6 +1,6 @@
 {
   "name": "useful-tasks",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A CLI task runner that utilizes JSON-based configuration and processes tasks sequentially",
   "author": {
     "name": "Jinho Yun",
@@ -46,13 +46,12 @@
     "command"
   ],
   "scripts": {
-    "start": "npm run build && node dist/index.js",
+    "start": "npm run build:prod && node dist/index.js",
     "start:ts": "tsx src/index.ts",
     "build:dev": "npm test && cross-env BUILD_MODE=development tsup",
     "build:prod": "npm test && cross-env BUILD_MODE=production tsup",
     "watch": "cross-env BUILD_MODE=development tsup --watch",
     "prepare": "husky && npm run build:prod",
-    "prepublishOnly": "npm test",
     "print_help": "tsx src/index.ts --help",
     "clean": "rimraf dist",
     "test": "jest",
