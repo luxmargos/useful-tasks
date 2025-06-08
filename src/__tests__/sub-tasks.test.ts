@@ -2,7 +2,7 @@ import { usefulTasks } from '@/useful_tasks';
 import { prepare } from '@/build_cli_parser';
 import { buildTestPath, prepareTestSuite, prepareTestInstance } from '@/__tests__/testUtils';
 import fse from 'fs-extra';
-import { TasksScript, TasksScriptInput, TasksScriptSchema } from '@/task_data';
+import { TasksScriptInput } from '@/script';
 
 describe('Sub-tasks', () => {
   const { testDir } = prepareTestSuite(__dirname);

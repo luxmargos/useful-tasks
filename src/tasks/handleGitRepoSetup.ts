@@ -1,16 +1,33 @@
 import { logv, logw } from '@/loggers';
-import { isFile, isNotNil } from 'es-toolkit';
+import { isNotNil } from 'es-toolkit';
 import { isEmpty } from 'es-toolkit/compat';
 import fs from 'fs';
 import path from 'path';
 import simpleGit, { CheckRepoActions, ResetMode, SimpleGit } from 'simple-git';
-import { TaskContext, TaskGitSetup } from 'task_data';
+import { newTaskSchema, TaskContext } from '@/task_data';
+import { z } from 'zod';
+
+export const TaskGitSetupSchema = newTaskSchema('git-setup', {
+  checkLocalChanges: z
+    .boolean()
+    .default(true)
+    .describe('Whether to check for local changes, unpushed commits, and warn or throw'),
+  remote: z.string().nonempty().default('origin'),
+  localPath: z.string().nonempty(),
+  /** Executable git binary */
+  binary: z.string().nonempty().optional(),
+  url: z.string().nonempty(),
+  branch: z.string().nonempty(),
+  startPoint: z.string().nonempty().optional().describe('The commit hash or tag to checkout'),
+  updateSubmodules: z.union([z.array(z.string().nonempty()), z.boolean()]).default(true),
+});
+export type TaskGitSetup = z.infer<typeof TaskGitSetupSchema>;
 
 /**
  * Handles the setup of a git repository.
  *
  * @description
- * 
+ *
  * This function clones the repository if it doesn't exist, adds the remote if it doesn't exist,
  * updates submodules if specified, checks for local changes, and resets the repository to the specified branch.
  *

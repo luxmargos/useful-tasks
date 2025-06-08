@@ -19,7 +19,7 @@ export const handlerMap: {
   cmd: handleTerminalCommand,
   'set-var': handleSetVar,
   output: handleOutput,
-  symlink: handleFsSymlink,
+  'fs-symlink': handleFsSymlink,
   'fs-touch': handleFsTouch,
   'fs-copy': handleFsCopy,
   'fs-del': handleFsDelete,

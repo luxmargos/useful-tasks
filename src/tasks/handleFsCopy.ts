@@ -1,9 +1,30 @@
-import { processWithGlobSync } from '../glob_handler';
+import { processWithGlobSync } from '@/glob_handler';
 import path from 'path';
-import { TaskContext, TaskFsCopy } from '../task_data';
-import { logi, logv } from '../loggers';
+import { newTaskSchemaWithGlobFilters, TaskContext } from '@/task_data';
+import { logv } from '@/loggers';
 import fse from 'fs-extra';
-import { resolveStringArray } from '../utils';
+import { resolveStringArray } from '@/utils';
+import { z } from 'zod';
+
+export const TaskFsCopyOptionsSchema = z.object({
+  conflict: z
+    .union([
+      z.literal('overwrite'),
+      z.literal('skip'),
+      /**
+       * @reserved - feature in future:
+       * z.literal('prompt')*/
+    ])
+    .default('overwrite'),
+});
+export type TaskFsCopyOptions = z.infer<typeof TaskFsCopyOptionsSchema>;
+
+export const TaskFsCopySchema = newTaskSchemaWithGlobFilters('fs-copy', {
+  src: z.string().nonempty(),
+  dest: z.string().nonempty(),
+  options: TaskFsCopyOptionsSchema.default({ conflict: 'overwrite' }),
+});
+export type TaskFsCopy = z.infer<typeof TaskFsCopySchema>;
 
 export const runCopy = (src: string, dst: string, options: fse.CopyOptionsSync) => {
   logv(`Copy: ${src} => ${dst}`);

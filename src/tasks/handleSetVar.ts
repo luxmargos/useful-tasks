@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { processWithGlobSync } from '@/glob_handler';
 import { logv } from '@/loggers';
-import { TaskContext, TaskSetVar } from '@/task_data';
+import { newTaskSchemaWithGlobFilters, TaskContext } from '@/task_data';
 import { replaceVarLiterals, setTaskVar } from '@/task_utils';
 import {
   checkTypeOrThrow,
@@ -13,6 +13,17 @@ import {
   resolveStringArray,
 } from '@/utils';
 import { isNil } from 'es-toolkit';
+import { z } from 'zod';
+
+export const TaskSetVarSchema = newTaskSchemaWithGlobFilters('set-var', {
+  key: z.string().nonempty(),
+  value: z.union([z.string(), z.number(), z.boolean(), z.any()]),
+  src: z.string().nonempty().optional(),
+  parser: z.union([z.literal('json'), z.literal('lines'), z.literal('string'), z.literal('auto')]).default('auto'),
+  /** If the variable already exists, assigning will be skipped */
+  isFallback: z.boolean().default(false).describe('If the variable already exists, assigning will be skipped'),
+});
+export type TaskSetVar = z.infer<typeof TaskSetVarSchema>;
 
 export const handleSetVar = async (context: TaskContext, task: TaskSetVar) => {
   const isFallback: boolean = task.isFallback;

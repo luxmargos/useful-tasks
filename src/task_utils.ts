@@ -1,5 +1,6 @@
 import { logv } from './loggers';
-import { Task, TaskContext } from './task_data';
+import { TaskContext } from './task_data';
+import { Task } from './script';
 import { convertOrNotHyphenTextToCamelText } from './utils';
 import { get, isNotNil } from 'es-toolkit/compat';
 

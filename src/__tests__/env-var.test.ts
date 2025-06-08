@@ -1,7 +1,8 @@
 import { prepare } from '@/build_cli_parser';
 import { prepareTestInstance, prepareTestSuite } from './testUtils';
 import { usefulTasks } from '@/useful_tasks';
-import { TaskEnvVar, TaskEnvVarIn, TasksScriptInput } from '@/task_data';
+import { TasksScriptInput } from '@/script';
+import { TaskEnvVarIn } from '@/tasks/handleEnvVar';
 
 describe('env-var', () => {
   const { testDir } = prepareTestSuite(__dirname);

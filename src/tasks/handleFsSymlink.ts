@@ -2,7 +2,18 @@ import path from 'path';
 import fs from 'fs';
 import fse from 'fs-extra';
 import { logv } from '@/loggers';
-import { TaskContext, TaskSymlink } from '@/task_data';
+import { newTaskSchema, TaskContext } from '@/task_data';
+import { z } from 'zod';
+
+export const TaskSymlinkSchema = newTaskSchema('fs-symlink', {
+  type: z.literal('fs-symlink'),
+  target: z.string().nonempty(),
+  path: z.string().nonempty(),
+  linkType: z.union([z.literal('dir'), z.literal('file'), z.literal('junction')]).optional(),
+  forced: z.boolean().optional(),
+});
+
+export type TaskSymlink = z.infer<typeof TaskSymlinkSchema>;
 
 export const handleFsSymlink = async (context: TaskContext, task: TaskSymlink) => {
   const target: string = path.resolve(task.target);

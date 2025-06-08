@@ -1,12 +1,31 @@
 import stringArgv from 'string-argv';
-import { TaskContext, TaskSubTasks } from '../task_data';
-import { initUsefulTasks } from '../useful_tasks';
-import { fillDefaultOptions, prepareOpts } from '../build_cli_parser';
+import { newTaskSchemaWithGlobFilters, TaskContext } from '@/task_data';
+import { initUsefulTasks } from '@/useful_tasks';
+import { fillDefaultOptions, prepareOpts } from '@/build_cli_parser';
 import fse from 'fs-extra';
 import { processWithGlobSync } from '@/glob_handler';
 import { resolveStringArray } from '@/utils';
 import path from 'path';
 import { cloneDeep, isNotNil, mergeWith } from 'es-toolkit';
+import { z } from 'zod';
+
+/**
+ * Configuration for running a set of tasks as a sub-task group.
+ * FUTURE: Add glob support for task file patterns
+ */
+
+export const TaskSubTasksSchema = newTaskSchemaWithGlobFilters('sub-tasks', {
+  /** The path to the task file or directory to run as a sub-task group.*/
+  src: z.string().nonempty(),
+
+  /** Configuration for inheriting context from parent task. */
+  shareArgs: z.boolean().default(true).describe('Whether to share args with the sub-tasks.'),
+  shareVars: z.boolean().default(true).describe('Whether to share vars with the sub-tasks.'),
+
+  /** Command-line arguments to pass to the sub-tasks. */
+  args: z.string().default(''),
+});
+export type TaskSubTasks = z.infer<typeof TaskSubTasksSchema>;
 
 // TODO: Implement glob filters, and entire process
 export const handleSubTasks = async (context: TaskContext, task: TaskSubTasks) => {

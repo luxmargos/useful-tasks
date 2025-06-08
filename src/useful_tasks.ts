@@ -4,18 +4,11 @@ import { LogLevel, logLevels } from './loggers';
 import { containsAllTag, containsTag, loadJsonConfig } from './utils';
 import debug from 'debug';
 import os from 'os';
-import {
-  TasksScript,
-  Task,
-  TaskContext,
-  VAR_FROM_ARGUMENT_PREFIX,
-  ENV_VAR_FROM_ARGUMENT_PREFIX,
-  TasksScriptInput,
-  TasksScriptSchema,
-  convertToRuntimeTask,
-  RuntimeTask,
-  AnyRuntimeTask,
-} from './task_data';
+import { TaskContext, VAR_FROM_ARGUMENT_PREFIX, ENV_VAR_FROM_ARGUMENT_PREFIX, convertToRuntimeTask } from './task_data';
+import { TasksScript, TasksScriptInput, TasksScriptSchema } from './script';
+import { RuntimeTask } from './script';
+import { AnyRuntimeTask } from './script';
+import { Task } from './script';
 import { TAG_DEBUG, TAG_INFO, TAG_WARN } from './loggers';
 import { replaceVarLiterals, searchExtraKeyValue, setTaskVar, setEnvVar } from './task_utils';
 import { Command } from 'commander';

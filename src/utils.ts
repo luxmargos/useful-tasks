@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import json5 from 'json5';
-import { Task, type TasksScriptInput } from 'task_data';
+import { type TasksScriptInput } from './script';
+import { Task } from './script';
 import { logw, logv } from './loggers';
 import { assignIn } from 'es-toolkit/compat';
 

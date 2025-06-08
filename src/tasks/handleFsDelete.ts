@@ -5,8 +5,14 @@ import fse from 'fs-extra';
 
 import { processWithGlobSync } from '@/glob_handler';
 import { logi, logv } from '@/loggers';
-import { TaskContext, TaskFsDelete } from '@/task_data';
+import { newTaskSchemaWithGlobFilters, TaskContext } from '@/task_data';
 import { resolveStringArray } from '@/utils';
+import { z } from 'zod';
+
+export const TaskFsDeleteSchema = newTaskSchemaWithGlobFilters('fs-del', {
+  path: z.string().nonempty(),
+});
+export type TaskFsDelete = z.infer<typeof TaskFsDeleteSchema>;
 
 export const runDelete = (path: string) => {
   logv(`Delete: ${path}`);

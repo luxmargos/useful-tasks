@@ -1,7 +1,13 @@
 import { mkdirpSync } from 'fs-extra';
 import { logv } from '@/loggers';
-import { TaskContext, TaskFsMakeDir } from '@/task_data';
+import { newTaskSchema, TaskContext } from '@/task_data';
 import { checkTypeOrThrow } from '@/utils';
+import { z } from 'zod';
+
+export const TaskFsMakeDirSchema = newTaskSchema('fs-mkdir', {
+  path: z.string().nonempty(),
+});
+export type TaskFsMakeDir = z.infer<typeof TaskFsMakeDirSchema>;
 
 export const handleMkdir = async (context: TaskContext, task: TaskFsMakeDir) => {
   checkTypeOrThrow('path', task.path, ['string']);

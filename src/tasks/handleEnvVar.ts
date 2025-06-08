@@ -2,11 +2,50 @@ import fse from 'fs-extra';
 import path from 'path';
 import { processWithGlobSync } from '@/glob_handler';
 import { logv } from '@/loggers';
-import { DEFAULT_REPLACE_REGEX_TRADITIONAL, TaskContext, TaskEnvVar } from '@/task_data';
+import {
+  DEFAULT_REPLACE_REGEX_TRADITIONAL,
+  newTaskSchema,
+  newTaskSchemaWithGlobFilters,
+  TaskContext,
+} from '@/task_data';
 import { replaceVarLiterals, setEnvVar } from '@/task_utils';
 import { parseLines, checkTypeOrThrow, loadFileOrThrow, parseJson, resolveStringArray } from '@/utils';
-import { isNil, isNotNil } from 'es-toolkit';
+import { isNil, isNotNil, omit } from 'es-toolkit';
 import { get } from 'es-toolkit/compat';
+import { z } from 'zod';
+
+export const TaskEnvVarMapSchema = newTaskSchemaWithGlobFilters('env-var', {
+  map: z.union([z.string(), z.record(z.string(), z.union([z.string(), z.number(), z.boolean()]))]).optional(),
+  src: z.string().nonempty().optional(),
+  parser: z.union([z.literal('json'), z.literal('lines'), z.literal('auto')]).default('auto'),
+  /** If the environment variable already exists, assigning will be skipped */
+  isFallback: z
+    .boolean()
+    .default(false)
+    .describe('If the environment variable already exists, assigning will be skipped'),
+});
+
+export const TaskEnvVarKVSchema = newTaskSchema('env-var', {
+  key: z.string().nonempty(),
+  value: z.string(),
+  /** If the environment variable already exists, assigning will be skipped */
+  isFallback: z
+    .boolean()
+    .default(false)
+    .describe('If the environment variable already exists, assigning will be skipped'),
+}).transform((params) => {
+  return TaskEnvVarMapSchema.parse({
+    ...omit(params, ['key', 'value']),
+    map: {
+      [params.key]: params.value,
+    },
+  } satisfies z.input<typeof TaskEnvVarMapSchema>);
+});
+
+export const TaskEnvVarSchema = z.union([TaskEnvVarMapSchema, TaskEnvVarKVSchema]);
+
+export type TaskEnvVar = z.infer<typeof TaskEnvVarSchema>;
+export type TaskEnvVarIn = z.input<typeof TaskEnvVarSchema>;
 
 const traditionalProviders = [
   { regex: new RegExp(DEFAULT_REPLACE_REGEX_TRADITIONAL), store: (varPath: string) => get(process.env, varPath) },

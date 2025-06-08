@@ -1,9 +1,26 @@
 import fs from 'fs';
 import path from 'path';
-import { TaskContext, TaskContentReplace, RegexData } from '../task_data';
-import { logi, logv } from '../loggers';
-import { processWithGlobSync } from '../glob_handler';
-import { resolveStringArray, throwInvalidParamError } from '../utils';
+import { TaskContext, RegexData, newTaskSchemaWithGlobFilters, RegexDataSchema } from '@/task_data';
+import { logv } from '@/loggers';
+import { processWithGlobSync } from '@/glob_handler';
+import { resolveStringArray, throwInvalidParamError } from '@/utils';
+import { z } from 'zod';
+
+export const TaskContentFindSchema = z.union([z.string().nonempty(), RegexDataSchema]);
+export const TaskContentReplaceSchema = newTaskSchemaWithGlobFilters('content-replace', {
+  path: z
+    .string()
+    .nonempty()
+    .describe(
+      `If the task includes 'include' or 'exclude', \
+      it will be handled as a directory. 
+      Otherwise, it will be processed as a file.`
+    ),
+  find: TaskContentFindSchema,
+  replace: z.string(),
+  loop: z.number().optional(),
+});
+export type TaskContentReplace = z.infer<typeof TaskContentReplaceSchema>;
 
 const runFindAndReplaceWithRegex = (content: string, find: RegExp, replace: string, repeat: number): string => {
   var text: string = content;
