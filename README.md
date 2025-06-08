@@ -1,8 +1,6 @@
-# Useful tasks
+# Useful Tasks
 
-A CLI task runner that utilizes JSON-based configuration and processes tasks sequentially.
-This project was initiated to resolve git repository dependencies without using git submodules.
-It aims to be useful for setting up a workspace with complex dependencies and multiple preparation steps.
+Useful Tasks is a flexible CLI task runner that executes tasks defined in JSON or JSON5 configuration files. It was created to simplify workspace setup, automate repetitive steps, and manage complex dependencies—especially when working with multiple repositories or advanced file operations. Tasks are processed sequentially, and the tool supports a variety of built-in actions.
 
 ## Support
 
@@ -10,441 +8,740 @@ It aims to be useful for setting up a workspace with complex dependencies and mu
 
 ## Installation
 
-* Use globally
+Install Useful Tasks globally or as a dev dependency in your project:
 
-```npm install -g useful-tasks```
+- **Globally:**
+  ```sh
+  npm install -g useful-tasks
+  ```
+- **Locally (per project):**
+  ```sh
+  npm install useful-tasks --save-dev
+  ```
 
-* Project locally
+## CLI Options
 
-```npm insatll useful-tasks --save-dev```
+```sh
+useful-tasks --help
+```
 
 ## Supported Tasks
-* cmd
-* output
-* set-var
-* env-var
-* symlink
-* fs-copy
-* fs-del
-* fs-mkdir
-* git-repo-prepare
-* sub-tasks
-* content-replace
 
-## How to use
+Useful Tasks supports a variety of actions, each defined as a task type in your configuration:
 
-Useful-tasks can be used through a command line interface
+- `cmd`: Run shell commands
+- `output`: Output text to console or file
+- `set-var`: Define variables for use in later tasks. It supports glob patterns to match files.
+- `env-var`: Set environment variables for task execution. It supports glob patterns to match files.
+- `fs-symlink`: Create symbolic links
+- `fs-copy`: Copy files or directories. It supports glob patterns to match files.
+- `fs-del`: Delete files or directories. It supports glob patterns to match files.
+- `fs-mkdir`: Create directories
+- `fs-touch`: Create empty file
+- `git-setup`: Set up a Git repository as desired, e.g., reset to the last commit or check out a specific branch; also supports a specific `startPoint` option.
+- `sub-tasks`: Run another Useful Tasks configuration as a sub-process
+- `content-replace`: Find and replace content in files. It supports glob patterns to match files.
 
-```useful-tasks --help```
+## How to Use
 
-```text
-Usage: useful-tasks [options]
+Useful Tasks is operated via CLI. Run the following for help:
 
-Options:
-  -V, --version              output the version number
-  --cwd <string>             Change working directory
-  -c, --config <string>      A path of json configuraion (default: "useful_tasks.json")
-  -i, --include <items>      Include tasks that contain at least one of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02
-  -a, --include-cta <items>  Include tasks that contain all of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02
-  -e, --exclude <items>      Exclude tasks that contain at least one of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02
-  -x, --exclude-cta <items>  Exclude tasks that contain all of the specified parameters. Specify the IDs or tags separated by commas. For example: my_task_01, my_task_02
-  --camel-keys <boolean>     Specify whether to use camel case for the key of the variable. If the value is true, the paramter "--var-my-key" will be converted to "myKey" otherwise it will be "my-key" (default: true)
-  --cwd-mode <string>        Choose between 'restore' or 'keep'. If you use 'cwd' property in a specific task, consider using this parameter. This parameter determines the behavior of the current working directory (CWD) when each task ends. In 'restore' mode, the
-                             CWD will be restored to its original state (or the one specified at --cwd) when each task ends, while in 'keep' mode, the CWD will remain unchanged. (default: "restore")
-  --log-level <string>       Specify the logging level as none,info,debug. This parameter takes higher priority than the 'json' configuration. (default: "info")
-  -h, --help                 display help for command
+```sh
+useful-tasks --help
 ```
 
-* Default usage
+### Basic Usage
 
-```useful-tasks --config=my_tasks.json```
+```sh
+useful-tasks --script=my_tasks.json
+```
 
-* Process with including specific tasks
+### Include or Exclude Tasks by ID or Tag
 
-```useful-tasks --config=my_tasks.json --include=my_task_1,my_task_2```
+```sh
+useful-tasks --script=my_tasks.json --include=task1,task2
+useful-tasks --script=my_tasks.json --exclude=task3
+```
 
-* Process without some of tasks
+### Pass Variables and Environment Variables
 
-```useful-tasks --config=my_tasks.json --exclude=my_task_1,my_task_2```
+```sh
+useful-tasks --script=my_tasks.json --var-my-key=VALUE
+useful-tasks --script=my_tasks.json --env-MY_ENV=VALUE
+```
 
-* The variables can be set using command-line parameters. Just use the prefix '--var-' followed by the key-value pair, e.g., '--var-my-key=VALUE'. You can then use this custom variable in your configuration using the syntax '${myKey}'. This will have the same effect as the 'set-var' task.
+### Additional Options
 
- ```useful-tasks --config=my_tasks.json --var-my-key=VALUE```
+- `--cwd <dir>`: Set working directory
+- `--camel-keys <bool>`: Use camelCase for variable keys (default: true)
+- `--cwd-mode <restore|keep>`: Restore or keep working directory after each task
+- `--log-level <none|info|debug>`: Set logging verbosity
 
-* You can turn off the camel case conversion by setting the '--camel-keys' parameter to false. Then you can use it with '${my-key}'.
+## Scripting
 
- ```useful-tasks --config=my_tasks.json --camel-keys=false --var-my-key=VALUE```
+Tasks are defined in a JSON or JSON5 file, typically named `useful_tasks.json` or similar. Tasks are executed in the order they appear.
 
-* The environment variables can be set using command-line parameters. Just use the prefix '--env-' followed by the key-value pair, e.g., '--env-my-key=VALUE'.
+### Task Object Structure
 
- ```useful-tasks --config=my_tasks.json --env-my-key=VALUE```
+Each task can have the following properties:
 
-## Configuration
-The tasks will be processed in the order they are specified.
+- `type` (string, required): Task type (see Supported Tasks)
+- `id` (string, optional): Unique identifier for referencing
+- `tags` (string or array, optional): Tags for filtering tasks (can be a single string or array of strings)
+- `enabled` (boolean, optional): If false, task is skipped (default: true)
+- `cwd` (string, optional): Working directory for the task
+- `when` (object, optional): Conditional execution based on platform, architecture, or machine.
+  - `platform` (string, optional): Target platform (e.g., 'darwin', 'win32', 'linux', '!win32')
+  - `architecture` (string, optional): Target architecture (e.g., 'x64', 'arm64', '!arm64')
+  - `machine` (string, optional): Target machine (e.g., 'x86_64', 'arm64', '!arm64')
+- `comment` (string, optional): Description or note
+- `onError` (string, optional): Error handling strategy ('skip', 'throw', or 'warn', default: 'throw')
 
-### A basic structure
-```json5
+### Examples
+
+Minimal:
+
+```json
 {
-    "name":"Sample",
-    "tasks":[
-        {
-            "type":"output",
-            "text":"Hello world!"
-        }
-    ]
+  "name": "Sample",
+  "tasks": [{ "type": "output", "text": "Hello world!" }]
 }
 ```
 
-### Environment configuration
-```json5
+With various options:
+
+```json
 {
-    "name":"Sample",
-    //Optional.
-    "env":{
-        //Optional. Specify the logging level as 'info', 'debug', or 'none'.
-        //Default="info"
-        "logLevel":"info",
-        
-        //Optional. The regular expression used for replacing parts of the text with variables. The default regex targets the format '${VARIABLE_KEY}'. 
-        //DEFAULT="\$\{([a-zA-Z0-9\.\-_]*)\}"
-        "replaceRegex":"..."
+  "name": "Sample",
+  "tasks": [
+    {
+      "type": "output",
+      "text": "Hello macos!",
+      "comment": "This is a comment",
+      "enabled": true,
+      "when": {
+        "platform": "darwin"
+      }
     },
-    "tasks":[
-        ...
-    ]
+    {
+      "type": "output",
+      "text": "Hello non windows!",
+      "comment": "This is a comment",
+      "enabled": true,
+      "when": {
+        "platform": "!win32"
+      }
+    },
+    {
+      "type": "output",
+      "text": "Hello linux!",
+      "comment": "This is a comment",
+      "enabled": true,
+      "when": {
+        "platform": "linux"
+      }
+    }
+  ]
 }
 ```
 
-### Common Task structure
-All tasks have the following common properties
+### Environment and Global Options
 
-```json5
+```json
 {
-    "name":"Sample",
-    "tasks":[
-        {
-            //Required
-            "type":"TASK TYPE",
-            
-            //Optional. The identifier of task. It also used for including or excluding specific tasks.
-            "id":"<UNIQUE TASK ID>",
-
-            //Optional. Used by include or exclude specific tasks.
-            "tags":[],
-
-            //Optional. If the value is false, the task will be skipped without being processed.
-            //DEFAULT=true
-            "enabled":true,
-
-            //Optional. Current working directory. Each task can be proccessed in a different directory. 
-            //DEFAULT="."
-            "cwd":"...",
-
-            //Optional. The comment will be printed before starting a task, unless you set the --log-level to none.
-            "comment":"..."
-        }
-    ]
+  "name": "Sample",
+  "env": {
+    "logLevel": "info", // 'info', 'debug', or 'none' // Default: 'info'
+    // To replace variable literal in text properties of tasks. This Regex lets you replace `${variable.path}` with the value of the variable.
+    "varReplaceRegex": "(?<!\\\\)\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}",
+    // To replace environment variable literal in text properties of tasks. This Regex lets you replace `${variable.path}` with the value of the environment variable.
+    "envVarReplaceRegex": "(?<!\\\\)\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}"
+  },
+  "tasks": []
 }
 ```
 
-### Tasks
-```json5
+## Tasks
+
+### cmd
+
+Runs shell commands with optional shell specification.
+
+```json
 {
-    "name":"Sample",
-    "tasks":[
-        {
-            //Run a terminal command
-            "type":"cmd",
+  "type": "cmd",
+  "cmd": "echo 'Hello World'",
+  "shell": "/bin/bash" // Optional, defaults to system shell
+}
+```
 
-            //Command line to execute
-            "cmd":"..."
-        },
+Examples:
 
-        {
-            //The variable can be set and subsequently used by all following tasks. 
-            "type":"set-var",
+```json
+// Simple command
+{
+  "type": "cmd",
+  "cmd": "npm install"
+}
 
-            //This represents the key for the variable. All subsequent tasks will access the variable using this key.
-            "key":"access_key_to_var",
+// With working directory specified
+{
+  "type": "cmd",
+  "cmd": "ls -la",
+  "cwd": "./src"
+}
 
-            //The variable can be a type such as 'string', 'number', 'object' for "varType":"value"
-            "value":"text",
-            "value":1,
-            //To access nested variable from another task, use the expression 'access_key_to_var.a'
-            "value":{
-                "a":"value of a",
-                "b":{
-                    "c":"value of c"
-                }
-            },
+// With conditional execution
+{
+  "type": "cmd",
+  "cmd": "brew update",
+  "when": {
+    "platform": "darwin"
+  }
+}
+```
 
-            // The 'src' can be a path to a file or a directory. The processor reveals the variables from the file(s).
-            "src": "path/of/json/file.json",
+### output
 
-            // Optional. This option applies with the 'src' parameter and can be set to either 'json', 'lines' or 'string'. 
-            // When set to 'json', the content of the file will be parsed as JSON.
-            // DEFAULT="auto"
-            "parser": "json",
+Outputs text to console or file with options for appending or overwriting.
 
-            // Optional. This option allows you to include specific files using glob patterns. The "src" path must be a directory.
-            "include": "*.txt",
-            // An array is allowed
-            "include": ["foo/bar/*", "bar/**/*.txt"],
+```json
+{
+  "type": "output",
+  "target": "console", // or "file-write", "file-append", "c", "fw", "fa"
+  "text": "Hello World",
+  "path": "./output.txt" // Required when target is file-related
+}
+```
 
-            // Optional. This option allows you to exclude specific files using glob patterns. The "src" path must be a directory.
-            "exclude": "*.txt",
-            // An array is allowed
-            "exclude": ["foo/bar/*", "bar/**/*.txt"],
+Examples:
 
-            //Optional. Skip setting the variable if it already exists.
-            //DEFAULT=false
-            "fallback":false
-        },
+```json
+// Console output
+{
+  "type": "output",
+  "target": "console",
+  "text": "Starting process..."
+}
 
-        {
-            //Set the environment variable that usable while process is running
-            "type":"env-var",
+// Write to file (overwriting)
+{
+  "type": "output",
+  "target": "file-write", // or "fw"
+  "text": "Log entry: Process completed",
+  "path": "./logs/process.log"
+}
 
-            //Set the variable name and text.
-            "value":{
-                "ENV_VAR_1":"HELLO",
-                "ENV_VAR_2":"WORLD"
-            },
+// Append to file
+{
+  "type": "output",
+  "target": "file-append", // or "fa"
+  "text": "New log entry\n",
+  "path": "./logs/process.log"
+}
+```
 
-            //Lines style also works.
-            "value":"\
-                ENV_VAR_1=HELLO\n\
-                ENV_VAR_2=WORLD
-            ",
+### set-var
 
-            // The 'src' can be a path to a file or a directory. The processor reveals the variables from the file(s).
-            "src": "path/of/json/file.json",
+Defines variables for use in later tasks. Variables can be set directly or loaded from files.
 
-            // Optional. This option applies with the 'src' parameter and can be set to either 'json' or 'lines'. 
-            // When set to 'json', the content of the file will be parsed as JSON.
-            // DEFAULT="auto"
-            "parser": "json",
+```json
+{
+  "type": "set-var",
+  "key": "variableName",
+  "value": "variableValue", // Can be string, number, boolean, or object
+  "isFallback": false // Optional, if true, won't overwrite existing variables
+}
+```
 
-            // Optional. This option allows you to include specific files using glob patterns. The "src" path must be a directory.
-            "include": "*.txt",
-            // An array is allowed
-            "include": ["foo/bar/*", "bar/**/*.txt"],
+Examples:
 
-            // Optional. This option allows you to exclude specific files using glob patterns. The "src" path must be a directory.
-            "exclude": "*.txt",
-            // An array is allowed
-            "exclude": ["foo/bar/*", "bar/**/*.txt"],
+```json
+// Simple variable
+{
+  "type": "set-var",
+  "key": "greeting",
+  "value": "Hello World"
+}
 
-            //Optional. Skip setting the environment variable if it already exists.
-            //DEFAULT=false
-            "fallback":false
-        },
+// Object variable
+{
+  "type": "set-var",
+  "key": "config",
+  "value": {
+    "port": 3000,
+    "host": "localhost",
+    "debug": true
+  }
+}
 
-        {
-            //To output a text
-            "type":"output",
-            "text":"Hello world!",
-            //Optional. 'console' or 'c', 'file-write' or 'fw', 'file-append' or 'fa'. 
-            //Default="console"
-            "target":"file-write",
-            //Optional. But required on "target" is "file".
-            "path":"my-output.txt"
-        },
-        
-        {
-            //To output a text with the value of 'set-var' that was previously set.
-            "type":"output",
-            "text":"I found a value ${key_of_value.a}!"
-        },
+// Load from file
+{
+  "type": "set-var",
+  "key": "settings",
+  "src": "./config.json",
+  "parser": "json" // Options: "json", "lines", "string", "auto" (default)
+}
 
-        {
-            //To copy a file or directory
-            "type":"fs-copy",
-            "src":"copy-source.txt",
-            "dest":"copy-destination.txt",
+// Load from multiple files using glob patterns
+{
+  "type": "set-var",
+  "key": "translations",
+  "src": "./locales",
+  "include": ["**/*.json"],
+  "exclude": ["**/*.backup.json"],
+  "parser": "json"
+}
+```
 
-            //Optional.
-            "options":{
-                //Optional. 'skip' or 'overwrite'
-                //Default="overwrite"
-                "conflict":"overwrite",
-            },
-            //Optional. This option allows you to include specific files using glob patterns. The "src" path must be a directory.
-            "include": "*.txt",
-            //An array is allowed
-            "include":["foo/bar/*","bar/**/*.txt"],
+### env-var
 
-            //Optional. This option allows you to exclude specific files using glob patterns. The "src" path must be a directory.
-            "exclude": "*.txt",
-            //An array is allowed
-            "exclude":["foo/bar/*","bar/**/*.txt"]
-        },
+Sets environment variables for the current process. Variables can be set directly or loaded from files.
 
-        {
-            //To delete a file or directory
-            "type":"fs-del",
-            "path":"delete-target.txt",
+```json
+{
+  "type": "env-var",
+  "key": "ENV_VAR_NAME",
+  "value": "value",
+  "isFallback": false // Optional, if true, won't overwrite existing env vars
+}
+```
 
-            //Optional. This option allows you to include specific files using glob patterns. The "path" must be a directory.
-            "include": "*.txt",
-            //An array is allowed
-            "include":["foo/bar/*","bar/**/*.txt"],
+Alternatively, you can set multiple environment variables at once:
 
-            //Optional. This option allows you to exclude specific files using glob patterns. The "path" must be a directory.
-            "exclude": "*.txt",
-            //An array is allowed
-            "exclude":["foo/bar/*","bar/**/*.txt"]
-        },
+```json
+{
+  "type": "env-var",
+  "map": {
+    "NODE_ENV": "development",
+    "PORT": "3000",
+    "DEBUG": "true"
+  },
+  "isFallback": false
+}
+```
 
-        {
-            //Create a directory
-            "type":"fs-mkdir",
-            "path":"path/to/directory",
-        },
+Examples:
 
-        {
-            //Find and replace the content of file
-            "type":"content-replace",
-            //Required.
-            "path":"path_to_file.txt",
+```json
+// Simple environment variable
+{
+  "type": "env-var",
+  "key": "API_KEY",
+  "value": "secret-key-123"
+}
 
-            //Required.
-            "find":"TEXT_TO_REPLACE",
+// Load from .env file or other formats
+{
+  "type": "env-var",
+  "src": "./.env",
+  "parser": "lines" // Options: "json", "lines", "auto" (default)
+}
 
-            //Required. If you want to use Regular Expression
-            "find":{
-                "pattern":"TEXT_TO_REPLACE",
-                //Opional. Regex Flags
-                "flags":"gi",
-            },
-            
-            //Required.
-            "replace":"REPLACEMENT CONTENT",
+// Load from multiple files using glob patterns
+{
+  "type": "env-var",
+  "src": "./configs",
+  "include": ["**/*.env"],
+  "exclude": ["**/*.local.env"],
+  "parser": "lines"
+}
+```
 
-            //Optional. The count of loops for the entire find and replace operation. If Regular Expression is used with flags, including 'g', it is recommended to leave it as is.
-            "loop":1,
+### fs-symlink
 
-            //Optional. This option allows you to include specific files using glob patterns. The "path" must be a directory.
-            "include": "*.txt",
-            //An array is allowed
-            "include":["foo/bar/*","bar/**/*.txt"],
+Creates symbolic links between files or directories.
 
-            //Optional. This option allows you to exclude specific files using glob patterns. The "path" must be a directory.
-            "exclude": "*.txt",
-            //An array is allowed
-            "exclude":["foo/bar/*","bar/**/*.txt"]
-        }
+```json
+{
+  "type": "fs-symlink",
+  "target": "./source/path",
+  "path": "./link/path",
+  "linkType": "file", // Optional: "file", "dir", or "junction" (Windows only)
+  "forced": true // Optional: if true, will remove existing files/links at path
+}
+```
 
-        {
-            "type":"symlink",
-            
-            //"TARGET PATH of SYMLINK"
-            "target":"./symlink_target",
-            
-            //"SYMLINK DESTINATION PATH"
-            "path":"./symlink_path",
-            
-            //Remove an existing path and recreate a symlink each time the process is executed
-            "forced":true,
-            
-            //'dir', 'file', 'junction'
-            "linkType":"dir"
-        },
+Examples:
 
-        {
-            //Run another 'useful-tasks' process as a single task with specified arguments
-            "type":"sub-tasks",
+```json
+// Create a simple symlink
+{
+  "type": "fs-symlink",
+  "target": "./actual/config.json",
+  "path": "./config.json"
+}
 
-            //This is same with 'useful-tasks -c another_tasks.json'
-            "args":"-c another_tasks.json",
-        },
+// Create a directory symlink with forced overwrite
+{
+  "type": "fs-symlink",
+  "target": "./node_modules",
+  "path": "./vendor/modules",
+  "linkType": "dir",
+  "forced": true
+}
+```
 
-        {
-            //This task sets up a Git repository. The main purpose is to prepare the Git repository to be usable, utilizing various Git commands such as clone, checkout, reset, fetch, and clean.
-            "type":"git-repo-prepare",
+### fs-copy
 
-            //A path of git(local) repository
-            "localPath":"./path/of/local/git/repository",
+Copies files or directories with optional glob pattern filtering.
 
-            //Optional. Set a value if you want to use a different binary of git.
-            //DEFAULT="git"
-            "bin":"git",
-            
-            //Optional. Leave it empty if using local repository.
-            "url":"https://.../xxx.git",
+```json
+{
+  "type": "fs-copy",
+  "src": "./source/directory",
+  "dest": "./destination/directory",
+  "options": {
+    "conflict": "overwrite" // Optional: "overwrite" or "skip"
+  },
+  "include": ["**/*.js"], // Optional: glob patterns to include
+  "exclude": ["**/*.test.js"] // Optional: glob patterns to exclude
+}
+```
 
-            //Optional. Specify a branch(local) that you want to use
-            "branch":"master",
-            
-            //Optional. Use a specific commit hash, tag or another branch(e.g origin/master)
-            "startPoint":"origin/master",
-            
-            //Optional.
-            "updateSubmodules":false
-        }
-    ]
+Examples:
+
+```json
+// Copy a single file
+{
+  "type": "fs-copy",
+  "src": "./config.json",
+  "dest": "./backup/config.json"
+}
+
+// Copy a directory with options
+{
+  "type": "fs-copy",
+  "src": "./src",
+  "dest": "./dist",
+  "options": {
+    "conflict": "skip"
+  }
+}
+
+// Copy specific files using glob patterns
+{
+  "type": "fs-copy",
+  "src": "./assets",
+  "dest": "./public/assets",
+  "include": ["**/*.{png,jpg,svg}"],
+  "exclude": ["**/temp/**"]
+}
+```
+
+### fs-del
+
+Deletes files or directories with optional glob pattern filtering.
+
+```json
+{
+  "type": "fs-del",
+  "path": "./path/to/delete",
+  "include": ["**/*.tmp"], // Optional: glob patterns to include
+  "exclude": ["**/*.important"] // Optional: glob patterns to exclude
+}
+```
+
+Examples:
+
+```json
+// Delete a single file
+{
+  "type": "fs-del",
+  "path": "./temp.log"
+}
+
+// Delete a directory
+{
+  "type": "fs-del",
+  "path": "./temp"
+}
+
+// Delete specific files using glob patterns
+{
+  "type": "fs-del",
+  "path": "./cache",
+  "include": ["**/*.cache"],
+  "exclude": ["**/important/**"]
+}
+```
+
+### fs-mkdir
+
+Creates directories recursively (similar to `mkdir -p`).
+
+```json
+{
+  "type": "fs-mkdir",
+  "path": "./path/to/create"
+}
+```
+
+Examples:
+
+```json
+// Create a single directory
+{
+  "type": "fs-mkdir",
+  "path": "./logs"
+}
+
+// Create nested directories
+{
+  "type": "fs-mkdir",
+  "path": "./data/cache/temp"
+}
+```
+
+### fs-touch
+
+Creates an empty file if it doesn't exist (similar to Unix `touch` command).
+
+```json
+{
+  "type": "fs-touch",
+  "path": "./path/to/file.txt"
+}
+```
+
+Examples:
+
+```json
+// Create an empty file
+{
+  "type": "fs-touch",
+  "path": "./logs/app.log"
+}
+
+// Create a placeholder file
+{
+  "type": "fs-touch",
+  "path": "./.gitkeep"
+}
+```
+
+### git-setup
+
+Clones or updates a Git repository to a specific state.
+
+```json
+{
+  "type": "git-setup",
+  "localPath": "./path/to/repo",
+  "url": "https://github.com/user/repo.git",
+  "branch": "main",
+  "remote": "origin", // Optional, defaults to "origin"
+  "startPoint": "v1.0.0", // Optional, specific commit hash or tag to checkout
+  "checkLocalChanges": true, // Optional, whether to check for local changes
+  "updateSubmodules": true // Optional, can be boolean or array of submodule paths
+}
+```
+
+Examples:
+
+```json
+// Basic repository setup
+{
+  "type": "git-setup",
+  "localPath": "./projects/my-repo",
+  "url": "https://github.com/user/my-repo.git",
+  "branch": "main"
+}
+
+// Clone with specific tag and submodule handling
+{
+  "type": "git-setup",
+  "localPath": "./vendor/library",
+  "url": "https://github.com/org/library.git",
+  "branch": "stable",
+  "startPoint": "v2.1.0",
+  "updateSubmodules": ["./plugins/core", "./plugins/extra"]
+}
+
+// Development setup without checking local changes
+// This is so wild you can lose your local changes if you are not careful because 'checkLocalChanges' is false
+{
+  "type": "git-setup",
+  "localPath": "./dev/sandbox",
+  "url": "https://github.com/team/sandbox.git",
+  "branch": "develop",
+  "checkLocalChanges": false,
+  "updateSubmodules": false
+}
+```
+
+### sub-tasks
+
+Runs another task file or directory of task files as a sub-task group.
+
+```json
+{
+  "type": "sub-tasks",
+  "src": "./path/to/tasks.json",
+  "shareArgs": true, // Optional: whether to share CLI args with sub-tasks
+  "shareVars": true, // Optional: whether to share variables with sub-tasks
+  "args": "", // Optional: additional CLI args to pass to sub-tasks
+  "include": ["**/*.json"], // Optional: glob patterns to include
+  "exclude": ["**/*.skip.json"] // Optional: glob patterns to exclude
+}
+```
+
+Examples:
+
+```json
+// Run a single task file
+{
+  "type": "sub-tasks",
+  "src": "./setup/init.json"
+}
+
+// Run multiple task files with shared context
+{
+  "type": "sub-tasks",
+  "src": "./tasks",
+  "include": ["**/*.json"],
+  "exclude": ["**/temp/**"],
+  "shareVars": true,
+  "args": "--tags deploy"
+}
+
+// Run isolated sub-tasks without sharing variables
+{
+  "type": "sub-tasks",
+  "src": "./modules/cleanup.json",
+  "shareVars": false,
+  "shareArgs": false
+}
+```
+
+### content-replace
+
+Replaces content in files using string or regex patterns.
+
+```json
+{
+  "type": "content-replace",
+  "path": "./path/to/file.txt", // File or directory path
+  "find": "text to find", // String to find or regex object
+  "replace": "replacement text", // Replacement string
+  "loop": 1, // Optional: number of replacements to make (-1 for all occurrences)
+  "include": ["**/*.txt"], // Optional: glob patterns to include when path is a directory
+  "exclude": ["**/*.bak"] // Optional: glob patterns to exclude when path is a directory
+}
+```
+
+Examples:
+
+```json
+// Simple text replacement
+{
+  "type": "content-replace",
+  "path": "./config.json",
+  "find": "development",
+  "replace": "production"
+}
+
+// Replace all occurrences
+{
+  "type": "content-replace",
+  "path": "./README.md",
+  "find": "TODO",
+  "replace": "DONE",
+  "loop": -1 // Replace all occurrences
+}
+
+// Using regex
+{
+  "type": "content-replace",
+  "path": "./src",
+  "find": {
+    "pattern": "version:\\s*['\"]([0-9\\.]+)['\"];",
+    "flags": "g"
+  },
+  "replace": "version: '1.2.0';",
+  "include": ["**/*.js", "**/*.ts"]
+}
+
+// Multiple files with glob patterns
+{
+  "type": "content-replace",
+  "path": "./templates",
+  "find": "{{PROJECT_NAME}}",
+  "replace": "my-awesome-project",
+  "include": ["**/*.html", "**/*.md"],
+  "exclude": ["**/node_modules/**"]
 }
 ```
 
 ## Tips
 
-### Json5 formatting
+### JSON5 Formatting
 
-The default JSON parser used is json5, allowing you to write tasks with comments and line breaks.
-
-```json5
-{
-    //my comment
-    "type":"output",
-    "text":"HELLO \
-world!!!"
-}
-```
-
-### Replacement string with 'set-var' 
-
-The values specified in the 'set-var' task can replace any string properties in the subsequent tasks, except for the 'id' and 'tags' properties.
-
-```json5
-{
-    "tasks":[
-        {
-            "type":"set-var",
-            "key":"myVar",
-            "value":"HELLO set-var"
-        },
-        {
-            "type":"output",
-            "text":"The message: ${myVar}"
-        },
-    ]
-}
-```
-
-will output
-
-```
-The message: Hello set-var
-```
-
-
-### Accessing default variables
-
-#### Aceess to a startup directory 
+Useful Tasks supports JSON5, so you can use comments and trailing commas in your configuration files:
 
 ```json
 {
-    "type":"some_task",
-    "some_property":"${__env.cwd_startup}"
+  // This is a comment
+  "type": "output",
+  "text": "Hello, world!"
 }
 ```
 
-#### Access to a base directory
-The base directory is main working directory that is applied using the '--cwd' argument on the command line.
+### 'set-var' vs 'env-var'
+
+- `set-var` stores the variable in the task context
+- `env-var` stores the variable in the environment variables
+
+### Variable Replacement
+
+Use `set-var` or `env-var` to define variables, then reference them in later tasks using `${varName}`:
 
 ```json
 {
-    "type":"some_task",
-    "some_property":"${__env.cwd_base}"
+  "tasks": [
+    { "type": "set-var", "key": "msg", "value": "Hello" },
+    { "type": "env-var", "key": "msg2", "value": "Hello2" },
+    { "type": "output", "text": "The message: ${msg} ${msg2}" }
+  ]
 }
 ```
+
+Useful Tasks supports variable replacement using the pattern `${variable.path}`:
+
+- Regex: `(?<!\\\\)\\$\\{([a-zA-Z0-9\\.\\-_]*)\\}`
+- Escaping: Use `\\${variable.path}` to prevent replacement
+
+### Built-in Variables
+
+- `${__env.cwd_startup}`: The directory where Useful Tasks was launched
+- `${__env.cwd_base}`: The base working directory (set via `--cwd`)
+
+### Glob Filters
+
+Many tasks support glob patterns for file matching using `include` and `exclude` properties:
+
+```json
+{
+  "type": "fs-copy",
+  "src": "./source",
+  "dest": "./destination",
+  "include": ["**/*.js", "**/*.ts"],
+  "exclude": ["**/*.test.js"]
+}
+```
+
+Tasks that support glob filters: `set-var`, `env-var`, `fs-copy`, `fs-del`, and `content-replace`.
+
+### Advanced Examples
+
+- Use glob patterns in `include`/`exclude` fields to match files
+- Use regular expressions for advanced content replacement
+- Chain multiple configs using `sub-tasks`
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+
+---
+
+For bugs, questions, or contributions, please visit the [GitHub repository](https://github.com/luxmargos/useful-tasks).
