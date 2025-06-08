@@ -57,7 +57,7 @@ export const handleEnvVar = async (context: TaskContext, task: TaskEnvVar) => {
   // The env-var task treat $ENV_VAR as a var literal
   const replaceProviders = [...context.replaceProviders, ...traditionalProviders];
 
-  if (isNotNil(task.map)) {
+  if (isNil(task.src) && isNotNil(task.map)) {
     let map: any = task.map;
     if (typeof map === 'string') {
       logv('Trying to parse as lines.');
@@ -75,9 +75,8 @@ export const handleEnvVar = async (context: TaskContext, task: TaskEnvVar) => {
     }
   }
 
-  if (!task.src) return;
+  if (isNil(task.src)) return;
 
-  checkTypeOrThrow('src', task.src, ['string']);
   const src = task.src as string;
   const parser = task.parser || 'auto';
   logv(`Parser = ${parser}`);

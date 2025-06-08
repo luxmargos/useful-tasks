@@ -9,8 +9,11 @@ export const TaskSymlinkSchema = newTaskSchema('fs-symlink', {
   type: z.literal('fs-symlink'),
   target: z.string().nonempty(),
   path: z.string().nonempty(),
-  linkType: z.union([z.literal('dir'), z.literal('file'), z.literal('junction')]).optional(),
-  forced: z.boolean().optional(),
+  linkType: z
+    .union([z.literal('dir'), z.literal('file'), z.literal('junction')])
+    .optional()
+    .describe('Link type, dir for directory, file for file, junction for Windows junction'),
+  forced: z.boolean().optional().describe('If true, will remove existing files/links at path'),
 });
 
 export type TaskSymlink = z.infer<typeof TaskSymlinkSchema>;
