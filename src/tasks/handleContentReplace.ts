@@ -24,7 +24,7 @@ export type TaskContentReplace = z.infer<typeof TaskContentReplaceSchema>;
 
 const runFindAndReplaceWithRegex = (content: string, find: RegExp, replace: string, repeat: number): string => {
   var text: string = content;
-  if (repeat < 1) {
+  if (repeat < 0) {
     while (find.test(text)) {
       text = text.replace(find, replace);
     }
