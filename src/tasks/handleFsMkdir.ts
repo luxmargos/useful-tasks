@@ -6,17 +6,17 @@ import { z } from 'zod';
 
 export const TaskFsMakeDirSchema = newTaskSchema('fs-mkdir', {
   path: z.union([z.string().nonempty(), z.array(z.string().nonempty())]),
+}).transform((data) => {
+  return {
+    ...data,
+    path: typeof data.path === 'string' ? [data.path] : data.path,
+  };
 });
 export type TaskFsMakeDir = z.infer<typeof TaskFsMakeDirSchema>;
 
 export const handleMkdir = async (context: TaskContext, task: TaskFsMakeDir) => {
-  if (Array.isArray(task.path)) {
-    for (const p of task.path) {
-      logv(`Make a directory at : ${p}`);
-      mkdirpSync(p);
-    }
-  } else {
-    logv(`Make a directory at : ${task.path}`);
-    mkdirpSync(task.path);
+  for (const p of task.path) {
+    logv(`Make a directory at : ${p}`);
+    mkdirpSync(p);
   }
 };
