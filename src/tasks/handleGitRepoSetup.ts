@@ -114,11 +114,15 @@ export const handleGitSetup = async (context: TaskContext, task: TaskGitSetup) =
     }
   }
 
-  if (task.checkLocalChanges) {
+  if (task.checkLocalChanges && !isEmpty(branchLocal.current)) {
     await git.fetch(remote, branchLocal.current);
     let hasUnpushedCommits = false;
     try {
-      hasUnpushedCommits = await checkUnpushedCommits(git, remote, branchLocal.current);
+      // Only check for unpushed commits if the branch exists locally
+      const branchExists = branchLocal.all.includes(branchLocal.current);
+      if (branchExists) {
+        hasUnpushedCommits = await checkUnpushedCommits(git, remote, branchLocal.current);
+      }
     } catch (e) {
       logw(e);
     }
@@ -133,7 +137,11 @@ export const handleGitSetup = async (context: TaskContext, task: TaskGitSetup) =
   if (task.checkLocalChanges) {
     let hasUnpushedCommits = false;
     try {
-      hasUnpushedCommits = await checkUnpushedCommits(git, remote, task.branch);
+      // Only check for unpushed commits if the branch exists locally
+      const branchExists = branchLocal.all.includes(task.branch);
+      if (branchExists) {
+        hasUnpushedCommits = await checkUnpushedCommits(git, remote, task.branch);
+      }
     } catch (e) {
       logw(e);
     }
