@@ -4,14 +4,16 @@ import path from 'path';
 import { newTaskSchema, TaskContext } from '@/task_data';
 import { z } from 'zod';
 
-export const TaskOutputTargetsSchema = z.union([
-  z.literal('console').describe('Output to console'),
-  z.literal('file-write').describe('Output to file (overwriting)'),
-  z.literal('file-append').describe('Output to file (appending)'),
-  z.literal('c').describe('Output to console'),
-  z.literal('fw').describe('Output to file (overwriting)'),
-  z.literal('fa').describe('Output to file (appending)'),
-]);
+export const TaskOutputTargetsSchema = z
+  .union([
+    z.literal('console').describe('Output to console'),
+    z.literal('file-write').describe('Output to file (overwriting)'),
+    z.literal('file-append').describe('Output to file (appending)'),
+    z.literal('c').describe('Output to console'),
+    z.literal('fw').describe('Output to file (overwriting)'),
+    z.literal('fa').describe('Output to file (appending)'),
+  ])
+  .default('console');
 
 export type TaskOutputTargets = z.infer<typeof TaskOutputTargetsSchema>;
 
