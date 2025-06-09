@@ -14,7 +14,7 @@ import { replaceVarLiterals, searchExtraKeyValue, setTaskVar, setEnvVar } from '
 import { Command } from 'commander';
 import { handlerMap } from './handler_map';
 import { logi, logv, logw } from './loggers';
-import { isNil, isNotNil } from 'es-toolkit';
+import { isNil, isNotNil } from 'es-toolkit/compat';
 import { get } from 'es-toolkit/compat';
 
 export const usefulTasks = async (

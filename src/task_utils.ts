@@ -1,8 +1,7 @@
 import { logv } from './loggers';
 import { TaskContext } from './task_data';
-import { Task } from './script';
 import { convertOrNotHyphenTextToCamelText } from './utils';
-import { get, isNotNil } from 'es-toolkit/compat';
+import { isNotNil } from 'es-toolkit/compat';
 
 export const replaceVarLiterals = async (
   providers: { regex: RegExp; store: (varPath: string) => any }[],

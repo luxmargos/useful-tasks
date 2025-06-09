@@ -1,8 +1,8 @@
 import { Command } from 'commander';
 import path from 'path';
 import * as packageJson from '../package.json';
-import { cloneDeep, isNil, isNotNil } from 'es-toolkit';
-import { LogLevel, logLevels, logw } from './loggers';
+import { cloneDeep, isNil } from 'es-toolkit/compat';
+import { LogLevel, logLevels } from './loggers';
 import { isEmpty } from 'es-toolkit/compat';
 
 export const DEFAULT_SCRIPT_FILE_NAME = 'useful_tasks.json';

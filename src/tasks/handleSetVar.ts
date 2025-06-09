@@ -4,15 +4,8 @@ import { processWithGlobSync } from '@/glob_handler';
 import { logv } from '@/loggers';
 import { newTaskSchemaWithGlobFilters, TaskContext } from '@/task_data';
 import { replaceVarLiterals, setTaskVar } from '@/task_utils';
-import {
-  checkTypeOrThrow,
-  checkEmptyStringOrThrow,
-  loadFileOrThrow,
-  parseJson,
-  parseLines,
-  resolveStringArray,
-} from '@/utils';
-import { isNil } from 'es-toolkit';
+import { loadFileOrThrow, parseJson, parseLines, resolveStringArray } from '@/utils';
+import { isNil } from 'es-toolkit/compat';
 import { z } from 'zod';
 
 export const TaskSetVarSchema = newTaskSchemaWithGlobFilters('set-var', {

@@ -1,6 +1,5 @@
 import { logv, logw } from '@/loggers';
-import { isNotNil } from 'es-toolkit';
-import { isEmpty } from 'es-toolkit/compat';
+import { isNotNil, isEmpty } from 'es-toolkit/compat';
 import fs from 'fs';
 import path from 'path';
 import simpleGit, { CheckRepoActions, ResetMode, SimpleGit } from 'simple-git';

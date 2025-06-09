@@ -3,7 +3,6 @@ import fse from 'fs-extra';
 import { nanoid } from 'nanoid3';
 import { TasksScriptInput } from '@/script';
 import { TaskInput } from '@/script';
-import { delay } from 'es-toolkit';
 
 export const removeTestOutputDir = (dirPath: string) => {
   fse.removeSync(dirPath);

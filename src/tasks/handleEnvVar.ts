@@ -9,8 +9,8 @@ import {
   TaskContext,
 } from '@/task_data';
 import { replaceVarLiterals, setEnvVar } from '@/task_utils';
-import { parseLines, checkTypeOrThrow, loadFileOrThrow, parseJson, resolveStringArray } from '@/utils';
-import { isNil, isNotNil, omit } from 'es-toolkit';
+import { parseLines, loadFileOrThrow, parseJson, resolveStringArray } from '@/utils';
+import { isNil, isNotNil, omit } from 'es-toolkit/compat';
 import { get } from 'es-toolkit/compat';
 import { z } from 'zod';
 

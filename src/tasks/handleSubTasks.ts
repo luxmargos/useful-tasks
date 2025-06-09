@@ -6,7 +6,7 @@ import fse from 'fs-extra';
 import { processWithGlobSync } from '@/glob_handler';
 import { resolveStringArray } from '@/utils';
 import path from 'path';
-import { cloneDeep, isNotNil, mergeWith } from 'es-toolkit';
+import { cloneDeep, isNotNil, mergeWith } from 'es-toolkit/compat';
 import { z } from 'zod';
 
 /**
