@@ -14,7 +14,11 @@ Install Useful Tasks globally or as a dev dependency in your project:
   ```sh
   npm install -g useful-tasks
   ```
-- **Locally (per project):**
+- **Locally (per project, as dependency):**
+  ```sh
+  npm install useful-tasks
+  ```
+- **Locally (per project, as dev dependency):**
   ```sh
   npm install useful-tasks --save-dev
   ```
@@ -79,7 +83,7 @@ useful-tasks --script=my_tasks.json --env-MY_ENV=VALUE
 
 ## Scripting
 
-Tasks are defined in a JSON or JSON5 file, typically named `useful_tasks.json` or similar. Tasks are executed in the order they appear.
+Tasks are defined in a JSON or JSON5 file. Tasks are executed in the order they appear.
 
 ### Task Object Structure
 
@@ -165,7 +169,7 @@ With various options:
 
 ### cmd
 
-Runs shell commands with optional shell specification.
+Runs shell commands with optional shell specification. Supports both single commands and arrays of commands that will run sequentially.
 
 ```json
 {
@@ -182,6 +186,16 @@ Examples:
 {
   "type": "cmd",
   "cmd": "npm install"
+}
+
+// Multiple commands (executed sequentially)
+{
+  "type": "cmd",
+  "cmd": [
+    "npm install",
+    "npm run build",
+    "npm test"
+  ]
 }
 
 // With working directory specified
@@ -203,14 +217,14 @@ Examples:
 
 ### output
 
-Outputs text to console or file with options for appending or overwriting.
+Outputs text to the console or a file.
 
 ```json
 {
   "type": "output",
-  "target": "console", // or "file-write", "file-append", "c", "fw", "fa"
   "text": "Hello World",
-  "path": "./output.txt" // Required when target is file-related
+  "target": "console", // Optional: "console", "file-write", "file-append", "c", "fw", or "fa" (defaults to "console")
+  "path": "./output.txt" // Required if target is file-related
 }
 ```
 
@@ -468,12 +482,12 @@ Examples:
 
 ### fs-mkdir
 
-Creates directories recursively (similar to `mkdir -p`).
+Creates directories. Supports both single paths and arrays of paths.
 
 ```json
 {
   "type": "fs-mkdir",
-  "path": "./path/to/create"
+  "path": "./path/to/create" // String or array of strings
 }
 ```
 
@@ -486,6 +500,16 @@ Examples:
   "path": "./logs"
 }
 
+// Create multiple directories
+{
+  "type": "fs-mkdir",
+  "path": [
+    "./logs",
+    "./data/cache",
+    "./temp/uploads"
+  ]
+}
+
 // Create nested directories
 {
   "type": "fs-mkdir",
@@ -495,12 +519,12 @@ Examples:
 
 ### fs-touch
 
-Creates an empty file if it doesn't exist (similar to Unix `touch` command).
+Creates empty files. Supports both single paths and arrays of paths. Will not overwrite existing files.
 
 ```json
 {
   "type": "fs-touch",
-  "path": "./path/to/file.txt"
+  "path": "./path/to/file.txt" // String or array of strings
 }
 ```
 
@@ -511,6 +535,16 @@ Examples:
 {
   "type": "fs-touch",
   "path": "./logs/app.log"
+}
+
+// Create multiple empty files
+{
+  "type": "fs-touch",
+  "path": [
+    "./.gitkeep",
+    "./logs/errors.log",
+    "./temp/placeholder.txt"
+  ]
 }
 
 // Create a placeholder file
