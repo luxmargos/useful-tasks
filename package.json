@@ -81,7 +81,7 @@
     "fs-extra": "^11.3.0",
     "glob": "^11.0.1",
     "json5": "^2.2.3",
-    "nanoid4": "npm:nanoid@^4.0.2",
+    "nanoid5": "npm:nanoid@^5.1.5",
     "simple-git": "^3.27.0",
     "string-argv": "^0.3.2",
     "zod": "^3.24.3"
