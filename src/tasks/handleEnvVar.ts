@@ -10,7 +10,7 @@ import {
 } from '@/task_data';
 import { replaceVarLiterals, setEnvVar } from '@/task_utils';
 import { parseLines, loadFileOrThrow, parseJson, resolveStringArray } from '@/utils';
-import { isNil, isNotNil, omit } from 'es-toolkit/compat';
+import { isNil, omit } from 'es-toolkit/compat';
 import { get } from 'es-toolkit/compat';
 import { z } from 'zod';
 
@@ -57,7 +57,7 @@ export const handleEnvVar = async (context: TaskContext, task: TaskEnvVar) => {
   // The env-var task treat $ENV_VAR as a var literal
   const replaceProviders = [...context.replaceProviders, ...traditionalProviders];
 
-  if (isNil(task.src) && isNotNil(task.map)) {
+  if (isNil(task.src) && !isNil(task.map)) {
     let map: any = task.map;
     if (typeof map === 'string') {
       logv('Trying to parse as lines.');

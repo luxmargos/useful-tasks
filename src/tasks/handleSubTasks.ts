@@ -6,7 +6,7 @@ import fse from 'fs-extra';
 import { processWithGlobSync } from '@/glob_handler';
 import { resolveStringArray } from '@/utils';
 import path from 'path';
-import { cloneDeep, isNotNil, mergeWith } from 'es-toolkit/compat';
+import { cloneDeep, isNil, mergeWith } from 'es-toolkit/compat';
 import { z } from 'zod';
 
 /**
@@ -41,14 +41,14 @@ export const handleSubTasks = async (context: TaskContext, task: TaskSubTasks) =
     if (task.shareArgs) {
       const mergedOpts = mergeWith(cloneDeep(context.opts), opts, (dest, src, key, target, source) => {
         if (Array.isArray(dest)) {
-          if (isNotNil(src)) {
+          if (!isNil(src)) {
             if (Array.isArray(src)) return [...dest, ...src];
             return [...dest, src];
           }
           return dest;
         }
 
-        if (isNotNil(src)) return src;
+        if (!isNil(src)) return src;
         return dest;
       });
       mergedOpts.cwd = opts.cwd;

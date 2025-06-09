@@ -14,7 +14,7 @@ import { replaceVarLiterals, searchExtraKeyValue, setTaskVar, setEnvVar } from '
 import { Command } from 'commander';
 import { handlerMap } from './handler_map';
 import { logi, logv, logw } from './loggers';
-import { isNil, isNotNil } from 'es-toolkit/compat';
+import { isNil } from 'es-toolkit/compat';
 import { get } from 'es-toolkit/compat';
 
 export const usefulTasks = async (
@@ -124,7 +124,7 @@ export const usefulTasks = async (
       const task = tasks[i];
 
       // Validate task IDs
-      if (isNotNil(task.id)) {
+      if (!isNil(task.id)) {
         for (let j = i + 1; j < tasks.length; j++) {
           const otherTask = tasks[j];
           if (otherTask.id !== undefined && otherTask.id === task.id) {
@@ -156,7 +156,7 @@ export const usefulTasks = async (
       if (isNil(taskItem.when)) return true;
 
       const { platform, architecture, machine } = taskItem.when;
-      if (isNotNil(platform)) {
+      if (!isNil(platform)) {
         if (platform.startsWith('!')) {
           if (platform.substring(1) === context.os.platform) {
             return false;
@@ -167,7 +167,7 @@ export const usefulTasks = async (
           }
         }
       }
-      if (isNotNil(architecture)) {
+      if (!isNil(architecture)) {
         if (architecture.startsWith('!')) {
           if (architecture.substring(1) === context.os.architecture) {
             return false;
@@ -178,7 +178,7 @@ export const usefulTasks = async (
           }
         }
       }
-      if (isNotNil(machine)) {
+      if (!isNil(machine)) {
         if (machine.startsWith('!')) {
           if (machine.substring(1) === context.os.machine) {
             return false;

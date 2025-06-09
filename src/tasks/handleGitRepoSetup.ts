@@ -1,5 +1,5 @@
 import { logv, logw } from '@/loggers';
-import { isNotNil, isEmpty } from 'es-toolkit/compat';
+import { isEmpty, isNil } from 'es-toolkit/compat';
 import fs from 'fs';
 import path from 'path';
 import simpleGit, { CheckRepoActions, ResetMode, SimpleGit } from 'simple-git';
@@ -176,7 +176,7 @@ const checkUnpushedCommits = async (git: SimpleGit, remote: string, branch: stri
       const aheadArr = ahead.split(/\s*/);
       logv(`Ahead: `, aheadArr);
       const aheadCountStr = aheadArr[0];
-      if (isNotNil(aheadCountStr) && aheadCountStr.length > 0) {
+      if (!isNil(aheadCountStr) && aheadCountStr.length > 0) {
         const aheadCount = Number(aheadCountStr);
         if (aheadCount > 0) {
           return true;

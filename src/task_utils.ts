@@ -1,7 +1,7 @@
+import { isNil } from 'es-toolkit';
 import { logv } from './loggers';
 import { TaskContext } from './task_data';
 import { convertOrNotHyphenTextToCamelText } from './utils';
-import { isNotNil } from 'es-toolkit/compat';
 
 export const replaceVarLiterals = async (
   providers: { regex: RegExp; store: (varPath: string) => any }[],
@@ -39,14 +39,14 @@ export const replaceVarLiterals = async (
             const regex = provider.regex;
             regex.lastIndex = 0;
             const execArr = regex.exec(value);
-            if (isNotNil(execArr)) {
+            if (!isNil(execArr)) {
               isMatched = true;
               // example: Text ${var_name}, Text ${var_name.sub_name}, Text ${var_name[0]}
               matchedStr = execArr[0];
               // example: ${var_name}, ${var_name.sub_name}, ${var_name[0]}
               varPath = execArr[1];
               matchedVar = varPath ? provider.store(varPath) : undefined;
-              canReplace = isNotNil(matchedVar);
+              canReplace = !isNil(matchedVar);
               replaceText = () => {
                 const valuePrefix = value.substring(0, execArr.index);
                 const valueReplace = `${matchedVar}`;
