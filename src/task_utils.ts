@@ -157,16 +157,12 @@ export const setEnvVar = (context: TaskContext, key: string, value: any, skipFor
     logv(`Ignoring the invalid typed(${valueType}) environment variable ${key}=${value}`);
   } else {
     const stringVal = String(value);
-    if (stringVal.length < 1) {
-      logv(`Ignoring the invalid environment variable ${key}=${value}`);
-    } else {
-      if (skipForExists && process.env[key] !== undefined) {
-        logv(`Skips assigning the environment variable ${key}=${value} because it already exists.`);
-        return;
-      }
-
-      logv(`Sets the environment variable ${key}=${value}`);
-      process.env[key] = String(value);
+    if (skipForExists && process.env[key] !== undefined) {
+      logv(`Skips assigning the environment variable ${key}=${value} because it already exists.`);
+      return;
     }
+
+    logv(`Sets the environment variable ${key}=${value}`);
+    process.env[key] = stringVal;
   }
 };
