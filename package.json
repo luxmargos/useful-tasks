@@ -52,7 +52,7 @@
     "build:prod": "npm test && cross-env BUILD_MODE=production tsup",
     "watch": "cross-env BUILD_MODE=development tsup --watch",
     "prepare": "husky",
-    "prepublish": "npm run build:prod",
+    "prepublishOnly": "npm run build:prod",
     "print_help": "tsx src/index.ts --help",
     "clean": "rimraf dist",
     "test": "vitest run",
