@@ -1,8 +1,9 @@
 import path from 'path';
 import fse from 'fs-extra';
-import { nanoid } from 'nanoid3';
+import { nanoid } from 'nanoid';
 import { TasksScriptInput } from '@/script';
 import { TaskInput } from '@/script';
+import { beforeAll, afterAll, describe } from 'vitest';
 
 export const removeTestOutputDir = (dirPath: string) => {
   fse.removeSync(dirPath);
@@ -66,9 +67,8 @@ export const buildTaskConfigWithSampleTexts = (dirPath: string, tasks: TaskInput
   };
 };
 
-export const prepareTestSuite = (baseDir: string, clearDirAfter = true, dirName = nanoid()) => {
+export const prepareTestSuite = (baseDir: string, options?: { clearDirAfter?: boolean }, dirName = nanoid()) => {
   const baseDirAbsPath = path.resolve(baseDir);
-  // const testDirRelativePath = 'test_outputs';
   const testDirRelativePath = `test_${dirName}`;
   const testDirAbsPath = path.resolve(baseDirAbsPath, testDirRelativePath);
 
@@ -77,12 +77,11 @@ export const prepareTestSuite = (baseDir: string, clearDirAfter = true, dirName 
     prepareCwd(testDirAbsPath);
   });
 
-  afterAll((fn) => {
+  afterAll(() => {
     process.chdir(baseDirAbsPath);
-    if (clearDirAfter) {
+    if ((options?.clearDirAfter ?? true) && fse.existsSync(testDirAbsPath)) {
       removeTestOutputDir(testDirAbsPath);
     }
-    fn();
   });
 
   const buildTestPath = (subPath?: string) => {
