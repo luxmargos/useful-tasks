@@ -55,6 +55,7 @@
     "print_help": "tsx src/index.ts --help",
     "clean": "rimraf dist",
     "test": "jest",
+    "test:vars_args": "tsx src/index.ts --cwd=./src/__tests__ --script=test_vars_args.json --var-TEST=TestText",
     "test:all": "npm run test:fs && npm run test:fs2 && npm run test:vars && npm run test:vars_parsers && npm run test:exclude && npm run test:include && npm run test:exclude_include && npm run test:exclude_tag && npm run test:include_tag && npm run test:exclude_include_tag && npm run test:outputs && npm run test:custom_regex && npm run test:sub_tasks && npm run test:fs_cp_filter && npm run test:fs_del_filter",
     "test:fs": "tsx src/index.ts --cwd=./test --script=test_fs.json",
     "test:fs2": "tsx src/index.ts --cwd=./test --script=test_fs2.json",

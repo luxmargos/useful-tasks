@@ -1,0 +1,14 @@
+{
+  "name": "Sample",
+  "env": {
+    "logLevel": "debug"
+  },
+  "tasks": [
+    {
+      "id": "task-1",
+      "type": "output",
+      "comment": "OUTPUT TASK",
+      "text": "${TEST}"
+    }
+  ]
+}

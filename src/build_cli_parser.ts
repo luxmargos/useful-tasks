@@ -93,6 +93,7 @@ export const createProgram = () => {
       '--log-level <level>',
       `Set logging level (${logLevels.join('|')})\n` + 'Example: --log-level=debug for verbose output'
     )
+    .argument('[args...]', 'Extra arguments')
     .allowUnknownOption(true);
 
   return program;
