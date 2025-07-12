@@ -13,14 +13,14 @@ import { TaskSymlinkSchema } from './tasks/handleFsSymlink';
 import { TaskGitSetupSchema } from './tasks/handleGitRepoSetup';
 import { CWD_RESTORE, CWD_KEEP } from './build_cli_parser';
 import { logLevels } from './loggers';
-import { TaskEnvVarSchema } from './tasks/handleEnvVar';
+import { TaskEnvVarSchemaBase } from './tasks/handleEnvVar';
 import { TaskFsTouchSchema } from './tasks/handleFsTouch';
 
-export const TaskSchema = z.union([
+export const TaskSchema = z.discriminatedUnion('type', [
   TaskGitSetupSchema,
   TaskTerminalCommandSchema,
   TaskSetVarSchema,
-  TaskEnvVarSchema,
+  TaskEnvVarSchemaBase,
   TaskOutputSchema,
   TaskFsCopySchema,
   TaskFsDeleteSchema,

@@ -14,8 +14,11 @@ import { isNil, omit } from 'es-toolkit/compat';
 import { get } from 'es-toolkit/compat';
 import { z } from 'zod';
 
-export const TaskEnvVarMapSchema = newTaskSchemaWithGlobFilters('env-var', {
-  map: z.union([z.string(), z.record(z.string(), z.union([z.string(), z.number(), z.boolean()]))]).optional(),
+const EnvVarMap = z.union([z.string(), z.record(z.string(), z.union([z.string(), z.number(), z.boolean()]))]);
+export const TaskEnvVarSchemaBase = newTaskSchemaWithGlobFilters('env-var', {
+  key: z.string().nonempty().optional(),
+  value: z.string().optional(),
+  map: EnvVarMap.optional(),
   src: z.string().nonempty().optional(),
   parser: z.union([z.literal('json'), z.literal('lines'), z.literal('auto')]).default('auto'),
   /** If the environment variable already exists, assigning will be skipped */
@@ -25,40 +28,60 @@ export const TaskEnvVarMapSchema = newTaskSchemaWithGlobFilters('env-var', {
     .describe('If the environment variable already exists, assigning will be skipped'),
 });
 
-export const TaskEnvVarKVSchema = newTaskSchema('env-var', {
-  key: z.string().nonempty(),
-  value: z.string(),
-  /** If the environment variable already exists, assigning will be skipped */
-  isFallback: z
-    .boolean()
-    .default(false)
-    .describe('If the environment variable already exists, assigning will be skipped'),
-}).transform((params) => {
-  return TaskEnvVarMapSchema.parse({
-    ...omit(params, ['key', 'value']),
-    map: {
-      [params.key]: params.value,
-    },
-  } satisfies z.input<typeof TaskEnvVarMapSchema>);
+const TaskEnvVarSchema = TaskEnvVarSchemaBase.superRefine((data, ctx) => {
+  const hasKv = data.key !== undefined;
+  const hasMap = data.map !== undefined || data.src !== undefined;
+
+  if (hasKv && hasMap) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Cannot have both key/value and map/src properties.',
+    });
+  }
+
+  if (!hasKv && !hasMap) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Must have either key/value or map/src properties.',
+    });
+  }
+
+  if (hasKv && data.value === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: '`value` is required when `key` is provided.',
+      path: ['value'],
+    });
+  }
+}).transform((data) => {
+  if (!isNil(data.key) && !isNil(data.value) && isNil(data.map)) {
+    return {
+      ...data,
+      map: {
+        [data.key]: data.value,
+      },
+    };
+  }
+
+  return data;
 });
 
-export const TaskEnvVarSchema = z.union([TaskEnvVarMapSchema, TaskEnvVarKVSchema]);
-
-export type TaskEnvVar = z.infer<typeof TaskEnvVarSchema>;
-export type TaskEnvVarIn = z.input<typeof TaskEnvVarSchema>;
+export type TaskEnvVarBase = z.infer<typeof TaskEnvVarSchemaBase>;
+export type TaskEnvVarBaseIn = z.input<typeof TaskEnvVarSchemaBase>;
 
 const traditionalProviders = [
   { regex: new RegExp(DEFAULT_REPLACE_REGEX_TRADITIONAL), store: (varPath: string) => get(process.env, varPath) },
 ];
 
-export const handleEnvVar = async (context: TaskContext, task: TaskEnvVar) => {
+export const handleEnvVar = async (context: TaskContext, task: TaskEnvVarBase) => {
+  const refinedTask = TaskEnvVarSchema.parse(task);
   const isFallback: boolean = task.isFallback;
 
   // The env-var task treat $ENV_VAR as a var literal
   const replaceProviders = [...context.replaceProviders, ...traditionalProviders];
 
-  if (isNil(task.src) && !isNil(task.map)) {
-    let map: any = task.map;
+  if (isNil(task.src) && !isNil(refinedTask.map)) {
+    let map: any = refinedTask.map;
     if (typeof map === 'string') {
       logv('Trying to parse as lines.');
       map = parseLines(map);

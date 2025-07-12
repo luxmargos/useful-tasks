@@ -16,6 +16,7 @@ import { handlerMap } from './handler_map';
 import { logi, logv, logw } from './loggers';
 import { isNil } from 'es-toolkit/compat';
 import { get } from 'es-toolkit/compat';
+import { z } from 'zod';
 
 export const usefulTasks = async (
   originCwd: string,
@@ -24,7 +25,32 @@ export const usefulTasks = async (
   program: Command,
   sharedVars: Record<string, any> = {}
 ) => {
-  const script: TasksScript = TasksScriptSchema.parse(tasksConfigInput);
+  const scriptParseResult = TasksScriptSchema.safeParse(tasksConfigInput);
+  if (!scriptParseResult.success) {
+    const errorMessages = scriptParseResult.error.issues
+      .map((issue) => {
+        if ((issue as z.ZodInvalidUnionIssue).unionErrors) {
+          return (issue as z.ZodInvalidUnionIssue).unionErrors
+            .flatMap((unionIssue) => {
+              return unionIssue.issues.map((issue) => {
+                if (issue.path.length === 0) {
+                  return `- ${issue.message}`;
+                }
+                return `- at ${issue.path.join('.')}: ${issue.message}`;
+              });
+            })
+            .join('\n');
+        }
+        if (issue.path.length === 0) {
+          return `- ${issue.message}`;
+        }
+        return `- at ${issue.path.join('.')}: ${issue.message}`;
+      })
+      .join('\n');
+    throw new Error(`Invalid tasks configuration:\n${errorMessages}`);
+  }
+
+  const script = scriptParseResult.data;
 
   // cli argument can overwrite json's cwdMode
   const cwdModeIsKeep = opts.cwdMode ? opts.cwdMode === CWD_KEEP : script.env.cwdMode === CWD_KEEP;

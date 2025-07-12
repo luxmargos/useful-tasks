@@ -6,18 +6,14 @@ import { z } from 'zod';
 export const TaskTerminalCommandSchema = newTaskSchema('cmd', {
   cmd: z.union([z.string(), z.array(z.string())]),
   shell: z.string().optional(),
-}).transform((data) => {
-  return {
-    ...data,
-    cmd: typeof data.cmd === 'string' ? [data.cmd] : data.cmd,
-  };
 });
 export type TaskTerminalCommand = z.infer<typeof TaskTerminalCommandSchema>;
 
 export const handleTerminalCommand = async (context: TaskContext, task: TaskTerminalCommand) => {
   logv(`Start execution... ${task.cmd}`);
 
-  for (const cmd of task.cmd) {
+  const commands = Array.isArray(task.cmd) ? task.cmd : [task.cmd];
+  for (const cmd of commands) {
     execSync(cmd, {
       shell: task.shell,
       env: process.env,
