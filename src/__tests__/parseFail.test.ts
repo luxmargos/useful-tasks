@@ -29,6 +29,6 @@ describe('parse fail', () => {
       success = false;
     }
 
-    expect(success).toBe(true);
+    expect(success).toBe(false);
   });
 });
