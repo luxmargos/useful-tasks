@@ -5,13 +5,13 @@ import { usefulTasks } from '@/useful_tasks';
 import fse from 'fs-extra';
 
 describe('FS Mkdir Test', () => {
-  const { testDir } = prepareTestSuite(__dirname, { clearDirAfter: false });
+  const { testDir } = prepareTestSuite(__dirname, { clearDirAfter: true });
 
-  it('MkdirTest', async () => {
+  it('fs-mkdir with --var- arguments', async () => {
     const itObj = prepareTestInstance(testDir);
 
     const dirName = 'TestDir';
-    const setupResult = prepare(['--var-TEST=' + dirName]);
+    const setupResult = prepare([`--var-TEST=${dirName}`]);
 
     await usefulTasks(
       itObj.instanceCwd,
@@ -32,10 +32,10 @@ describe('FS Mkdir Test', () => {
     const expectedDir = itObj.buildTestPath(dirName);
     expect(fse.existsSync(expectedDir)).toBe(true);
 
-    const expectedDir2 = itObj.buildTestPath(dirName + '/dir_1');
+    const expectedDir2 = itObj.buildTestPath(`${dirName}/dir_1`);
     expect(fse.existsSync(expectedDir2)).toBe(true);
 
-    const expectedDir3 = itObj.buildTestPath(dirName + '/dir_2');
+    const expectedDir3 = itObj.buildTestPath(`${dirName}/dir_2`);
     expect(fse.existsSync(expectedDir3)).toBe(true);
   });
 });

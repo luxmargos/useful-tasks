@@ -154,6 +154,7 @@ export const prepareOpts = (userArgv?: string[]) => {
   // console.log(`Using options : ${JSON.stringify(typedOptions, undefined, 2)}`);
   // console.log(`Extra arguments`, program.args);
 
+  // support --config for backward compatibility
   if (typedOptions.config) {
     typedOptions.script = typedOptions.config;
     typedOptions.config = undefined;
