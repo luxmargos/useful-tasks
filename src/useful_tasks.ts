@@ -17,6 +17,8 @@ import { logi, logv, logw } from './loggers';
 import { isNil } from 'es-toolkit/compat';
 import { get } from 'es-toolkit/compat';
 import { z } from 'zod';
+import { TaskSetVar } from './tasks/handleSetVar';
+import { TaskEnvVarBase } from './tasks/handleEnvVar';
 
 export const usefulTasks = async (
   originCwd: string,
@@ -253,7 +255,26 @@ export const usefulTasks = async (
     const taskCount = tasks.length ?? 0;
     for (let i = 0; i < taskCount; i++) {
       const task = tasks[i];
-      await replaceVarLiterals(context.replaceProviders, task, ['type', 'id', 'tags'] satisfies (keyof Task)[]);
+      const immutableKeys: string[] = ['type', 'id', 'tags'] satisfies (keyof Task)[];
+      if (task.type === 'env-var') {
+        immutableKeys.push(...(['map', 'value'] satisfies (keyof TaskEnvVarBase)[]));
+      } else if (task.type === 'set-var') {
+        immutableKeys.push('value' satisfies keyof TaskSetVar);
+      }
+      await replaceVarLiterals(
+        0,
+        context.replaceProviders,
+        task,
+        (obj: any, depth: number, key: any, valueOfKey: string) => {
+          if (depth === 0 && immutableKeys.includes(key)) {
+            return false;
+          }
+          return true;
+        },
+        (obj: any, depth: number, key: any, valueOfKey: string) => {
+          obj[key] = valueOfKey;
+        }
+      );
 
       const taskRepresentStr = getTaskRepresentStr(task, i);
       if (task.enabled === false) {

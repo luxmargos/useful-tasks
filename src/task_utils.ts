@@ -4,10 +4,11 @@ import { TaskContext } from './task_data';
 import { convertOrNotHyphenTextToCamelText } from './utils';
 
 export const replaceVarLiterals = async (
+  depth: number,
   providers: { regex: RegExp; store: (varPath: string) => any }[],
   anyValue: any,
-  immutableValueOfKeys: string[] = [],
-  inheritValueOfKeys: boolean = false
+  canBeChanged: (obj: any, depth: number, key: any, valueOfKey: any) => boolean,
+  onChange: (obj: any, depth: number, key: any, valueOfKey: string) => void
 ) => {
   if (typeof anyValue !== 'object' && !Array.isArray(anyValue)) {
     return false;
@@ -15,89 +16,111 @@ export const replaceVarLiterals = async (
 
   let hasChanges = false;
   for (const key of Object.keys(anyValue)) {
-    // NOTE: Consider to remove this check
-    // if (typeof key !== 'string') {
-    //   continue;
-    // }
-
-    if (immutableValueOfKeys.includes(key)) {
+    if (!canBeChanged(anyValue, depth, key, anyValue[key])) {
       continue;
     }
+    const valueOfKey = anyValue[key];
 
-    let valueOfKey: string = anyValue[key];
+    // for set var and env var strings
     if (valueOfKey !== undefined && typeof valueOfKey === 'string') {
-      let hasChangesForCurrentKey = false;
-      while (true) {
-        const varLiteralHandler = (value: string) => {
-          let isMatched = false;
-          let canReplace = false;
-          let matchedStr: string | undefined;
-          let varPath: string | undefined;
-          let matchedVar: string | undefined;
-          let replaceText = () => value;
-          for (const provider of providers) {
-            const regex = provider.regex;
-            regex.lastIndex = 0;
-            const execArr = regex.exec(value);
-            if (!isNil(execArr)) {
-              isMatched = true;
-              // example: Text ${var_name}, Text ${var_name.sub_name}, Text ${var_name[0]}
-              matchedStr = execArr[0];
-              // example: ${var_name}, ${var_name.sub_name}, ${var_name[0]}
-              varPath = execArr[1];
-              matchedVar = varPath ? provider.store(varPath) : undefined;
-              canReplace = !isNil(matchedVar);
-              replaceText = () => {
-                const valuePrefix = value.substring(0, execArr.index);
-                const valueReplace = `${matchedVar}`;
-                const valueSuffix = value.substring(execArr.index + matchedStr!.length);
-                return `${valuePrefix}${valueReplace}${valueSuffix}`;
-              };
-              if (canReplace) {
-                break;
-              }
-            }
-          }
-
-          return {
-            isMatched,
-            canReplace,
-            matchedStr,
-            varPath,
-            matchedVar,
-            replaceText,
-          };
-        };
-
-        const varLiteralHandlerResult = varLiteralHandler(valueOfKey);
-
-        if (varLiteralHandlerResult.canReplace) {
-          logv(`Injecting the variable literal: '${key}'=>'${valueOfKey}'`);
-          valueOfKey = varLiteralHandlerResult.replaceText();
-          hasChanges = true;
-          hasChangesForCurrentKey = true;
-        } else {
-          break;
+      const result = await replaceVarLiteralsForText(
+        providers,
+        valueOfKey,
+        (valueOfKey) => {},
+        (valueOfKey) => {
+          onChange(anyValue, depth, key, valueOfKey);
         }
+      );
+      if (result.hasChanges) {
+        hasChanges = true;
       }
+    }
+    //for set var objects
+    else if (typeof valueOfKey === 'object' || Array.isArray(valueOfKey)) {
+      if (await replaceVarLiterals(depth + 1, providers, valueOfKey, canBeChanged, onChange)) {
+        hasChanges = true;
+      }
+    }
 
-      if (hasChangesForCurrentKey) {
-        anyValue[key] = valueOfKey;
-      }
-    } else if (typeof valueOfKey === 'object' || Array.isArray(valueOfKey)) {
-      if (inheritValueOfKeys) {
-        if (await replaceVarLiterals(providers, valueOfKey, immutableValueOfKeys, true)) {
-          hasChanges = true;
-        }
-      } else {
-        if (await replaceVarLiterals(providers, valueOfKey, [], false)) {
-          hasChanges = true;
-        }
-      }
+    if (!hasChanges) {
+      onChange(anyValue, depth, key, valueOfKey);
     }
   }
 
   return hasChanges;
+};
+
+export const replaceVarLiteralsForText = async (
+  providers: { regex: RegExp; store: (varPath: string) => any }[],
+  valueOfKey: string,
+  beforeChange?: (valueOfKey: string) => void,
+  afterChange?: (valueOfKey: string) => void
+) => {
+  let hasChanges = false;
+  // NOTE: Consider to remove this check
+  // if (typeof key !== 'string') {
+  //   continue;
+  // }
+
+  let hasChangesForCurrentKey = false;
+  while (true) {
+    const varLiteralHandler = (value: string) => {
+      let isMatched = false;
+      let canReplace = false;
+      let matchedStr: string | undefined;
+      let varPath: string | undefined;
+      let matchedVar: string | undefined;
+      let replaceText = () => value;
+      for (const provider of providers) {
+        const regex = provider.regex;
+        regex.lastIndex = 0;
+        const execArr = regex.exec(value);
+        if (!isNil(execArr)) {
+          isMatched = true;
+          // example: Text ${var_name}, Text ${var_name.sub_name}, Text ${var_name[0]}
+          matchedStr = execArr[0];
+          // example: ${var_name}, ${var_name.sub_name}, ${var_name[0]}
+          varPath = execArr[1];
+          matchedVar = varPath ? provider.store(varPath) : undefined;
+          canReplace = !isNil(matchedVar);
+          replaceText = () => {
+            const valuePrefix = value.substring(0, execArr.index);
+            const valueReplace = `${matchedVar}`;
+            const valueSuffix = value.substring(execArr.index + matchedStr!.length);
+            return `${valuePrefix}${valueReplace}${valueSuffix}`;
+          };
+          if (canReplace) {
+            break;
+          }
+        }
+      }
+
+      return {
+        isMatched,
+        canReplace,
+        matchedStr,
+        varPath,
+        matchedVar,
+        replaceText,
+      };
+    };
+
+    const varLiteralHandlerResult = varLiteralHandler(valueOfKey);
+
+    if (varLiteralHandlerResult.canReplace) {
+      logv(`Injecting the variable literal: '${valueOfKey}'`);
+      beforeChange?.(valueOfKey);
+      valueOfKey = varLiteralHandlerResult.replaceText();
+      afterChange?.(valueOfKey);
+      logv(`Injected the variable literal: '${valueOfKey}'`);
+      hasChanges = true;
+      hasChangesForCurrentKey = true;
+    } else {
+      break;
+    }
+  }
+
+  return { hasChanges, valueOfKey };
 };
 
 export const searchExtraKeyValue = (

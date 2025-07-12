@@ -73,12 +73,31 @@ const traditionalProviders = [
   { regex: new RegExp(DEFAULT_REPLACE_REGEX_TRADITIONAL), store: (varPath: string) => get(process.env, varPath) },
 ];
 
+//TODO: The unescaping feature might required.
+
 export const handleEnvVar = async (context: TaskContext, task: TaskEnvVarBase) => {
   const refinedTask = TaskEnvVarSchema.parse(task);
   const isFallback: boolean = task.isFallback;
 
   // The env-var task treat $ENV_VAR as a var literal
   const replaceProviders = [...context.replaceProviders, ...traditionalProviders];
+
+  const handleForMap = async (map: any) => {
+    while (
+      await replaceVarLiterals(
+        0,
+        replaceProviders,
+        map,
+        (obj, depth, key, valueOfKey) => {
+          return true;
+        },
+        (obj, depth, key, valueOfKey) => {
+          obj[key] = valueOfKey;
+          setEnvVar(context, key, valueOfKey, isFallback);
+        }
+      )
+    ) {}
+  };
 
   if (isNil(task.src) && !isNil(refinedTask.map)) {
     let map: any = refinedTask.map;
@@ -88,13 +107,7 @@ export const handleEnvVar = async (context: TaskContext, task: TaskEnvVarBase) =
     }
 
     if (typeof map === 'object' || Array.isArray(map)) {
-      const keys = Object.keys(map);
-      for (const key of keys) {
-        setEnvVar(context, key, map[key], isFallback);
-        // this assumes map has including another var literals
-        // so it will replace var literals in the map, until no more changes
-        while (await replaceVarLiterals(replaceProviders, map)) {}
-      }
+      await handleForMap(map);
     }
   }
 
@@ -124,14 +137,7 @@ export const handleEnvVar = async (context: TaskContext, task: TaskEnvVarBase) =
     }
 
     if (obj) {
-      const finalObj = obj;
-      const keys = Object.keys(finalObj);
-      for (const key of keys) {
-        setEnvVar(context, key, finalObj[key], isFallback);
-        // this assumes finalObj has including another var literals
-        // so it will replace var literals in the finalObj, until no more changes
-        while (await replaceVarLiterals(replaceProviders, finalObj)) {}
-      }
+      await handleForMap(obj);
     }
   };
 

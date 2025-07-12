@@ -3,7 +3,7 @@ import path from 'path';
 import { processWithGlobSync } from '@/glob_handler';
 import { logv } from '@/loggers';
 import { newTaskSchemaWithGlobFilters, TaskContext } from '@/task_data';
-import { replaceVarLiterals, setTaskVar } from '@/task_utils';
+import { replaceVarLiterals, replaceVarLiteralsForText, setTaskVar } from '@/task_utils';
 import { loadFileOrThrow, parseJson, parseLines, resolveStringArray } from '@/utils';
 import { isNil } from 'es-toolkit/compat';
 import { z } from 'zod';
@@ -21,10 +21,34 @@ export type TaskSetVar = z.infer<typeof TaskSetVarSchema>;
 export const handleSetVar = async (context: TaskContext, task: TaskSetVar) => {
   const isFallback: boolean = task.isFallback;
 
+  const handleForKeyValue = async (rootKey: string, value: any) => {
+    if (typeof value === 'string') {
+      const result = await replaceVarLiteralsForText(context.replaceProviders, value);
+      setTaskVar(context, rootKey, result.valueOfKey, isFallback);
+    } else if (typeof value === 'object' || Array.isArray(value)) {
+      while (
+        await replaceVarLiterals(
+          0,
+          context.replaceProviders,
+          value,
+          (obj, depth, key, valueOfKey) => {
+            return true;
+          },
+          (obj, depth, key, valueOfKey) => {
+            obj[key] = valueOfKey;
+            // setTaskVar(context, rootKey, valueOfKey, isFallback);
+          }
+        )
+      ) {}
+
+      setTaskVar(context, rootKey, value, isFallback);
+    } else {
+      setTaskVar(context, rootKey, value, isFallback);
+    }
+  };
   if (task.value !== undefined) {
     const value = task.value;
-    setTaskVar(context, task.key, value, isFallback);
-    while (await replaceVarLiterals(context.replaceProviders, value)) {}
+    handleForKeyValue(task.key, value);
   }
 
   if (!task.src) return;
@@ -56,8 +80,7 @@ export const handleSetVar = async (context: TaskContext, task: TaskSetVar) => {
       obj = content;
     }
 
-    setTaskVar(context, task.key, obj, isFallback);
-    while (await replaceVarLiterals(context.replaceProviders, obj)) {}
+    handleForKeyValue(task.key, obj);
   };
 
   const runGlobSync = async (items: string[]) => {
